@@ -5,8 +5,6 @@
 	<div class="jumbotron">
 		<div class="container">
 			<h1>Øse Kirke</h1>
-			<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Doloremque quia minima commodi voluptates. Quos impedit doloribus aperiam, dicta, rem vero eius modi repudiandae eveniet officia qui unde deleniti culpa! Nam!</p>
-			<p><a href="#">Læs mere</a></p>
 		</div>
 	</div><!-- end .jumbotron -->
 

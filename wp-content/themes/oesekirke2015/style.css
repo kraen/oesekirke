@@ -7,11 +7,12 @@ nav {
 }
 
 .jumbotron {
-	background: url("img/header.jpg") no-repeat;
+	background: url("../../../images/sydoest.jpg") no-repeat;
 	background-size: cover;
 	height:500px;
 	margin-bottom:0px;
 	margin-top:-20px;
+	color:#fff;
 }
 
 .jumbotron .container {
