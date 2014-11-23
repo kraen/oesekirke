@@ -1,1 +1,5 @@
 .DS_Store
+images
+wp-content/cache
+wp-content/gallery
+wp-content/uploads
