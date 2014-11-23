@@ -19,7 +19,7 @@
 					if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
 					<div class="post" id="<?php the_ID(); ?>">
 							<?php the_content(); ?>
-					</div><?php endwhile; endif;?>
+						</div><?php endwhile; endif;?>
 				</div>
 				<div class="col-md-4">
 					<?php rewind_posts(); query_posts('page_id=22'); if ( have_posts() ) : while ( have_posts() ) : the_post();
