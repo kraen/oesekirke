@@ -2,6 +2,9 @@
 if ( function_exists('register_sidebar') )
 register_sidebar();
 
+// Register Custom Navigation Walker
+require_once('wp_bootstrap_navwalker.php');
+
 automatic_feed_links();
 function removeHeadLinks() {
   remove_action('wp_head', 'rsd_link');

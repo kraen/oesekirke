@@ -36,13 +36,22 @@
         <span class="icon-bar"></span>
       </button>
       <a class="navbar-brand" href="#">Øse Kirke</a>
+      
     </div>
-    <div class="collapse navbar-collapse" id="navbar-collapse-1">
-      <ul class="nav navbar-nav pull-left">
-        <?php wp_nav_menu( array( 'container' => false, 'items_wrap' => '%3$s' ) ); ?>
-      </ul>
-      <?php get_search_form(); ?>
-    </div>
+    <?php
+    wp_nav_menu( array(
+    'menu'              => 'primary',
+    'theme_location'    => 'primary',
+    'depth'             => 2,
+    'container'         => 'div',
+    'container_class'   => 'collapse navbar-collapse',
+    'container_id'      => 'bs-example-navbar-collapse-1',
+    'menu_class'        => 'nav navbar-nav',
+    'fallback_cb'       => 'wp_bootstrap_navwalker::fallback',
+    'walker'            => new wp_bootstrap_navwalker())
+    );
+    ?>
+
 
 
     </div><!-- .container -->

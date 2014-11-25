@@ -2,7 +2,7 @@
   <div class="container">
     <div class="row">
       <div class="col-md-4">
-        FOOTER 1
+        <?php get_search_form(); ?>
       </div>
       <div class="col-md-4">
         <?php dynamic_sidebar( 'sidebar-1' ); ?>
