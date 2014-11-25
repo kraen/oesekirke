@@ -3,9 +3,11 @@
 <!-- start MAIN CONTENT -->
 <section class="content" id="main">
 	<div class="jumbotron">
+		<div class="overlay">
 		<div class="container">
 			<h1>Øse Kirke</h1>
 		</div>
+	</div>
 	</div><!-- end .jumbotron -->
 
 	<div class="columns">
@@ -39,10 +41,14 @@
 
 						<div class="post" id="<?php the_ID(); ?>">
 								<?php the_content(); ?>
-								<p>For at læse kirkebladet fra 2010 og frem skal du have Adobe Flash Player installeret. Du kan hente det hos <a href="http://get.adobe.com/flashplayer/">Adobe</a>. For at læse tidligere kirkeblade skal du have Adobe Acrobat Reader installeret. Det kan også hentes hos <a href="http://get.adobe.com/dk/reader/">Adobe</a></p>
-								<small>Se tidligere kirkeblade her: <?php the_category(" "); ?></small>
-						</div><?php endwhile; endif;?>
+
+						</div>
+
+
 					</div>
+					<p>For at læse kirkebladet fra 2010 og frem skal du have Adobe Flash Player installeret. Du kan hente det hos <a href="http://get.adobe.com/flashplayer/">Adobe</a>. For at læse tidligere kirkeblade skal du have Adobe Acrobat Reader installeret. Det kan også hentes hos <a href="http://get.adobe.com/dk/reader/">Adobe</a></p>
+					<small>Se tidligere kirkeblade her: <?php the_category(" "); ?></small>
+				<?php endwhile; endif;?>
 				</div>
 			</div>
 		</div>

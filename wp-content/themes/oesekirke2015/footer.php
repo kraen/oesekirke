@@ -22,5 +22,24 @@
 
 
 <?php wp_footer(); ?>
+<script>
+var main = function() {
+
+  $('.ngg-albumoverview').addClass('row').removeClass('ngg-albumoverview');
+  $('.ngg-album').addClass('col-xs-6 col-md-3').removeClass('ngg-album');
+
+  $('.ngg-navigation').children().each(function(){
+    $(this).wrap('<li>');
+  });
+
+  $('.ngg-navigation li').wrapAll('<ul class="pagination">');
+  $('.pagination .current').parent().addClass('active');
+  $('.ngg-navigation').removeClass('ngg-navigation').addClass('clear');
+};
+
+$(document).ready(main);
+
+</script>
+
 </body>
 </html>

@@ -1,0 +1,41 @@
+/*
+CSS Name: Øse Kirke
+Description: Øse Kirke NextGen
+Author: Kræn Bech-Petersen
+Version: 1.0
+
+This stylesheet is provided to allow users the ability of overriding the default styles for all display types
+*/
+
+.ngg-albumoverview {
+
+}
+
+.ngg-album {
+
+}
+
+.ngg-album-compactbox {
+
+}
+
+.ngg-galleryoverview {
+
+}
+
+.ngg-gallery-thumbnail-box {
+
+}
+
+.ngg-gallery-thumbnail {
+
+}
+
+.ngg-gallery-thumbnail img {
+  background-color: #FFFFFF;
+  border: 1px solid #A9A9A9;
+  display: block;
+  margin: 4px 0px 4px 4px;
+  padding: 4px;
+  position: relative;
+}

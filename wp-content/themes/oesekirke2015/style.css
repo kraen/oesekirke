@@ -17,6 +17,10 @@ nav {
 	text-transform:uppercase;
 }
 
+.clear {
+	clear:both;
+}
+
 .jumbotron {
 	background: url("../../../images/sydoest.jpg") no-repeat;
 	background-size: cover;
@@ -24,11 +28,24 @@ nav {
 	margin-bottom:0px;
 	margin-top:-20px;
 	color:#fff;
+	padding:0;
+	overflow:hidden;
+}
+
+.overlay {
+	background:rgba(0,0,0,0.2);
+	position:relative;
+	height:510px;
+	z-index:100;
+
+	box-sizing: border-box;
 }
 
 .jumbotron .container {
 	position: relative;
-	top:100px;
+	top:150px;
+	z-index:101;
+	padding: 30px 15px;
 }
 
 .columns {
