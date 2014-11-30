@@ -10,8 +10,8 @@
 
   <link rel="stylesheet" href="<?php bloginfo('template_url'); ?>/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="<?php bloginfo('stylesheet_url'); ?>"/>
-  <script src="<?php bloginfo('template_url'); ?>/js/jquery-1.11.1.min.js"></script>
-
+  <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+  <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
   <?php wp_head(); ?>
   <script src="<?php bloginfo('template_url'); ?>/js/bootstrap.min.js"></script>
 
