@@ -57,3 +57,11 @@ nav {
 .footer {
 	padding: 30px 0;
 }
+
+.widget-title {
+	margin-top:0;
+}
+
+#noscript {
+	display:none;
+}

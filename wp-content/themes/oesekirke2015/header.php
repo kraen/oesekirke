@@ -1,17 +1,17 @@
 <!doctype html>
 <html>
 <head>
-  <title>Øse Kirke</title>
+  <title><?php wp_title(); ?></title>
 
-  <meta charset="utf-8">
+  <meta charset="<?php bloginfo( 'charset' ); ?>">
 
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <link rel="stylesheet" href="<?php bloginfo('template_url'); ?>/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="<?php bloginfo('stylesheet_url'); ?>"/>
-  <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
-  <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+  <script src="<?php bloginfo('template_url'); ?>/js/jquery-1.11.1.min.js"></script>
+
   <?php wp_head(); ?>
   <script src="<?php bloginfo('template_url'); ?>/js/bootstrap.min.js"></script>
 
