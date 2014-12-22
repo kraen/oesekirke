@@ -5,7 +5,8 @@
 	<div class="jumbotron">
 		<div class="overlay">
 		<div class="container">
-			<h1>Øse Kirke</h1>
+			<h1><?php bloginfo('name'); ?></h1>
+			<p><?php bloginfo('description'); ?></p>
 		</div>
 	</div>
 	</div><!-- end .jumbotron -->
