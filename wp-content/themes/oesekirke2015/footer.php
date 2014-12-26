@@ -16,7 +16,18 @@
             Sønderskovvej 123, Øse<br>
             6800 Varde<br>
             Tlf. 75 29 80 30<br>
-            <a href="mailto:&#105;&#110;&#102;&#111;&#64;&#111;&#101;&#115;&#101;&#107;&#105;&#114;&#107;&#101;&#46;&#100;&#107;">Send mail</a>
+            <?php 
+    $content = "info@oesekirke.dk"; 
+    $args = array('text' => '',
+                              'css_class' => '',
+                              'css_id' => '',
+                              'echo' => 1); 
+    if (function_exists('encryptx')) { 
+        encryptx($content, $args); 
+    } else { 
+        echo sprintf('<a href="mailto:%s" id="%s" class="%s">%s</a>', $content, $args['css_id'], $args['css_class'], ($args['text'] != '' ? $args['text'] : $content)); 
+    } 
+?>
           </address>
           <p><a href="https://www.google.dk/maps/place/Øse+Kirke/@55.645846,8.654002,17z/data=!3m1!4b1!4m2!3m1!1s0x464b1a3b8a1f469d:0x515334ab6925482f?hl=da">Find vej</a></p>
         </aside>
