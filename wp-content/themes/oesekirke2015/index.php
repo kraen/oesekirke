@@ -3,11 +3,13 @@
 <!-- start MAIN CONTENT -->
 <section class="content" id="main">
 	<div class="jumbotron">
+		<img src="<?php header_image(); ?>" height="<?php echo get_custom_header()->height; ?>" width="<?php echo get_custom_header()->width; ?>" alt="" class="header-image" />
 		<div class="overlay">
-		<div class="container">
-			<h1><?php bloginfo('name'); ?></h1>
-			<p><?php bloginfo('description'); ?></p>
-		</div>
+
+				<div class="container">
+					<h1><?php bloginfo('name'); ?></h1>
+					<p><?php bloginfo('description'); ?></p>
+				</div>
 	</div>
 	</div><!-- end .jumbotron -->
 

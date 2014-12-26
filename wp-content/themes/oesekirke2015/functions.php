@@ -12,7 +12,15 @@ register_sidebar( array(
 // Register Custom Navigation Walker
 require_once('wp_bootstrap_navwalker.php');
 
-add_theme_support( 'custom-header' );
+$customHeader = array(
+  'flex-width'    => true,
+  'flex-height'   => true,
+  'height'        => 500,
+  'width'         => 1800,
+  'default-image' => get_template_directory_uri() . '/img/header.jpg'
+);
+
+add_theme_support( 'custom-header', $customHeader );
 
 automatic_feed_links();
 function removeHeadLinks() {

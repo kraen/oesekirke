@@ -22,7 +22,6 @@ nav {
 }
 
 .jumbotron {
-	background: url("../../../images/sydoest.jpg") no-repeat;
 	background-size: cover;
 	height:500px;
 	margin-bottom:0px;
@@ -30,6 +29,11 @@ nav {
 	color:#fff;
 	padding:0;
 	overflow:hidden;
+}
+
+.header-image {
+	position:absolute;
+	z-index:0;
 }
 
 .overlay {
