@@ -29,11 +29,13 @@ nav {
 	color:#fff;
 	padding:0;
 	overflow:hidden;
+	position:relative;
 }
 
 .header-image {
 	position:absolute;
 	z-index:0;
+	overflow:hidden;
 }
 
 .overlay {

@@ -5,6 +5,7 @@
         <?php get_search_form(); ?>
       </div>
       <div class="col-md-4">
+        <div class="fb-like-box" data-href="https://www.facebook.com/pages/&#xd8;se-og-N&#xe6;sbjerg-kirker/106219799469101" data-colorscheme="light" data-show-faces="false" data-header="true" data-stream="true" data-show-border="false"></div>
         <?php dynamic_sidebar( 'sidebar-1' ); ?>
         <a href="https://www.facebook.com/pages/Øse-og-Næsbjerg-kirker/106219799469101" id="noscript" target="_blank">Følg på facebook</a>
       </div>
@@ -71,6 +72,7 @@ var main = function() {
         (atb.css("visibility")=="hidden") ||
         (atb.css("display")=="none") )
         {
+
           $("#noscript").css("display", "inline");
         }
 
