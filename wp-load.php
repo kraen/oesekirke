@@ -71,3 +71,17 @@ if ( file_exists( ABSPATH . 'wp-config.php') ) {
 
 	wp_die( $die, __( 'WordPress &rsaquo; Error' ) );
 }
+printf(
+		/* translators: %s: Codex URL */
+		__( "Need more help? <a href='%s'>We got it</a>." ),
+		__( 'https://codex.wordpress.org/Editing_wp-config.php' )
+	) . '</p>';
+	$die .= '<p>' . sprintf(
+		/* translators: %s: wp-config.php */
+		__( "You can create a %s file through a web interface, but this doesn't work for all server setups. The safest way is to manually create the file." ),
+		'<code>wp-config.php</code>'
+	) . '</p>';
+	$die .= '<p><a href="' . $path . '" class="button button-large">' . __( "Create a Configuration File" ) . '</a>';
+
+	wp_die( $die, __( 'WordPress &rsaquo; Error' ) );
+}

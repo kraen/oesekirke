@@ -959,3 +959,29 @@ try {
 login_footer();
 break;
 } // end action switch
+
+} catch(e){}
+}, 200);
+}
+
+<?php if ( !$error ) { ?>
+wp_attempt_focus();
+<?php } ?>
+if(typeof wpOnload=='function')wpOnload();
+<?php if ( $interim_login ) { ?>
+(function(){
+try {
+	var i, links = document.getElementsByTagName('a');
+	for ( i in links ) {
+		if ( links[i].href )
+			links[i].target = '_blank';
+	}
+} catch(e){}
+}());
+<?php } ?>
+</script>
+
+<?php
+login_footer();
+break;
+} // end action switch

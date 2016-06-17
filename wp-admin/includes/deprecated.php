@@ -1185,3 +1185,218 @@ function wp_dashboard_secondary_control() {}
 function _relocate_children( $old_ID, $new_ID ) {
 	_deprecated_function( __FUNCTION__, '3.9' );
 }
+ * @deprecated 3.7.0 Use Plugin_Upgrader
+ * @see Plugin_Upgrader
+ */
+function wp_update_plugin($plugin, $feedback = '') {
+	_deprecated_function( __FUNCTION__, '3.7', 'new Plugin_Upgrader();' );
+
+	if ( !empty($feedback) )
+		add_filter('update_feedback', $feedback);
+
+	include( ABSPATH . 'wp-admin/includes/class-wp-upgrader.php' );
+	$upgrader = new Plugin_Upgrader();
+	return $upgrader->upgrade($plugin);
+}
+
+/**
+ * This was once used to kick-off the Theme Updater.
+ *
+ * Deprecated in favor of instantating a Theme_Upgrader instance directly,
+ * and calling the 'upgrade' method.
+ * Unused since 2.8.0.
+ *
+ * @since 2.7.0
+ * @deprecated 3.7.0 Use Theme_Upgrader
+ * @see Theme_Upgrader
+ */
+function wp_update_theme($theme, $feedback = '') {
+	_deprecated_function( __FUNCTION__, '3.7', 'new Theme_Upgrader();' );
+
+	if ( !empty($feedback) )
+		add_filter('update_feedback', $feedback);
+
+	include( ABSPATH . 'wp-admin/includes/class-wp-upgrader.php' );
+	$upgrader = new Theme_Upgrader();
+	return $upgrader->upgrade($theme);
+}
+
+/**
+ * This was once used to display attachment links. Now it is deprecated and stubbed.
+ *
+ * @since 2.0.0
+ * @deprecated 3.7.0
+ *
+ * @param int|bool $id
+ */
+function the_attachment_links( $id = false ) {
+	_deprecated_function( __FUNCTION__, '3.7' );
+}
+
+/**
+ * Displays a screen icon.
+ *
+ * @since 2.7.0
+ * @since 3.8.0 Screen icons are no longer used in WordPress. This function no longer produces output.
+ * @deprecated 3.8.0 Use get_screen_icon()
+ * @see get_screen_icon()
+ */
+function screen_icon() {
+	echo get_screen_icon();
+}
+
+/**
+ * Retrieves the screen icon (no longer used in 3.8+).
+ *
+ * @deprecated 3.8.0
+ *
+ * @return string
+ */
+function get_screen_icon() {
+	return '<!-- Screen icons are no longer used as of WordPress 3.8. -->';
+}
+
+/**
+ * Deprecated dashboard widget controls.
+ *
+ * @since 2.5.0
+ * @deprecated 3.8.0
+ */
+function wp_dashboard_incoming_links_output() {}
+
+/**
+ * Deprecated dashboard secondary output.
+ *
+ * @deprecated 3.8.0
+ */
+function wp_dashboard_secondary_output() {}
+
+/**
+ * Deprecated dashboard widget controls.
+ *
+ * @since 2.7.0
+ * @deprecated 3.8.0
+ */
+function wp_dashboard_incoming_links() {}
+
+/**
+ * Deprecated dashboard incoming links control.
+ *
+ * @deprecated 3.8.0
+ */
+function wp_dashboard_incoming_links_control() {}
+
+/**
+ * Deprecated dashboard plugins control.
+ *
+ * @deprecated 3.8.0
+ */
+function wp_dashboard_plugins() {}
+
+/**
+ * Deprecated dashboard primary control.
+ *
+ * @deprecated 3.8.0
+ */
+function wp_dashboard_primary_control() {}
+
+/**
+ * Deprecated dashboard recent comments control.
+ *
+ * @deprecated 3.8.0
+ */
+function wp_dashboard_recent_comments_control() {}
+
+/**
+ * Deprecated dashboard secondary section.
+ *
+ * @deprecated 3.8.0
+ */
+function wp_dashboard_secondary() {}
+
+/**
+ * Deprecated dashboard secondary control.
+ *
+ * @deprecated 3.8.0
+ */
+function wp_dashboard_secondary_control() {}
+
+/**
+ * This was once used to move child posts to a new parent.
+ *
+ * @since 2.3.0
+ * @deprecated 3.9.0
+ * @access private
+ *
+ * @param int $old_ID
+ * @param int $new_ID
+ */
+function _relocate_children( $old_ID, $new_ID ) {
+	_deprecated_function( __FUNCTION__, '3.9' );
+}
+
+/**
+ * Add a top-level menu page in the 'objects' section.
+ *
+ * This function takes a capability which will be used to determine whether
+ * or not a page is included in the menu.
+ *
+ * The function which is hooked in to handle the output of the page must check
+ * that the user has the required capability as well.
+ *
+ * @since 2.7.0
+ *
+ * @deprecated 4.5.0 Use add_menu_page()
+ * @see add_menu_page()
+ * @global int $_wp_last_object_menu
+ *
+ * @param string   $page_title The text to be displayed in the title tags of the page when the menu is selected.
+ * @param string   $menu_title The text to be used for the menu.
+ * @param string   $capability The capability required for this menu to be displayed to the user.
+ * @param string   $menu_slug  The slug name to refer to this menu by (should be unique for this menu).
+ * @param callable $function   The function to be called to output the content for this page.
+ * @param string   $icon_url   The url to the icon to be used for this menu.
+ * @return string The resulting page's hook_suffix.
+ */
+function add_object_page( $page_title, $menu_title, $capability, $menu_slug, $function = '', $icon_url = '') {
+	_deprecated_function( __FUNCTION__, '4.5', 'add_menu_page()' );
+
+	global $_wp_last_object_menu;
+
+	$_wp_last_object_menu++;
+
+	return add_menu_page($page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $_wp_last_object_menu);
+}
+
+/**
+ * Add a top-level menu page in the 'utility' section.
+ *
+ * This function takes a capability which will be used to determine whether
+ * or not a page is included in the menu.
+ *
+ * The function which is hooked in to handle the output of the page must check
+ * that the user has the required capability as well.
+ *
+ * @since 2.7.0
+ *
+ * @deprecated 4.5.0 Use add_menu_page()
+ * @see add_menu_page()
+ * @global int $_wp_last_utility_menu
+ *
+ * @param string   $page_title The text to be displayed in the title tags of the page when the menu is selected.
+ * @param string   $menu_title The text to be used for the menu.
+ * @param string   $capability The capability required for this menu to be displayed to the user.
+ * @param string   $menu_slug  The slug name to refer to this menu by (should be unique for this menu).
+ * @param callable $function   The function to be called to output the content for this page.
+ * @param string   $icon_url   The url to the icon to be used for this menu.
+ * @return string The resulting page's hook_suffix.
+ */
+function add_utility_page( $page_title, $menu_title, $capability, $menu_slug, $function = '', $icon_url = '') {
+	_deprecated_function( __FUNCTION__, '4.5', 'add_menu_page()' );
+
+	global $_wp_last_utility_menu;
+
+	$_wp_last_utility_menu++;
+
+	return add_menu_page($page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $_wp_last_utility_menu);
+}

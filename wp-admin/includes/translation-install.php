@@ -238,3 +238,9 @@ function wp_can_install_language_pack() {
 
 	return true;
 }
+| is_wp_error( $check ) ) {
+		return false;
+	}
+
+	return true;
+}

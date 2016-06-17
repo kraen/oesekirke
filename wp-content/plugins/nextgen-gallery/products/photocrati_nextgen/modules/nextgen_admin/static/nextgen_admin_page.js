@@ -65,3 +65,20 @@ jQuery(function($){
     $('input.nextgen_settings_field_colorpicker').wpColorPicker();
     $('#ngg_page_content').css('visibility', 'visible');
 });
+attr('rel');
+        var btn = $(this);
+        $(form_id).toggle(500, 'swing', function(){
+            if ($(this).hasClass('hidden')) {
+                $(this).removeClass('hidden');
+                btn.text(btn.attr('active_label'));
+            }
+            else {
+                $(this).addClass('hidden');
+                btn.text(btn.attr('hidden_label'));
+            }
+        });
+    });
+
+    $('input.nextgen_settings_field_colorpicker').wpColorPicker();
+    $('#ngg_page_content').css('visibility', 'visible');
+});

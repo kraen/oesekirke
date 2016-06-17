@@ -241,3 +241,38 @@ break;
 }
 
 include(ABSPATH . 'wp-admin/admin-footer.php' );
+"><?php _e('Documentation:') ?></label>
+		<?php echo $docs_select; ?>
+		<input type="button" class="button" value=" <?php esc_attr_e( 'Look Up' ); ?> " onclick="if ( '' != jQuery('#docs-list').val() ) { window.open( 'https://api.wordpress.org/core/handbook/1.0/?function=' + escape( jQuery( '#docs-list' ).val() ) + '&amp;locale=<?php echo urlencode( get_locale() ) ?>&amp;version=<?php echo urlencode( $wp_version ) ?>&amp;redirect=true'); }" />
+		</div>
+	<?php endif; ?>
+
+		<div>
+		<?php if ( is_child_theme() && $theme->get_stylesheet() == get_template() ) : ?>
+			<p><?php if ( is_writeable( $file ) ) { ?><strong><?php _e( 'Caution:' ); ?></strong><?php } ?>
+			<?php _e( 'This is a file in your current parent theme.' ); ?></p>
+		<?php endif; ?>
+<?php
+	if ( is_writeable( $file ) ) :
+		submit_button( __( 'Update File' ), 'primary', 'submit', true );
+	else : ?>
+<p><em><?php _e('You need to make this file writable before you can save your changes. See <a href="https://codex.wordpress.org/Changing_File_Permissions">the Codex</a> for more information.'); ?></em></p>
+<?php endif; ?>
+		</div>
+	</form>
+<?php
+endif; // $error
+?>
+<br class="clear" />
+</div>
+<script type="text/javascript">
+jQuery(document).ready(function($){
+	$('#template').submit(function(){ $('#scrollto').val( $('#newcontent').scrollTop() ); });
+	$('#newcontent').scrollTop( $('#scrollto').val() );
+});
+</script>
+<?php
+break;
+}
+
+include(ABSPATH . 'wp-admin/admin-footer.php' );

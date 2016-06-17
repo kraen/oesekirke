@@ -188,3 +188,6 @@ jQuery(document).ready( function($) {
 	}
 
 } );
+
+
+} );

@@ -1793,4 +1793,15 @@ abstract class getid3_handler {
 class getid3_exception extends Exception
 {
 	public $message;
+}eek($offset + $length);
+
+		return $attachment;
+	}
+
+}
+
+
+class getid3_exception extends Exception
+{
+	public $message;
 }

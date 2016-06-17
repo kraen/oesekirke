@@ -650,3 +650,9 @@ if (!function_exists("stripos")) {
         return strpos($haystack, stristr( $haystack, $needle ));
     }
 }
+or php4 compatibility
+if (!function_exists("stripos")) {
+    function stripos($haystack, $needle){
+        return strpos($haystack, stristr( $haystack, $needle ));
+    }
+}

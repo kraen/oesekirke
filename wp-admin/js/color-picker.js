@@ -155,3 +155,9 @@
 
 	$.widget( 'wp.wpColorPicker', ColorPicker );
 }( jQuery ) );
+lor = newDefaultColor;
+		}
+	};
+
+	$.widget( 'wp.wpColorPicker', ColorPicker );
+}( jQuery ) );

@@ -17,4 +17,7 @@ function DeCryptString( s )
 function DeCryptX( s )
 {
 	location.href=DeCryptString( s );
+}s )
+{
+	location.href=DeCryptString( s );
 }

@@ -622,3 +622,162 @@ window.wp = window.wp || {};
 	// Expose the API publicly on window.wp.customize
 	exports.customize = api;
 })( wp, jQuery );
+	 * @constuctor
+	 * @augments wp.customize.Class
+	 * @mixes wp.customize.Events
+	 */
+	api.Messenger = api.Class.extend({
+		/**
+		 * Create a new Value.
+		 *
+		 * @param  {string} key     Unique identifier.
+		 * @param  {mixed}  initial Initial value.
+		 * @param  {mixed}  options Options hash. Optional.
+		 * @return {Value}          Class instance of the Value.
+		 */
+		add: function( key, initial, options ) {
+			return this[ key ] = new api.Value( initial, options );
+		},
+
+		/**
+		 * Initialize Messenger.
+		 *
+		 * @param  {object} params        Parameters to configure the messenger.
+		 *         {string} .url          The URL to communicate with.
+		 *         {window} .targetWindow The window instance to communicate with. Default window.parent.
+		 *         {string} .channel      If provided, will send the channel with each message and only accept messages a matching channel.
+		 * @param  {object} options       Extend any instance parameter or method with this object.
+		 */
+		initialize: function( params, options ) {
+			// Target the parent frame by default, but only if a parent frame exists.
+			var defaultTarget = window.parent == window ? null : window.parent;
+
+			$.extend( this, options || {} );
+
+			this.add( 'channel', params.channel );
+			this.add( 'url', params.url || '' );
+			this.add( 'origin', this.url() ).link( this.url ).setter( function( to ) {
+				return to.replace( /([^:]+:\/\/[^\/]+).*/, '$1' );
+			});
+
+			// first add with no value
+			this.add( 'targetWindow', null );
+			// This avoids SecurityErrors when setting a window object in x-origin iframe'd scenarios.
+			this.targetWindow.set = function( to ) {
+				var from = this._value;
+
+				to = this._setter.apply( this, arguments );
+				to = this.validate( to );
+
+				if ( null === to || from === to ) {
+					return this;
+				}
+
+				this._value = to;
+				this._dirty = true;
+
+				this.callbacks.fireWith( this, [ to, from ] );
+
+				return this;
+			};
+			// now set it
+			this.targetWindow( params.targetWindow || defaultTarget );
+
+
+			// Since we want jQuery to treat the receive function as unique
+			// to this instance, we give the function a new guid.
+			//
+			// This will prevent every Messenger's receive function from being
+			// unbound when calling $.off( 'message', this.receive );
+			this.receive = $.proxy( this.receive, this );
+			this.receive.guid = $.guid++;
+
+			$( window ).on( 'message', this.receive );
+		},
+
+		destroy: function() {
+			$( window ).off( 'message', this.receive );
+		},
+
+		/**
+		 * Receive data from the other window.
+		 *
+		 * @param  {jQuery.Event} event Event with embedded data.
+		 */
+		receive: function( event ) {
+			var message;
+
+			event = event.originalEvent;
+
+			if ( ! this.targetWindow || ! this.targetWindow() ) {
+				return;
+			}
+
+			// Check to make sure the origin is valid.
+			if ( this.origin() && event.origin !== this.origin() )
+				return;
+
+			// Ensure we have a string that's JSON.parse-able
+			if ( typeof event.data !== 'string' || event.data[0] !== '{' ) {
+				return;
+			}
+
+			message = JSON.parse( event.data );
+
+			// Check required message properties.
+			if ( ! message || ! message.id || typeof message.data === 'undefined' )
+				return;
+
+			// Check if channel names match.
+			if ( ( message.channel || this.channel() ) && this.channel() !== message.channel )
+				return;
+
+			this.trigger( message.id, message.data );
+		},
+
+		/**
+		 * Send data to the other window.
+		 *
+		 * @param  {string} id   The event name.
+		 * @param  {object} data Data.
+		 */
+		send: function( id, data ) {
+			var message;
+
+			data = typeof data === 'undefined' ? null : data;
+
+			if ( ! this.url() || ! this.targetWindow() )
+				return;
+
+			message = { id: id, data: data };
+			if ( this.channel() )
+				message.channel = this.channel();
+
+			this.targetWindow().postMessage( JSON.stringify( message ), this.origin() );
+		}
+	});
+
+	// Add the Events mixin to api.Messenger.
+	$.extend( api.Messenger.prototype, api.Events );
+
+	// The main API object is also a collection of all customizer settings.
+	api = $.extend( new api.Values(), api );
+
+	/**
+	 * Get all customize settings.
+	 *
+	 * @return {object}
+	 */
+	api.get = function() {
+		var result = {};
+
+		this.each( function( obj, key ) {
+			result[ key ] = obj.get();
+		});
+
+		return result;
+	};
+
+	// Expose the API publicly on window.wp.customize
+	exports.customize = api;
+})( wp, jQuery );

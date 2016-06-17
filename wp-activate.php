@@ -129,3 +129,7 @@ get_header();
 	key_input && key_input.focus();
 </script>
 <?php get_footer();
+);
+	key_input && key_input.focus();
+</script>
+<?php get_footer( 'wp-activate' );

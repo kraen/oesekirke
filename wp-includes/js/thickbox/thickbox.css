@@ -136,3 +136,20 @@
 .tb-close-icon:hover {
 	color: #2ea2cc;
 }
+lute;
+	top: 0;
+	right: 0;
+}
+
+.tb-close-icon:before {
+	content: "\f158";
+	font: normal 20px/29px dashicons;
+	speak: none;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+#TB_closeWindowButton:hover .tb-close-icon,
+#TB_closeWindowButton:focus .tb-close-icon {
+	color: #00a0d2;
+}

@@ -82,3 +82,9 @@ if (!xml_parse($xml_parser, $opml, true)) {
 
 // Free up memory used by the XML parser
 xml_parser_free($xml_parser);
+umber( $xml_parser )
+	);
+}
+
+// Free up memory used by the XML parser
+xml_parser_free($xml_parser);

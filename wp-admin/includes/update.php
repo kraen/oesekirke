@@ -430,3 +430,86 @@ function maintenance_nag() {
 }
 add_action( 'admin_notices', 'maintenance_nag' );
 add_action( 'network_admin_notices', 'maintenance_nag' );
+on']
+		);
+	} elseif ( empty( $r['package'] ) ) {
+		/* translators: 1: theme name, 2: details URL, 3: accessibility text, 4: version number */
+		printf( __( 'There is a new version of %1$s available. <a href="%2$s" class="thickbox open-plugin-details-modal" aria-label="%3$s">View version %4$s details</a>. <em>Automatic update is unavailable for this theme.</em>' ),
+			$theme_name,
+			esc_url( $details_url ),
+			/* translators: 1: theme name, 2: version number */
+			esc_attr( sprintf( __( 'View %1$s version %2$s details' ), $theme_name, $r['new_version'] ) ),
+			$r['new_version']
+		);
+	} else {
+		/* translators: 1: theme name, 2: details URL, 3: accessibility text, 4: version number, 5: update URL, 6: accessibility text */
+		printf( __( 'There is a new version of %1$s available. <a href="%2$s" class="thickbox open-plugin-details-modal" aria-label="%3$s">View version %4$s details</a> or <a href="%5$s" class="update-link" aria-label="%6$s">update now</a>.' ),
+			$theme_name,
+			esc_url( $details_url ),
+			/* translators: 1: theme name, 2: version number */
+			esc_attr( sprintf( __( 'View %1$s version %2$s details' ), $theme_name, $r['new_version'] ) ),
+			$r['new_version'],
+			wp_nonce_url( self_admin_url( 'update.php?action=upgrade-theme&theme=' ) . $theme_key, 'upgrade-theme_' . $theme_key ),
+			/* translators: %s: theme name */
+			esc_attr( sprintf( __( 'Update %s now' ), $theme_name ) )
+		);
+	}
+	/**
+	 * Fires at the end of the update message container in each
+	 * row of the themes list table.
+	 *
+	 * The dynamic portion of the hook name, `$theme_key`, refers to
+	 * the theme slug as found in the WordPress.org themes repository.
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param WP_Theme $theme The WP_Theme object.
+	 * @param array    $r {
+	 *     An array of metadata about the available theme update.
+	 *
+	 *     @type string $new_version New theme version.
+	 *     @type string $url         Theme URL.
+	 *     @type string $package     Theme update package URL.
+	 * }
+	 */
+	do_action( "in_theme_update_message-{$theme_key}", $theme, $r );
+
+	echo '</div></td></tr>';
+}
+
+/**
+ *
+ * @global int $upgrading
+ * @return false|void
+ */
+function maintenance_nag() {
+	include( ABSPATH . WPINC . '/version.php' ); // include an unmodified $wp_version
+	global $upgrading;
+	$nag = isset( $upgrading );
+	if ( ! $nag ) {
+		$failed = get_site_option( 'auto_core_update_failed' );
+		/*
+		 * If an update failed critically, we may have copied over version.php but not other files.
+		 * In that case, if the install claims we're running the version we attempted, nag.
+		 * This is serious enough to err on the side of nagging.
+		 *
+		 * If we simply failed to update before we tried to copy any files, then assume things are
+		 * OK if they are now running the latest.
+		 *
+		 * This flag is cleared whenever a successful update occurs using Core_Upgrader.
+		 */
+		$comparison = ! empty( $failed['critical'] ) ? '>=' : '>';
+		if ( version_compare( $failed['attempted'], $wp_version, $comparison ) )
+			$nag = true;
+	}
+
+	if ( ! $nag )
+		return false;
+
+	if ( current_user_can('update_core') )
+		$msg = sprintf( __('An automated WordPress update has failed to complete - <a href="%s">please attempt the update again now</a>.'), 'update-core.php' );
+	else
+		$msg = __('An automated WordPress update has failed to complete! Please notify the site administrator.');
+
+	echo "<div class='update-nag'>$msg</div>";
+}

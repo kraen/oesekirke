@@ -204,3 +204,8 @@ function wp_get_popular_importers() {
 		),
 	);
 }
+ => 'wordpress-importer',
+			'importer-id' => 'wordpress',
+		),
+	);
+}

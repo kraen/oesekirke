@@ -282,3 +282,25 @@ function wp_create_term($tag_name, $taxonomy = 'post_tag') {
 
 	return wp_insert_term($tag_name, $taxonomy);
 }
+h to retrieve terms. Default 'post_tag'.
+	 */
+	$terms_to_edit = apply_filters( 'terms_to_edit', $terms_to_edit, $taxonomy );
+
+	return $terms_to_edit;
+}
+
+/**
+ * Add a new term to the database if it does not already exist.
+ *
+ * @since 2.8.0
+ *
+ * @param int|string $tag_name
+ * @param string $taxonomy Optional. The taxonomy for which to retrieve terms. Default 'post_tag'.
+ * @return array|WP_Error
+ */
+function wp_create_term($tag_name, $taxonomy = 'post_tag') {
+	if ( $id = term_exists($tag_name, $taxonomy) )
+		return $id;
+
+	return wp_insert_term($tag_name, $taxonomy);
+}

@@ -110,3 +110,21 @@ window.wp = window.wp || {};
 	};
 
 }(jQuery));
+					else
+						deferred.rejectWith( this, [response] );
+				}).fail( function() {
+					deferred.rejectWith( this, arguments );
+				});
+			});
+
+			promise = deferred.promise();
+			promise.abort = function() {
+				deferred.jqXHR.abort();
+				return this;
+			};
+
+			return promise;
+		}
+	};
+
+}(jQuery));

@@ -401,3 +401,242 @@ function strip_shortcode_tag( $m ) {
 }
 
 add_filter('the_content', 'do_shortcode', 11); // AFTER wpautop()
+
+		}
+
+		$attributes = wp_kses_attr_parse( $element );
+		if ( false === $attributes ) {
+			// Some plugins are doing things like [name] <[email]>.
+			if ( 1 === preg_match( '%^<\s*\[\[?[^\[\]]+\]%', $element ) ) {
+				$element = preg_replace_callback( "/$pattern/", 'do_shortcode_tag', $element );
+			}
+
+			// Looks like we found some crazy unfiltered HTML.  Skipping it for sanity.
+			$element = strtr( $element, $trans );
+			continue;
+		}
+
+		// Get element name
+		$front = array_shift( $attributes );
+		$back = array_pop( $attributes );
+		$matches = array();
+		preg_match('%[a-zA-Z0-9]+%', $front, $matches);
+		$elname = $matches[0];
+
+		// Look for shortcodes in each attribute separately.
+		foreach ( $attributes as &$attr ) {
+			$open = strpos( $attr, '[' );
+			$close = strpos( $attr, ']' );
+			if ( false === $open || false === $close ) {
+				continue; // Go to next attribute.  Square braces will be escaped at end of loop.
+			}
+			$double = strpos( $attr, '"' );
+			$single = strpos( $attr, "'" );
+			if ( ( false === $single || $open < $single ) && ( false === $double || $open < $double ) ) {
+				// $attr like '[shortcode]' or 'name = [shortcode]' implies unfiltered_html.
+				// In this specific situation we assume KSES did not run because the input
+				// was written by an administrator, so we should avoid changing the output
+				// and we do not need to run KSES here.
+				$attr = preg_replace_callback( "/$pattern/", 'do_shortcode_tag', $attr );
+			} else {
+				// $attr like 'name = "[shortcode]"' or "name = '[shortcode]'"
+				// We do not know if $content was unfiltered. Assume KSES ran before shortcodes.
+				$count = 0;
+				$new_attr = preg_replace_callback( "/$pattern/", 'do_shortcode_tag', $attr, -1, $count );
+				if ( $count > 0 ) {
+					// Sanitize the shortcode output using KSES.
+					$new_attr = wp_kses_one_attr( $new_attr, $elname );
+					if ( '' !== trim( $new_attr ) ) {
+						// The shortcode is safe to use now.
+						$attr = $new_attr;
+					}
+				}
+			}
+		}
+		$element = $front . implode( '', $attributes ) . $back;
+
+		// Now encode any remaining [ or ] chars.
+		$element = strtr( $element, $trans );
+	}
+
+	$content = implode( '', $textarr );
+
+	return $content;
+}
+
+/**
+ * Remove placeholders added by do_shortcodes_in_html_tags().
+ *
+ * @since 4.2.3
+ *
+ * @param string $content Content to search for placeholders.
+ * @return string Content with placeholders removed.
+ */
+function unescape_invalid_shortcodes( $content ) {
+        // Clean up entire string, avoids re-parsing HTML.
+        $trans = array( '&#91;' => '[', '&#93;' => ']' );
+        $content = strtr( $content, $trans );
+
+        return $content;
+}
+
+/**
+ * Retrieve the shortcode attributes regex.
+ *
+ * @since 4.4.0
+ *
+ * @return string The shortcode attribute regular expression
+ */
+function get_shortcode_atts_regex() {
+	return '/([\w-]+)\s*=\s*"([^"]*)"(?:\s|$)|([\w-]+)\s*=\s*\'([^\']*)\'(?:\s|$)|([\w-]+)\s*=\s*([^\s\'"]+)(?:\s|$)|"([^"]*)"(?:\s|$)|(\S+)(?:\s|$)/';
+}
+
+/**
+ * Retrieve all attributes from the shortcodes tag.
+ *
+ * The attributes list has the attribute name as the key and the value of the
+ * attribute as the value in the key/value pair. This allows for easier
+ * retrieval of the attributes, since all attributes have to be known.
+ *
+ * @since 2.5.0
+ *
+ * @param string $text
+ * @return array|string List of attribute values.
+ *                      Returns empty array if trim( $text ) == '""'.
+ *                      Returns empty string if trim( $text ) == ''.
+ *                      All other matches are checked for not empty().
+ */
+function shortcode_parse_atts($text) {
+	$atts = array();
+	$pattern = get_shortcode_atts_regex();
+	$text = preg_replace("/[\x{00a0}\x{200b}]+/u", " ", $text);
+	if ( preg_match_all($pattern, $text, $match, PREG_SET_ORDER) ) {
+		foreach ($match as $m) {
+			if (!empty($m[1]))
+				$atts[strtolower($m[1])] = stripcslashes($m[2]);
+			elseif (!empty($m[3]))
+				$atts[strtolower($m[3])] = stripcslashes($m[4]);
+			elseif (!empty($m[5]))
+				$atts[strtolower($m[5])] = stripcslashes($m[6]);
+			elseif (isset($m[7]) && strlen($m[7]))
+				$atts[] = stripcslashes($m[7]);
+			elseif (isset($m[8]))
+				$atts[] = stripcslashes($m[8]);
+		}
+
+		// Reject any unclosed HTML elements
+		foreach( $atts as &$value ) {
+			if ( false !== strpos( $value, '<' ) ) {
+				if ( 1 !== preg_match( '/^[^<]*+(?:<[^>]*+>[^<]*+)*+$/', $value ) ) {
+					$value = '';
+				}
+			}
+		}
+	} else {
+		$atts = ltrim($text);
+	}
+	return $atts;
+}
+
+/**
+ * Combine user attributes with known attributes and fill in defaults when needed.
+ *
+ * The pairs should be considered to be all of the attributes which are
+ * supported by the caller and given as a list. The returned attributes will
+ * only contain the attributes in the $pairs list.
+ *
+ * If the $atts list has unsupported attributes, then they will be ignored and
+ * removed from the final returned list.
+ *
+ * @since 2.5.0
+ *
+ * @param array  $pairs     Entire list of supported attributes and their defaults.
+ * @param array  $atts      User defined attributes in shortcode tag.
+ * @param string $shortcode Optional. The name of the shortcode, provided for context to enable filtering
+ * @return array Combined and filtered attribute list.
+ */
+function shortcode_atts( $pairs, $atts, $shortcode = '' ) {
+	$atts = (array)$atts;
+	$out = array();
+	foreach ($pairs as $name => $default) {
+		if ( array_key_exists($name, $atts) )
+			$out[$name] = $atts[$name];
+		else
+			$out[$name] = $default;
+	}
+	/**
+	 * Filter a shortcode's default attributes.
+	 *
+	 * If the third parameter of the shortcode_atts() function is present then this filter is available.
+	 * The third parameter, $shortcode, is the name of the shortcode.
+	 *
+	 * @since 3.6.0
+	 * @since 4.4.0 Added the `$shortcode` parameter.
+	 *
+	 * @param array  $out       The output array of shortcode attributes.
+	 * @param array  $pairs     The supported attributes and their defaults.
+	 * @param array  $atts      The user defined shortcode attributes.
+	 * @param string $shortcode The shortcode name.
+	 */
+	if ( $shortcode ) {
+		$out = apply_filters( "shortcode_atts_{$shortcode}", $out, $pairs, $atts, $shortcode );
+	}
+
+	return $out;
+}
+
+/**
+ * Remove all shortcode tags from the given content.
+ *
+ * @since 2.5.0
+ *
+ * @global array $shortcode_tags
+ *
+ * @param string $content Content to remove shortcode tags.
+ * @return string Content without shortcode tags.
+ */
+function strip_shortcodes( $content ) {
+	global $shortcode_tags;
+
+	if ( false === strpos( $content, '[' ) ) {
+		return $content;
+	}
+
+	if (empty($shortcode_tags) || !is_array($shortcode_tags))
+		return $content;
+
+	// Find all registered tag names in $content.
+	preg_match_all( '@\[([^<>&/\[\]\x00-\x20=]++)@', $content, $matches );
+	$tagnames = array_intersect( array_keys( $shortcode_tags ), $matches[1] );
+
+	if ( empty( $tagnames ) ) {
+		return $content;
+	}
+
+	$content = do_shortcodes_in_html_tags( $content, true, $tagnames );
+
+	$pattern = get_shortcode_regex( $tagnames );
+	$content = preg_replace_callback( "/$pattern/", 'strip_shortcode_tag', $content );
+
+	// Always restore square braces so we don't break things like <!--[if IE ]>
+	$content = unescape_invalid_shortcodes( $content );
+
+	return $content;
+}
+
+/**
+ * Strips a shortcode tag based on RegEx matches against post content.
+ *
+ * @since 3.3.0
+ *
+ * @param array $m RegEx matches against post content.
+ * @return string|false The content stripped of the tag, otherwise false.
+ */
+function strip_shortcode_tag( $m ) {
+	// allow [[foo]] syntax for escaping a tag
+	if ( $m[1] == '[' && $m[6] == ']' ) {
+		return substr($m[0], 1, -1);
+	}
+
+	return $m[1] . $m[6];
+}

@@ -187,4 +187,52 @@
 		<?php endif;?>
 
 	</div>
+</div>gn="left">
+												<span><?php echo $akismet_user->account_name; ?></span>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row" align="left"><?php esc_html_e( 'Status' , 'akismet');?></th>
+											<td width="5%"/>
+											<td align="left">
+												<span><?php 
+													if ( 'cancelled' == $akismet_user->status ) :
+														esc_html_e( 'Cancelled', 'akismet' ); 
+													elseif ( 'suspended' == $akismet_user->status ) :
+														esc_html_e( 'Suspended', 'akismet' );
+													elseif ( 'missing' == $akismet_user->status ) :
+														esc_html_e( 'Missing', 'akismet' ); 
+													elseif ( 'no-sub' == $akismet_user->status ) :
+														esc_html_e( 'No Subscription Found', 'akismet' );
+													else :
+														esc_html_e( 'Active', 'akismet' );  
+													endif; ?></span>
+											</td>
+										</tr>
+										<?php if ( $akismet_user->next_billing_date ) : ?>
+										<tr>
+											<th scope="row" align="left"><?php esc_html_e( 'Next Billing Date' , 'akismet');?></th>
+											<td width="5%"/>
+											<td align="left">
+												<span><?php echo date( 'F j, Y', $akismet_user->next_billing_date ); ?></span>
+											</td>
+										</tr>
+										<?php endif; ?>
+									</tbody>
+								</table>
+							</div>
+							<div id="major-publishing-actions">
+								<div id="publishing-action">
+									<?php Akismet::view( 'get', array( 'text' => ( $akismet_user->account_type == 'free-api-key' && $akismet_user->status == 'active' ? __( 'Upgrade' , 'akismet') : __( 'Change' , 'akismet') ), 'redirect' => 'upgrade' ) ); ?>
+								</div>
+								<div class="clear"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		<?php endif;?>
+
+	</div>
 </div>

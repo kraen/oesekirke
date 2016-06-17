@@ -652,3 +652,110 @@ if ( post_type_supports( $post_type, 'comments' ) )
 try{document.post.title.focus();}catch(e){}
 </script>
 <?php endif; ?>
+ent-resize-handle" class="hide-if-no-js"><br /></td>
+</tr></tbody></table>
+
+</div>
+<?php }
+/**
+ * Fires after the content editor.
+ *
+ * @since 3.5.0
+ *
+ * @param WP_Post $post Post object.
+ */
+do_action( 'edit_form_after_editor', $post );
+?>
+</div><!-- /post-body-content -->
+
+<div id="postbox-container-1" class="postbox-container">
+<?php
+
+if ( 'page' == $post_type ) {
+	/**
+	 * Fires before meta boxes with 'side' context are output for the 'page' post type.
+	 *
+	 * The submitpage box is a meta box with 'side' context, so this hook fires just before it is output.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param WP_Post $post Post object.
+	 */
+	do_action( 'submitpage_box', $post );
+}
+else {
+	/**
+	 * Fires before meta boxes with 'side' context are output for all post types other than 'page'.
+	 *
+	 * The submitpost box is a meta box with 'side' context, so this hook fires just before it is output.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param WP_Post $post Post object.
+	 */
+	do_action( 'submitpost_box', $post );
+}
+
+
+do_meta_boxes($post_type, 'side', $post);
+
+?>
+</div>
+<div id="postbox-container-2" class="postbox-container">
+<?php
+
+do_meta_boxes(null, 'normal', $post);
+
+if ( 'page' == $post_type ) {
+	/**
+	 * Fires after 'normal' context meta boxes have been output for the 'page' post type.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @param WP_Post $post Post object.
+	 */
+	do_action( 'edit_page_form', $post );
+}
+else {
+	/**
+	 * Fires after 'normal' context meta boxes have been output for all post types other than 'page'.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @param WP_Post $post Post object.
+	 */
+	do_action( 'edit_form_advanced', $post );
+}
+
+
+do_meta_boxes(null, 'advanced', $post);
+
+?>
+</div>
+<?php
+/**
+ * Fires after all meta box sections have been output, before the closing #post-body div.
+ *
+ * @since 2.1.0
+ *
+ * @param WP_Post $post Post object.
+ */
+do_action( 'dbx_post_sidebar', $post );
+
+?>
+</div><!-- /post-body -->
+<br class="clear" />
+</div><!-- /poststuff -->
+</form>
+</div>
+
+<?php
+if ( post_type_supports( $post_type, 'comments' ) )
+	wp_comment_reply();
+?>
+
+<?php if ( ! wp_is_mobile() && post_type_supports( $post_type, 'title' ) && '' === $post->post_title ) : ?>
+<script type="text/javascript">
+try{document.post.title.focus();}catch(e){}
+</script>
+<?php endif; ?>

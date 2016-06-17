@@ -16,3 +16,5 @@
                value='<?php echo esc_attr($return_link_text); ?>'/>
     </td>
 </tr>
+>
+</tr>

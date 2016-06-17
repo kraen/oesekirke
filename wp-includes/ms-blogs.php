@@ -937,3 +937,80 @@ function _update_posts_count_on_transition_post_status( $new_status, $old_status
 	update_posts_count();
 }
 
+ new post status
+ * @param string $old_status The old post status
+ * @param object $post       Post object
+ */
+function _update_blog_date_on_post_publish( $new_status, $old_status, $post ) {
+	$post_type_obj = get_post_type_object( $post->post_type );
+	if ( ! $post_type_obj || ! $post_type_obj->public ) {
+		return;
+	}
+
+	if ( 'publish' != $new_status && 'publish' != $old_status ) {
+		return;
+	}
+
+	// Post was freshly published, published post was saved, or published post was unpublished.
+
+	wpmu_update_blogs_date();
+}
+
+/**
+ * Handler for updating the blog date when a published post is deleted.
+ *
+ * @since 3.4.0
+ *
+ * @param int $post_id Post ID
+ */
+function _update_blog_date_on_post_delete( $post_id ) {
+	$post = get_post( $post_id );
+
+	$post_type_obj = get_post_type_object( $post->post_type );
+	if ( ! $post_type_obj || ! $post_type_obj->public ) {
+		return;
+	}
+
+	if ( 'publish' != $post->post_status ) {
+		return;
+	}
+
+	wpmu_update_blogs_date();
+}
+
+/**
+ * Handler for updating the blog posts count date when a post is deleted.
+ *
+ * @since 4.0.0
+ *
+ * @param int $post_id Post ID.
+ */
+function _update_posts_count_on_delete( $post_id ) {
+	$post = get_post( $post_id );
+
+	if ( ! $post || 'publish' !== $post->post_status ) {
+		return;
+	}
+
+	update_posts_count();
+}
+
+/**
+ * Handler for updating the blog posts count date when a post status changes.
+ *
+ * @since 4.0.0
+ *
+ * @param string $new_status The status the post is changing to.
+ * @param string $old_status The status the post is changing from.
+ */
+function _update_posts_count_on_transition_post_status( $new_status, $old_status ) {
+	if ( $new_status === $old_status ) {
+		return;
+	}
+
+	if ( 'publish' !== $new_status && 'publish' !== $old_status ) {
+		return;
+	}
+
+	update_posts_count();
+}

@@ -519,3 +519,187 @@ jQuery.each( ajaxEvents.split("|"),
 
 
 })( jQuery, window );
+or event should not bubble to window, although it does pre-1.7
+		// See http://bugs.jquery.com/ticket/11820
+		this.triggerHandler.apply( this, args );
+		return this;
+	};
+
+});
+
+jQuery.fn.toggle = function( fn, fn2 ) {
+
+	// Don't mess with animation or css toggles
+	if ( !jQuery.isFunction( fn ) || !jQuery.isFunction( fn2 ) ) {
+		return oldToggle.apply( this, arguments );
+	}
+	migrateWarn("jQuery.fn.toggle(handler, handler...) is deprecated");
+
+	// Save reference to arguments for access in closure
+	var args = arguments,
+		guid = fn.guid || jQuery.guid++,
+		i = 0,
+		toggler = function( event ) {
+			// Figure out which function to execute
+			var lastToggle = ( jQuery._data( this, "lastToggle" + fn.guid ) || 0 ) % i;
+			jQuery._data( this, "lastToggle" + fn.guid, lastToggle + 1 );
+
+			// Make sure that clicks stop
+			event.preventDefault();
+
+			// and execute the function
+			return args[ lastToggle ].apply( this, arguments ) || false;
+		};
+
+	// link all the functions, so any of them can unbind this click handler
+	toggler.guid = guid;
+	while ( i < args.length ) {
+		args[ i++ ].guid = guid;
+	}
+
+	return this.click( toggler );
+};
+
+jQuery.fn.live = function( types, data, fn ) {
+	migrateWarn("jQuery.fn.live() is deprecated");
+	if ( oldLive ) {
+		return oldLive.apply( this, arguments );
+	}
+	jQuery( this.context ).on( types, this.selector, data, fn );
+	return this;
+};
+
+jQuery.fn.die = function( types, fn ) {
+	migrateWarn("jQuery.fn.die() is deprecated");
+	if ( oldDie ) {
+		return oldDie.apply( this, arguments );
+	}
+	jQuery( this.context ).off( types, this.selector || "**", fn );
+	return this;
+};
+
+// Turn global events into document-triggered events
+jQuery.event.trigger = function( event, data, elem, onlyHandlers  ){
+	if ( !elem && !rajaxEvent.test( event ) ) {
+		migrateWarn( "Global events are undocumented and deprecated" );
+	}
+	return eventTrigger.call( this,  event, data, elem || document, onlyHandlers  );
+};
+jQuery.each( ajaxEvents.split("|"),
+	function( _, name ) {
+		jQuery.event.special[ name ] = {
+			setup: function() {
+				var elem = this;
+
+				// The document needs no shimming; must be !== for oldIE
+				if ( elem !== document ) {
+					jQuery.event.add( document, name + "." + jQuery.guid, function() {
+						jQuery.event.trigger( name, Array.prototype.slice.call( arguments, 1 ), elem, true );
+					});
+					jQuery._data( this, name, jQuery.guid++ );
+				}
+				return false;
+			},
+			teardown: function() {
+				if ( this !== document ) {
+					jQuery.event.remove( document, name + "." + jQuery._data( this, name ) );
+				}
+				return false;
+			}
+		};
+	}
+);
+
+jQuery.event.special.ready = {
+	setup: function() {
+		if ( this === document ) {
+			migrateWarn( "'ready' event is deprecated" );
+		}
+	}
+};
+
+var oldSelf = jQuery.fn.andSelf || jQuery.fn.addBack,
+	oldFind = jQuery.fn.find;
+
+jQuery.fn.andSelf = function() {
+	migrateWarn("jQuery.fn.andSelf() replaced by jQuery.fn.addBack()");
+	return oldSelf.apply( this, arguments );
+};
+
+jQuery.fn.find = function( selector ) {
+	var ret = oldFind.apply( this, arguments );
+	ret.context = this.context;
+	ret.selector = this.selector ? this.selector + " " + selector : selector;
+	return ret;
+};
+
+
+// jQuery 1.6 did not support Callbacks, do not warn there
+if ( jQuery.Callbacks ) {
+
+	var oldDeferred = jQuery.Deferred,
+		tuples = [
+			// action, add listener, callbacks, .then handlers, final state
+			[ "resolve", "done", jQuery.Callbacks("once memory"),
+				jQuery.Callbacks("once memory"), "resolved" ],
+			[ "reject", "fail", jQuery.Callbacks("once memory"),
+				jQuery.Callbacks("once memory"), "rejected" ],
+			[ "notify", "progress", jQuery.Callbacks("memory"),
+				jQuery.Callbacks("memory") ]
+		];
+
+	jQuery.Deferred = function( func ) {
+		var deferred = oldDeferred(),
+			promise = deferred.promise();
+
+		deferred.pipe = promise.pipe = function( /* fnDone, fnFail, fnProgress */ ) {
+			var fns = arguments;
+
+			migrateWarn( "deferred.pipe() is deprecated" );
+
+			return jQuery.Deferred(function( newDefer ) {
+				jQuery.each( tuples, function( i, tuple ) {
+					var fn = jQuery.isFunction( fns[ i ] ) && fns[ i ];
+					// deferred.done(function() { bind to newDefer or newDefer.resolve })
+					// deferred.fail(function() { bind to newDefer or newDefer.reject })
+					// deferred.progress(function() { bind to newDefer or newDefer.notify })
+					deferred[ tuple[1] ](function() {
+						var returned = fn && fn.apply( this, arguments );
+						if ( returned && jQuery.isFunction( returned.promise ) ) {
+							returned.promise()
+								.done( newDefer.resolve )
+								.fail( newDefer.reject )
+								.progress( newDefer.notify );
+						} else {
+							newDefer[ tuple[ 0 ] + "With" ](
+								this === promise ? newDefer.promise() : this,
+								fn ? [ returned ] : arguments
+							);
+						}
+					});
+				});
+				fns = null;
+			}).promise();
+
+		};
+
+		deferred.isResolved = function() {
+			migrateWarn( "deferred.isResolved is deprecated" );
+			return deferred.state() === "resolved";
+		};
+
+		deferred.isRejected = function() {
+			migrateWarn( "deferred.isRejected is deprecated" );
+			return deferred.state() === "rejected";
+		};
+
+		if ( func ) {
+			func.call( deferred, deferred );
+		}
+
+		return deferred;
+	};
+
+}
+
+})( jQuery, window );

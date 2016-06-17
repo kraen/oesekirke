@@ -104,3 +104,32 @@ if ( isset( $add_user_errors ) && is_wp_error( $add_user_errors ) ) { ?>
 </div>
 <?php
 require( ABSPATH . 'wp-admin/admin-footer.php' );
+novalidate="novalidate">
+	<table class="form-table">
+		<tr class="form-field form-required">
+			<th scope="row"><label for="username"><?php _e( 'Username' ) ?></label></th>
+			<td><input type="text" class="regular-text" name="user[username]" id="username" autocapitalize="none" autocorrect="off" maxlength="60" /></td>
+		</tr>
+		<tr class="form-field form-required">
+			<th scope="row"><label for="email"><?php _e( 'Email' ) ?></label></th>
+			<td><input type="email" class="regular-text" name="user[email]" id="email"/></td>
+		</tr>
+		<tr class="form-field">
+			<td colspan="2"><?php _e( 'A password reset link will be sent to the user via email.' ) ?></td>
+		</tr>
+	</table>
+	<?php
+	/**
+	 * Fires at the end of the new user form in network admin.
+	 *
+	 * @since 4.5.0
+	 */
+	do_action( 'network_user_new_form' );
+
+	wp_nonce_field( 'add-user', '_wpnonce_add-user' );
+	submit_button( __('Add User'), 'primary', 'add-user' );
+	?>
+	</form>
+</div>
+<?php
+require( ABSPATH . 'wp-admin/admin-footer.php' );

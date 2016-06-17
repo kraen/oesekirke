@@ -3113,3 +3113,450 @@ function wp_heartbeat_settings( $settings ) {
 
 	return $settings;
 }
+includes/general-template.php */
+				$page_links[] = "<a class='page-numbers' href='" . esc_url( apply_filters( 'paginate_links', $link ) ) . "'>" . $args['before_page_number'] . number_format_i18n( $n ) . $args['after_page_number'] . "</a>";
+				$dots = true;
+			elseif ( $dots && ! $args['show_all'] ) :
+				$page_links[] = '<span class="page-numbers dots">' . __( '&hellip;' ) . '</span>';
+				$dots = false;
+			endif;
+		endif;
+	endfor;
+	if ( $args['prev_next'] && $current && ( $current < $total || -1 == $total ) ) :
+		$link = str_replace( '%_%', $args['format'], $args['base'] );
+		$link = str_replace( '%#%', $current + 1, $link );
+		if ( $add_args )
+			$link = add_query_arg( $add_args, $link );
+		$link .= $args['add_fragment'];
+
+		/** This filter is documented in wp-includes/general-template.php */
+		$page_links[] = '<a class="next page-numbers" href="' . esc_url( apply_filters( 'paginate_links', $link ) ) . '">' . $args['next_text'] . '</a>';
+	endif;
+	switch ( $args['type'] ) {
+		case 'array' :
+			return $page_links;
+
+		case 'list' :
+			$r .= "<ul class='page-numbers'>\n\t<li>";
+			$r .= join("</li>\n\t<li>", $page_links);
+			$r .= "</li>\n</ul>\n";
+			break;
+
+		default :
+			$r = join("\n", $page_links);
+			break;
+	}
+	return $r;
+}
+
+/**
+ * Registers an admin colour scheme css file.
+ *
+ * Allows a plugin to register a new admin colour scheme. For example:
+ *
+ *     wp_admin_css_color( 'classic', __( 'Classic' ), admin_url( "css/colors-classic.css" ), array(
+ *         '#07273E', '#14568A', '#D54E21', '#2683AE'
+ *     ) );
+ *
+ * @since 2.5.0
+ *
+ * @global array $_wp_admin_css_colors
+ *
+ * @param string $key    The unique key for this theme.
+ * @param string $name   The name of the theme.
+ * @param string $url    The URL of the CSS file containing the color scheme.
+ * @param array  $colors Optional. An array of CSS color definition strings which are used
+ *                       to give the user a feel for the theme.
+ * @param array  $icons {
+ *     Optional. CSS color definitions used to color any SVG icons.
+ *
+ *     @type string $base    SVG icon base color.
+ *     @type string $focus   SVG icon color on focus.
+ *     @type string $current SVG icon color of current admin menu link.
+ * }
+ */
+function wp_admin_css_color( $key, $name, $url, $colors = array(), $icons = array() ) {
+	global $_wp_admin_css_colors;
+
+	if ( !isset($_wp_admin_css_colors) )
+		$_wp_admin_css_colors = array();
+
+	$_wp_admin_css_colors[$key] = (object) array(
+		'name' => $name,
+		'url' => $url,
+		'colors' => $colors,
+		'icon_colors' => $icons,
+	);
+}
+
+/**
+ * Registers the default Admin color schemes
+ *
+ * @since 3.0.0
+ *
+ * @global string $wp_version
+ */
+function register_admin_color_schemes() {
+	$suffix = is_rtl() ? '-rtl' : '';
+	$suffix .= SCRIPT_DEBUG ? '' : '.min';
+
+	wp_admin_css_color( 'fresh', _x( 'Default', 'admin color scheme' ),
+		false,
+		array( '#222', '#333', '#0073aa', '#00a0d2' ),
+		array( 'base' => '#82878c', 'focus' => '#00a0d2', 'current' => '#fff' )
+	);
+
+	// Other color schemes are not available when running out of src
+	if ( false !== strpos( $GLOBALS['wp_version'], '-src' ) )
+		return;
+
+	wp_admin_css_color( 'light', _x( 'Light', 'admin color scheme' ),
+		admin_url( "css/colors/light/colors$suffix.css" ),
+		array( '#e5e5e5', '#999', '#d64e07', '#04a4cc' ),
+		array( 'base' => '#999', 'focus' => '#ccc', 'current' => '#ccc' )
+	);
+
+	wp_admin_css_color( 'blue', _x( 'Blue', 'admin color scheme' ),
+		admin_url( "css/colors/blue/colors$suffix.css" ),
+		array( '#096484', '#4796b3', '#52accc', '#74B6CE' ),
+		array( 'base' => '#e5f8ff', 'focus' => '#fff', 'current' => '#fff' )
+	);
+
+	wp_admin_css_color( 'midnight', _x( 'Midnight', 'admin color scheme' ),
+		admin_url( "css/colors/midnight/colors$suffix.css" ),
+		array( '#25282b', '#363b3f', '#69a8bb', '#e14d43' ),
+		array( 'base' => '#f1f2f3', 'focus' => '#fff', 'current' => '#fff' )
+	);
+
+	wp_admin_css_color( 'sunrise', _x( 'Sunrise', 'admin color scheme' ),
+		admin_url( "css/colors/sunrise/colors$suffix.css" ),
+		array( '#b43c38', '#cf4944', '#dd823b', '#ccaf0b' ),
+		array( 'base' => '#f3f1f1', 'focus' => '#fff', 'current' => '#fff' )
+	);
+
+	wp_admin_css_color( 'ectoplasm', _x( 'Ectoplasm', 'admin color scheme' ),
+		admin_url( "css/colors/ectoplasm/colors$suffix.css" ),
+		array( '#413256', '#523f6d', '#a3b745', '#d46f15' ),
+		array( 'base' => '#ece6f6', 'focus' => '#fff', 'current' => '#fff' )
+	);
+
+	wp_admin_css_color( 'ocean', _x( 'Ocean', 'admin color scheme' ),
+		admin_url( "css/colors/ocean/colors$suffix.css" ),
+		array( '#627c83', '#738e96', '#9ebaa0', '#aa9d88' ),
+		array( 'base' => '#f2fcff', 'focus' => '#fff', 'current' => '#fff' )
+	);
+
+	wp_admin_css_color( 'coffee', _x( 'Coffee', 'admin color scheme' ),
+		admin_url( "css/colors/coffee/colors$suffix.css" ),
+		array( '#46403c', '#59524c', '#c7a589', '#9ea476' ),
+		array( 'base' => '#f3f2f1', 'focus' => '#fff', 'current' => '#fff' )
+	);
+
+}
+
+/**
+ * Display the URL of a WordPress admin CSS file.
+ *
+ * @see WP_Styles::_css_href and its style_loader_src filter.
+ *
+ * @since 2.3.0
+ *
+ * @param string $file file relative to wp-admin/ without its ".css" extension.
+ * @return string
+ */
+function wp_admin_css_uri( $file = 'wp-admin' ) {
+	if ( defined('WP_INSTALLING') ) {
+		$_file = "./$file.css";
+	} else {
+		$_file = admin_url("$file.css");
+	}
+	$_file = add_query_arg( 'version', get_bloginfo( 'version' ),  $_file );
+
+	/**
+	 * Filter the URI of a WordPress admin CSS file.
+	 *
+	 * @since 2.3.0
+	 *
+	 * @param string $_file Relative path to the file with query arguments attached.
+	 * @param string $file  Relative path to the file, minus its ".css" extension.
+	 */
+	return apply_filters( 'wp_admin_css_uri', $_file, $file );
+}
+
+/**
+ * Enqueues or directly prints a stylesheet link to the specified CSS file.
+ *
+ * "Intelligently" decides to enqueue or to print the CSS file. If the
+ * 'wp_print_styles' action has *not* yet been called, the CSS file will be
+ * enqueued. If the wp_print_styles action *has* been called, the CSS link will
+ * be printed. Printing may be forced by passing true as the $force_echo
+ * (second) parameter.
+ *
+ * For backward compatibility with WordPress 2.3 calling method: If the $file
+ * (first) parameter does not correspond to a registered CSS file, we assume
+ * $file is a file relative to wp-admin/ without its ".css" extension. A
+ * stylesheet link to that generated URL is printed.
+ *
+ * @since 2.3.0
+ *
+ * @param string $file       Optional. Style handle name or file name (without ".css" extension) relative
+ * 	                         to wp-admin/. Defaults to 'wp-admin'.
+ * @param bool   $force_echo Optional. Force the stylesheet link to be printed rather than enqueued.
+ */
+function wp_admin_css( $file = 'wp-admin', $force_echo = false ) {
+	// For backward compatibility
+	$handle = 0 === strpos( $file, 'css/' ) ? substr( $file, 4 ) : $file;
+
+	if ( wp_styles()->query( $handle ) ) {
+		if ( $force_echo || did_action( 'wp_print_styles' ) ) // we already printed the style queue. Print this one immediately
+			wp_print_styles( $handle );
+		else // Add to style queue
+			wp_enqueue_style( $handle );
+		return;
+	}
+
+	/**
+	 * Filter the stylesheet link to the specified CSS file.
+	 *
+	 * If the site is set to display right-to-left, the RTL stylesheet link
+	 * will be used instead.
+	 *
+	 * @since 2.3.0
+	 *
+	 * @param string $file Style handle name or filename (without ".css" extension)
+	 *                     relative to wp-admin/. Defaults to 'wp-admin'.
+	 */
+	echo apply_filters( 'wp_admin_css', "<link rel='stylesheet' href='" . esc_url( wp_admin_css_uri( $file ) ) . "' type='text/css' />\n", $file );
+
+	if ( function_exists( 'is_rtl' ) && is_rtl() ) {
+		/** This filter is documented in wp-includes/general-template.php */
+		echo apply_filters( 'wp_admin_css', "<link rel='stylesheet' href='" . esc_url( wp_admin_css_uri( "$file-rtl" ) ) . "' type='text/css' />\n", "$file-rtl" );
+	}
+}
+
+/**
+ * Enqueues the default ThickBox js and css.
+ *
+ * If any of the settings need to be changed, this can be done with another js
+ * file similar to media-upload.js. That file should
+ * require array('thickbox') to ensure it is loaded after.
+ *
+ * @since 2.5.0
+ */
+function add_thickbox() {
+	wp_enqueue_script( 'thickbox' );
+	wp_enqueue_style( 'thickbox' );
+
+	if ( is_network_admin() )
+		add_action( 'admin_head', '_thickbox_path_admin_subfolder' );
+}
+
+/**
+ * Display the XHTML generator that is generated on the wp_head hook.
+ *
+ * @since 2.5.0
+ */
+function wp_generator() {
+	/**
+	 * Filter the output of the XHTML generator tag.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param string $generator_type The XHTML generator.
+	 */
+	the_generator( apply_filters( 'wp_generator_type', 'xhtml' ) );
+}
+
+/**
+ * Display the generator XML or Comment for RSS, ATOM, etc.
+ *
+ * Returns the correct generator type for the requested output format. Allows
+ * for a plugin to filter generators overall the the_generator filter.
+ *
+ * @since 2.5.0
+ *
+ * @param string $type The type of generator to output - (html|xhtml|atom|rss2|rdf|comment|export).
+ */
+function the_generator( $type ) {
+	/**
+	 * Filter the output of the XHTML generator tag for display.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param string $generator_type The generator output.
+	 * @param string $type           The type of generator to output. Accepts 'html',
+	 *                               'xhtml', 'atom', 'rss2', 'rdf', 'comment', 'export'.
+	 */
+	echo apply_filters( 'the_generator', get_the_generator($type), $type ) . "\n";
+}
+
+/**
+ * Creates the generator XML or Comment for RSS, ATOM, etc.
+ *
+ * Returns the correct generator type for the requested output format. Allows
+ * for a plugin to filter generators on an individual basis using the
+ * 'get_the_generator_{$type}' filter.
+ *
+ * @since 2.5.0
+ *
+ * @param string $type The type of generator to return - (html|xhtml|atom|rss2|rdf|comment|export).
+ * @return string|void The HTML content for the generator.
+ */
+function get_the_generator( $type = '' ) {
+	if ( empty( $type ) ) {
+
+		$current_filter = current_filter();
+		if ( empty( $current_filter ) )
+			return;
+
+		switch ( $current_filter ) {
+			case 'rss2_head' :
+			case 'commentsrss2_head' :
+				$type = 'rss2';
+				break;
+			case 'rss_head' :
+			case 'opml_head' :
+				$type = 'comment';
+				break;
+			case 'rdf_header' :
+				$type = 'rdf';
+				break;
+			case 'atom_head' :
+			case 'comments_atom_head' :
+			case 'app_head' :
+				$type = 'atom';
+				break;
+		}
+	}
+
+	switch ( $type ) {
+		case 'html':
+			$gen = '<meta name="generator" content="WordPress ' . get_bloginfo( 'version' ) . '">';
+			break;
+		case 'xhtml':
+			$gen = '<meta name="generator" content="WordPress ' . get_bloginfo( 'version' ) . '" />';
+			break;
+		case 'atom':
+			$gen = '<generator uri="https://wordpress.org/" version="' . get_bloginfo_rss( 'version' ) . '">WordPress</generator>';
+			break;
+		case 'rss2':
+			$gen = '<generator>https://wordpress.org/?v=' . get_bloginfo_rss( 'version' ) . '</generator>';
+			break;
+		case 'rdf':
+			$gen = '<admin:generatorAgent rdf:resource="https://wordpress.org/?v=' . get_bloginfo_rss( 'version' ) . '" />';
+			break;
+		case 'comment':
+			$gen = '<!-- generator="WordPress/' . get_bloginfo( 'version' ) . '" -->';
+			break;
+		case 'export':
+			$gen = '<!-- generator="WordPress/' . get_bloginfo_rss('version') . '" created="'. date('Y-m-d H:i') . '" -->';
+			break;
+	}
+
+	/**
+	 * Filter the HTML for the retrieved generator type.
+	 *
+	 * The dynamic portion of the hook name, `$type`, refers to the generator type.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param string $gen  The HTML markup output to {@see wp_head()}.
+	 * @param string $type The type of generator. Accepts 'html', 'xhtml', 'atom',
+	 *                     'rss2', 'rdf', 'comment', 'export'.
+	 */
+	return apply_filters( "get_the_generator_{$type}", $gen, $type );
+}
+
+/**
+ * Outputs the html checked attribute.
+ *
+ * Compares the first two arguments and if identical marks as checked
+ *
+ * @since 1.0.0
+ *
+ * @param mixed $checked One of the values to compare
+ * @param mixed $current (true) The other value to compare if not just true
+ * @param bool  $echo    Whether to echo or just return the string
+ * @return string html attribute or empty string
+ */
+function checked( $checked, $current = true, $echo = true ) {
+	return __checked_selected_helper( $checked, $current, $echo, 'checked' );
+}
+
+/**
+ * Outputs the html selected attribute.
+ *
+ * Compares the first two arguments and if identical marks as selected
+ *
+ * @since 1.0.0
+ *
+ * @param mixed $selected One of the values to compare
+ * @param mixed $current  (true) The other value to compare if not just true
+ * @param bool  $echo     Whether to echo or just return the string
+ * @return string html attribute or empty string
+ */
+function selected( $selected, $current = true, $echo = true ) {
+	return __checked_selected_helper( $selected, $current, $echo, 'selected' );
+}
+
+/**
+ * Outputs the html disabled attribute.
+ *
+ * Compares the first two arguments and if identical marks as disabled
+ *
+ * @since 3.0.0
+ *
+ * @param mixed $disabled One of the values to compare
+ * @param mixed $current  (true) The other value to compare if not just true
+ * @param bool  $echo     Whether to echo or just return the string
+ * @return string html attribute or empty string
+ */
+function disabled( $disabled, $current = true, $echo = true ) {
+	return __checked_selected_helper( $disabled, $current, $echo, 'disabled' );
+}
+
+/**
+ * Private helper function for checked, selected, and disabled.
+ *
+ * Compares the first two arguments and if identical marks as $type
+ *
+ * @since 2.8.0
+ * @access private
+ *
+ * @param mixed  $helper  One of the values to compare
+ * @param mixed  $current (true) The other value to compare if not just true
+ * @param bool   $echo    Whether to echo or just return the string
+ * @param string $type    The type of checked|selected|disabled we are doing
+ * @return string html attribute or empty string
+ */
+function __checked_selected_helper( $helper, $current, $echo, $type ) {
+	if ( (string) $helper === (string) $current )
+		$result = " $type='$type'";
+	else
+		$result = '';
+
+	if ( $echo )
+		echo $result;
+
+	return $result;
+}
+
+/**
+ * Default settings for heartbeat
+ *
+ * Outputs the nonce used in the heartbeat XHR
+ *
+ * @since 3.6.0
+ *
+ * @param array $settings
+ * @return array $settings
+ */
+function wp_heartbeat_settings( $settings ) {
+	if ( ! is_admin() )
+		$settings['ajaxurl'] = admin_url( 'admin-ajax.php', 'relative' );
+
+	if ( is_user_logged_in() )
+		$settings['nonce'] = wp_create_nonce( 'heartbeat-nonce' );
+
+	return $settings;
+}

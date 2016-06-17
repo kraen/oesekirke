@@ -454,3 +454,51 @@ class WP_Filesystem_ftpsockets extends WP_Filesystem_Base {
 		$this->ftp->quit();
 	}
 }
+s->exists( $path ) ) {
+
+			reset_mbstring_encoding();
+
+			return false;
+		}
+
+		$ret = array();
+		foreach ( $list as $struc ) {
+
+			if ( '.' == $struc['name'] || '..' == $struc['name'] )
+				continue;
+
+			if ( ! $include_hidden && '.' == $struc['name'][0] )
+				continue;
+
+			if ( $limit_file && $struc['name'] != $limit_file )
+				continue;
+
+			if ( 'd' == $struc['type'] ) {
+				if ( $recursive )
+					$struc['files'] = $this->dirlist($path . '/' . $struc['name'], $include_hidden, $recursive);
+				else
+					$struc['files'] = array();
+			}
+
+			// Replace symlinks formatted as "source -> target" with just the source name
+			if ( $struc['islink'] )
+				$struc['name'] = preg_replace( '/(\s*->\s*.*)$/', '', $struc['name'] );
+
+			// Add the Octal representation of the file permissions
+			$struc['permsn'] = $this->getnumchmodfromh( $struc['perms'] );
+
+			$ret[ $struc['name'] ] = $struc;
+		}
+
+		reset_mbstring_encoding();
+
+		return $ret;
+	}
+
+	/**
+	 * @access public
+	 */
+	public function __destruct() {
+		$this->ftp->quit();
+	}
+}

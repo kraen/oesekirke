@@ -97,3 +97,14 @@ if ( isset($_REQUEST['deleted']) ) {
 
 <?php
 include( ABSPATH . 'wp-admin/admin-footer.php' );
+t_table->search_box( __( 'Search Links' ), 'link' ); ?>
+
+<?php $wp_list_table->display(); ?>
+
+<div id="ajax-response"></div>
+</form>
+
+</div>
+
+<?php
+include( ABSPATH . 'wp-admin/admin-footer.php' );

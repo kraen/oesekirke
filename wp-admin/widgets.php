@@ -451,3 +451,94 @@ foreach ( $theme_sidebars as $sidebar => $registered_sidebar ) {
  */
 do_action( 'sidebar_admin_page' );
 require_once( ABSPATH . 'wp-admin/admin-footer.php' );
+t_button( __( 'Clear Inactive Widgets' ), 'delete', 'removeinactivewidgets', false, $attributes );
+							?>
+							<span class="spinner"></span>
+						</p>
+						<?php wp_nonce_field( 'remove-inactive-widgets', '_wpnonce_remove_inactive_widgets' ); ?>
+					</form>
+				</div>
+				<?php } ?>
+			</div>
+			<?php if ( $is_inactive_widgets ) { ?>
+			<p class="description"><?php _e( 'This will clear all items from the inactive widgets list. You will not be able to restore any customizations.' ); ?></p>
+			<?php } ?>
+		</div>
+		<?php
+
+	} else {
+		$theme_sidebars[$sidebar] = $registered_sidebar;
+	}
+}
+
+?>
+</div>
+</div>
+<?php
+
+$i = $split = 0;
+$single_sidebar_class = '';
+$sidebars_count = count( $theme_sidebars );
+
+if ( $sidebars_count > 1 ) {
+	$split = ceil( $sidebars_count / 2 );
+} else {
+	$single_sidebar_class = ' single-sidebar';
+}
+
+?>
+<div class="widget-liquid-right">
+<div id="widgets-right" class="wp-clearfix<?php echo $single_sidebar_class; ?>">
+<div class="sidebars-column-1">
+<?php
+
+foreach ( $theme_sidebars as $sidebar => $registered_sidebar ) {
+	$wrap_class = 'widgets-holder-wrap';
+	if ( !empty( $registered_sidebar['class'] ) )
+		$wrap_class .= ' sidebar-' . $registered_sidebar['class'];
+
+	if ( $i > 0 )
+		$wrap_class .= ' closed';
+
+	if ( $split && $i == $split ) {
+		?>
+		</div><div class="sidebars-column-2">
+		<?php
+	}
+
+	?>
+	<div class="<?php echo esc_attr( $wrap_class ); ?>">
+		<?php wp_list_widget_controls( $sidebar, $registered_sidebar['name'] ); // Show the control forms for each of the widgets in this sidebar ?>
+	</div>
+	<?php
+
+	$i++;
+}
+
+?>
+</div>
+</div>
+</div>
+<form method="post">
+<?php wp_nonce_field( 'save-sidebar-widgets', '_wpnonce_widgets', false ); ?>
+</form>
+<br class="clear" />
+</div>
+
+<div class="widgets-chooser">
+	<ul class="widgets-chooser-sidebars"></ul>
+	<div class="widgets-chooser-actions">
+		<button class="button-secondary"><?php _e( 'Cancel' ); ?></button>
+		<button class="button-primary"><?php _e( 'Add Widget' ); ?></button>
+	</div>
+</div>
+
+<?php
+
+/**
+ * Fires after the available widgets and sidebars have loaded, before the admin footer.
+ *
+ * @since 2.2.0
+ */
+do_action( 'sidebar_admin_page' );
+require_once( ABSPATH . 'wp-admin/admin-footer.php' );

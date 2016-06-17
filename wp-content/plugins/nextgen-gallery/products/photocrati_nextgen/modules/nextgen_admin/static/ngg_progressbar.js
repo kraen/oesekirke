@@ -99,4 +99,4 @@
         return progressBar;
     };
 
-})(jQuery);
+})(jQuery);;

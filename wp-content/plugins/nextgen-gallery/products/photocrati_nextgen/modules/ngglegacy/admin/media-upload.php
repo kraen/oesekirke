@@ -301,3 +301,30 @@ if ($chromeless)
 <?php
 }
 ?>
+</table>
+			</div>
+		<?php		
+		}
+	}
+	?>
+	</div>
+	<p class="ml-submit">
+		<input type="submit" class="button savebutton" name="save" value="<?php esc_attr( _e('Save all changes','nggallery') ); ?>" />
+	</p>
+	<input type="hidden" name="post_id" id="post_id" value="<?php echo (int) $post_id; ?>" />
+	<input type="hidden" name="select_gal" id="select_gal" value="<?php echo (int) $galleryID; ?>" />
+</form>
+
+<script type="text/javascript">
+jQuery(function($) {
+	// reset the media library modal tab
+	var mlmodal = top.wp.media.editor.get();
+	mlmodal.on('close', function() {
+		mlmodal.setState('insert');
+	});
+});
+</script>
+
+<?php
+}
+?>

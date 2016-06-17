@@ -21,3 +21,5 @@ jQuery(function($) {
 
     callback();
 });
+;
+});

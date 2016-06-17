@@ -941,3 +941,66 @@ class C_Component_Registry
     	}
     }
 }
+          if (isset($this->_utilities[$interface][$context])) {
+                $class = $this->_utilities[$interface][$context];
+            }
+
+            // No utility defined for the specified interface
+            else {
+                if ($context == 'all') $context = 'default';
+                $class = $this->_retrieve_utility_class($interface, FALSE);
+                if (!$class)
+                    throw new Exception("No utility registered for `{$interface}` with the `{$context}` context.");
+
+            }
+        }
+        else throw new Exception("No utilities registered for `{$interface}`");
+
+        return $class;
+    }
+    /**
+     * Autoloads any classes, interfaces, or adapters needed by this module
+     */
+    function _module_autoload($name)
+    {
+	    // Pope classes are always prefixed
+	    if (strpos($name, 'C_') !== 0 && strpos($name, 'A_') !== 0 && strpos($name, 'Mixin_') !== 0) {
+		    return;
+	    }
+
+        if ($this->_module_type_cache == null || count($this->_modules) > $this->_module_type_cache_count)
+        {
+            $this->_module_type_cache_count = count($this->_modules);
+            $modules = $this->_modules;
+
+            $keys = array();
+            foreach ($modules as $mod => $properties) $keys[$mod] = $properties->module_version;
+            if (!($this->_module_type_cache = C_Pope_Cache::get($keys, array()))) {
+                foreach ($modules as $module_id => $module)
+                {
+                    $dir = $this->get_module_dir($module_id);
+                    $type_list = $module->get_type_list();
+
+                    foreach ($type_list as $type => $filename)
+                    {
+                        $this->_module_type_cache[strtolower($type)] = $dir . DIRECTORY_SEPARATOR . $filename;
+                    }
+                }
+                C_Pope_Cache::set($keys, $this->_module_type_cache);
+            }
+            elseif (is_object($this->_module_type_cache)) $this->_module_type_cache = get_object_vars($this->_module_type_cache);
+        }
+
+        $name = strtolower($name);
+
+        if (isset($this->_module_type_cache[$name]))
+        {
+            $module_filename = $this->_module_type_cache[$name];
+
+            if (file_exists($module_filename))
+            {
+                require_once($module_filename);
+            }
+        }
+    }
+}

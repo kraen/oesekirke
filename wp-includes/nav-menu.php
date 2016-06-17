@@ -898,3 +898,126 @@ function _wp_auto_add_pages_to_menu( $new_status, $old_status, $post ) {
 		wp_update_nav_menu_item( $menu_id, 0, $args );
 	}
 }
+ a particular object.
+ *
+ * @since 3.0.0
+ *
+ * @param int    $object_id   The ID of the original object.
+ * @param string $object_type The type of object, such as "taxonomy" or "post_type."
+ * @param string $taxonomy    If $object_type is "taxonomy", $taxonomy is the name of the tax that $object_id belongs to
+ * @return array The array of menu item IDs; empty array if none;
+ */
+function wp_get_associated_nav_menu_items( $object_id = 0, $object_type = 'post_type', $taxonomy = '' ) {
+	$object_id = (int) $object_id;
+	$menu_item_ids = array();
+
+	$query = new WP_Query;
+	$menu_items = $query->query(
+		array(
+			'meta_key' => '_menu_item_object_id',
+			'meta_value' => $object_id,
+			'post_status' => 'any',
+			'post_type' => 'nav_menu_item',
+			'posts_per_page' => -1,
+		)
+	);
+	foreach ( (array) $menu_items as $menu_item ) {
+		if ( isset( $menu_item->ID ) && is_nav_menu_item( $menu_item->ID ) ) {
+			$menu_item_type = get_post_meta( $menu_item->ID, '_menu_item_type', true );
+			if (
+				'post_type' == $object_type &&
+				'post_type' == $menu_item_type
+			) {
+				$menu_item_ids[] = (int) $menu_item->ID;
+			} elseif (
+				'taxonomy' == $object_type &&
+				'taxonomy' == $menu_item_type &&
+				get_post_meta( $menu_item->ID, '_menu_item_object', true ) == $taxonomy
+			) {
+				$menu_item_ids[] = (int) $menu_item->ID;
+			}
+		}
+	}
+
+	return array_unique( $menu_item_ids );
+}
+
+/**
+ * Callback for handling a menu item when its original object is deleted.
+ *
+ * @since 3.0.0
+ * @access private
+ *
+ * @param int $object_id The ID of the original object being trashed.
+ *
+ */
+function _wp_delete_post_menu_item( $object_id = 0 ) {
+	$object_id = (int) $object_id;
+
+	$menu_item_ids = wp_get_associated_nav_menu_items( $object_id, 'post_type' );
+
+	foreach ( (array) $menu_item_ids as $menu_item_id ) {
+		wp_delete_post( $menu_item_id, true );
+	}
+}
+
+/**
+ * Serves as a callback for handling a menu item when its original object is deleted.
+ *
+ * @since 3.0.0
+ * @access private
+ *
+ * @param int    $object_id Optional. The ID of the original object being trashed. Default 0.
+ * @param int    $tt_id     Term taxonomy ID. Unused.
+ * @param string $taxonomy  Taxonomy slug.
+ */
+function _wp_delete_tax_menu_item( $object_id = 0, $tt_id, $taxonomy ) {
+	$object_id = (int) $object_id;
+
+	$menu_item_ids = wp_get_associated_nav_menu_items( $object_id, 'taxonomy', $taxonomy );
+
+	foreach ( (array) $menu_item_ids as $menu_item_id ) {
+		wp_delete_post( $menu_item_id, true );
+	}
+}
+
+/**
+ * Automatically add newly published page objects to menus with that as an option.
+ *
+ * @since 3.0.0
+ * @access private
+ *
+ * @param string $new_status The new status of the post object.
+ * @param string $old_status The old status of the post object.
+ * @param object $post       The post object being transitioned from one status to another.
+ */
+function _wp_auto_add_pages_to_menu( $new_status, $old_status, $post ) {
+	if ( 'publish' != $new_status || 'publish' == $old_status || 'page' != $post->post_type )
+		return;
+	if ( ! empty( $post->post_parent ) )
+		return;
+	$auto_add = get_option( 'nav_menu_options' );
+	if ( empty( $auto_add ) || ! is_array( $auto_add ) || ! isset( $auto_add['auto_add'] ) )
+		return;
+	$auto_add = $auto_add['auto_add'];
+	if ( empty( $auto_add ) || ! is_array( $auto_add ) )
+		return;
+
+	$args = array(
+		'menu-item-object-id' => $post->ID,
+		'menu-item-object' => $post->post_type,
+		'menu-item-type' => 'post_type',
+		'menu-item-status' => 'publish',
+	);
+
+	foreach ( $auto_add as $menu_id ) {
+		$items = wp_get_nav_menu_items( $menu_id, array( 'post_status' => 'publish,draft' ) );
+		if ( ! is_array( $items ) )
+			continue;
+		foreach ( $items as $item ) {
+			if ( $post->ID == $item->object_id )
+				continue 2;
+		}
+		wp_update_nav_menu_item( $menu_id, 0, $args );
+	}
+}

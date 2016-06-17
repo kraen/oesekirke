@@ -553,3 +553,111 @@ foreach ( $columns as $column_name => $column_display_name ) {
 		return $actions;
 	}
 }
+itle ) ),
+						__( 'Delete Permanently' )
+					);
+				}
+			}
+			$actions['view'] = sprintf(
+				'<a href="%s" aria-label="%s" rel="permalink">%s</a>',
+				get_permalink( $post->ID ),
+				/* translators: %s: attachment title */
+				esc_attr( sprintf( __( 'View &#8220;%s&#8221;' ), $att_title ) ),
+				__( 'View' )
+			);
+
+			if ( current_user_can( 'edit_post', $post->ID ) ) {
+				$actions['attach'] = sprintf(
+					'<a href="#the-list" onclick="findPosts.open( \'media[]\', \'%s\' ); return false;" class="hide-if-no-js" aria-label="%s">%s</a>',
+					$post->ID,
+					/* translators: %s: attachment title */
+					esc_attr( sprintf( __( 'Attach &#8220;%s&#8221; to existing content' ), $att_title ) ),
+					__( 'Attach' )
+				);
+			}
+		}
+		else {
+			if ( current_user_can( 'edit_post', $post->ID ) && !$this->is_trash ) {
+				$actions['edit'] = sprintf(
+					'<a href="%s" aria-label="%s">%s</a>',
+					get_edit_post_link( $post->ID ),
+					/* translators: %s: attachment title */
+					esc_attr( sprintf( __( 'Edit &#8220;%s&#8221;' ), $att_title ) ),
+					__( 'Edit' )
+				);
+			}
+			if ( current_user_can( 'delete_post', $post->ID ) ) {
+				if ( $this->is_trash ) {
+					$actions['untrash'] = sprintf(
+						'<a href="%s" class="submitdelete" aria-label="%s">%s</a>',
+						wp_nonce_url( "post.php?action=untrash&amp;post=$post->ID", 'untrash-post_' . $post->ID ),
+						/* translators: %s: attachment title */
+						esc_attr( sprintf( __( 'Restore &#8220;%s&#8221; from the Trash' ), $att_title ) ),
+						__( 'Restore' )
+					);
+				} elseif ( EMPTY_TRASH_DAYS && MEDIA_TRASH ) {
+					$actions['trash'] = sprintf(
+						'<a href="%s" class="submitdelete" aria-label="%s">%s</a>',
+						wp_nonce_url( "post.php?action=trash&amp;post=$post->ID", 'trash-post_' . $post->ID ),
+						/* translators: %s: attachment title */
+						esc_attr( sprintf( __( 'Move &#8220;%s&#8221; to the Trash' ), $att_title ) ),
+						_x( 'Trash', 'verb' )
+					);
+				}
+				if ( $this->is_trash || ! EMPTY_TRASH_DAYS || ! MEDIA_TRASH ) {
+					$delete_ays = ( !$this->is_trash && !MEDIA_TRASH ) ? " onclick='return showNotice.warn();'" : '';
+					$actions['delete'] = sprintf(
+						'<a href="%s" class="submitdelete"%s aria-label="%s">%s</a>',
+						wp_nonce_url( "post.php?action=delete&amp;post=$post->ID", 'delete-post_' . $post->ID ),
+						$delete_ays,
+						/* translators: %s: attachment title */
+						esc_attr( sprintf( __( 'Delete &#8220;%s&#8221; permanently' ), $att_title ) ),
+						__( 'Delete Permanently' )
+					);
+				}
+			}
+			if ( ! $this->is_trash ) {
+				$actions['view'] = sprintf(
+					'<a href="%s" aria-label="%s" rel="permalink">%s</a>',
+					get_permalink( $post->ID ),
+					/* translators: %s: attachment title */
+					esc_attr( sprintf( __( 'View &#8220;%s&#8221;' ), $att_title ) ),
+					__( 'View' )
+				);
+			}
+		}
+
+		/**
+		 * Filter the action links for each attachment in the Media list table.
+		 *
+		 * @since 2.8.0
+		 *
+		 * @param array   $actions  An array of action links for each attachment.
+		 *                          Default 'Edit', 'Delete Permanently', 'View'.
+		 * @param WP_Post $post     WP_Post object for the current attachment.
+		 * @param bool    $detached Whether the list table contains media not attached
+		 *                          to any posts. Default true.
+		 */
+		return apply_filters( 'media_row_actions', $actions, $post, $this->detached );
+	}
+
+	/**
+	 * Generates and displays row action links.
+	 *
+	 * @since 4.3.0
+	 * @access protected
+	 *
+	 * @param object $post        Attachment being acted upon.
+	 * @param string $column_name Current column name.
+	 * @param string $primary     Primary column name.
+	 * @return string Row actions output for media attachments.
+	 */
+	protected function handle_row_actions( $post, $column_name, $primary ) {
+		if ( $primary !== $column_name ) {
+			return '';
+		}
+
+		$att_title = _draft_or_post_title();
+		return $this->row_actions( $this->_get_row_actions( $post, $att_title ) );
+	}
+}

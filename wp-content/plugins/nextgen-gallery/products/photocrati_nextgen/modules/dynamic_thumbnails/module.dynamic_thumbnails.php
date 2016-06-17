@@ -51,3 +51,25 @@ class M_Dynamic_Thumbnails extends C_Base_Module
 }
 
 new M_Dynamic_Thumbnails();
+ic_Thumbnails_Storage_Driver'	=> 'adapter.dynamic_thumbnails_storage_driver.php',
+            'C_Dynamic_Thumbnails_Installer'		=> 'class.dynamic_thumbnails_installer.php',
+            'C_Dynamic_Thumbnails_Controller' 		=> 'class.dynamic_thumbnails_controller.php',
+            'C_Dynamic_Thumbnails_Manager' 			=> 'class.dynamic_thumbnails_manager.php'
+        );
+    }
+}
+
+class C_Dynamic_Thumbnails_Installer
+{
+	function __construct()
+	{
+		$this->settings = C_NextGen_Settings::get_instance();
+	}
+
+	function install()
+	{
+		$this->settings->set_default_value('dynamic_thumbnail_slug', 'nextgen-image');
+	}
+}
+
+new M_Dynamic_Thumbnails();

@@ -320,3 +320,22 @@ if ( !user_can_access_admin_page() ) {
 }
 
 $menu = add_menu_classes($menu);
+t_menu_key = array_keys( $menu );
+$last_menu_key = array_pop( $last_menu_key );
+if ( !empty( $menu ) && 'wp-menu-separator' == $menu[ $last_menu_key ][ 4 ] )
+	unset( $menu[ $last_menu_key ] );
+unset( $last_menu_key );
+
+if ( !user_can_access_admin_page() ) {
+
+	/**
+	 * Fires when access to an admin page is denied.
+	 *
+	 * @since 2.5.0
+	 */
+	do_action( 'admin_page_access_denied' );
+
+	wp_die( __( 'You do not have sufficient permissions to access this page.' ), 403 );
+}
+
+$menu = add_menu_classes($menu);

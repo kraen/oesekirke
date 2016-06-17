@@ -1096,3 +1096,90 @@ html:lang(he-il) .rtl #wpadminbar *  {
 		box-shadow: none;
 	}
 }
+inbar #wp-admin-bar-new-content,
+	#wpadminbar #wp-admin-bar-edit,
+	#wpadminbar #wp-admin-bar-my-account {
+		position: static;
+	}
+
+	#wpadminbar #wp-admin-bar-my-account {
+		float: right;
+	}
+
+	.network-admin #wpadminbar ul#wp-admin-bar-top-secondary > li#wp-admin-bar-my-account {
+		margin-right: 0;
+	}
+
+	/* Realign arrows on taller responsive submenus */
+
+	#wpadminbar .ab-top-secondary .menupop .menupop > .ab-item:before {
+		top: 10px;
+		left: 0;
+	}
+}
+
+/* Smartphone */
+@media screen and (max-width: 600px) {
+	#wpadminbar {
+		position: absolute;
+	}
+
+	#wp-responsive-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 400;
+	}
+
+	#wpadminbar .ab-top-menu > .menupop > .ab-sub-wrapper {
+		width: 100%;
+		left: 0;
+	}
+
+	#wpadminbar .menupop .menupop > .ab-item:before {
+		display: none;
+	}
+
+	#wpadminbar #wp-admin-bar-wp-logo.menupop .ab-sub-wrapper {
+		margin-left: 0;
+	}
+
+	#wpadminbar .ab-top-menu > .menupop li > .ab-sub-wrapper {
+		margin: 0;
+		width: 100%;
+		top: auto;
+		left: auto;
+		position: relative;
+	}
+
+	#wpadminbar .ab-top-menu > .menupop li > .ab-sub-wrapper .ab-item {
+		font-size: 16px;
+		padding: 6px 15px 19px 30px;
+	}
+
+	#wpadminbar li:hover ul li ul li {
+		display: list-item;
+	}
+
+	#wpadminbar li#wp-admin-bar-wp-logo,
+	#wpadminbar li#wp-admin-bar-updates {
+		display: none;
+	}
+
+	/* Make submenus full-width at this size */
+
+	#wpadminbar .ab-top-menu > .menupop li > .ab-sub-wrapper {
+		position: static;
+		-webkit-box-shadow: none;
+		box-shadow: none;
+	}
+}
+
+/* Very narrow screens */
+@media screen and (max-width: 400px) {
+	#wpadminbar li#wp-admin-bar-comments {
+		display: none;
+	}
+}

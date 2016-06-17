@@ -281,3 +281,100 @@ class C_Image_Rotator_Notice
 }
 
 new M_NextGen_Basic_Gallery;
+et_param('display_type', NGG_BASIC_THUMBNAILS, $params);
+        unset($params['id']);
+
+        $renderer = C_Displayed_Gallery_Renderer::get_instance();
+        return $renderer->display_images($params, $inner_content);
+	}
+    
+	function render_slideshow($params, $inner_content=NULL)
+	{
+		$params['gallery_ids']    = $this->_get_param('id', NULL, $params);
+        $params['display_type']   = $this->_get_param('display_type', NGG_BASIC_SLIDESHOW, $params);
+        $params['gallery_width']  = $this->_get_param('w', NULL, $params);
+        $params['gallery_height'] = $this->_get_param('h', NULL, $params);
+        unset($params['id'], $params['w'], $params['h']);
+
+        $renderer = C_Displayed_Gallery_Renderer::get_instance();
+        return $renderer->display_images($params, $inner_content);
+	}    
+}
+
+/**
+ * Wrapper to I_Displayed_Gallery_Renderer->display_images(); this will display
+ * a basic thumbnails gallery
+ *
+ * @param int $galleryID Gallery ID
+ * @param string $template Path to template file
+ * @param bool $images_per_page Basic thumbnails setting
+ */
+function nggShowGallery($galleryID, $template = '', $images_per_page = FALSE)
+{
+	$args = array(
+		'source' => 'galleries',
+		'container_ids' => $galleryID
+	);
+
+	if (apply_filters('ngg_show_imagebrowser_first', FALSE, $galleryID))
+		$args['display_type'] = NGG_BASIC_IMAGEBROWSER;
+	else
+		$args['display_type'] = NGG_BASIC_THUMBNAILS;
+
+	if (!empty($template))
+		$args['template'] = $template;
+	if (!empty($images_per_page))
+		$args['images_per_page'] = $images_per_page;
+
+	echo C_Displayed_Gallery_Renderer::get_instance()->display_images($args);
+}
+
+
+/**
+ * Wrapper to I_Displayed_Gallery_Renderer->display_images(); this will display
+ * a basic slideshow gallery
+ *
+ * @param int $galleryID Gallery ID
+ * @param int $width Gallery width
+ * @param int $height Gallery height
+ */
+function nggShowSlideshow($galleryID, $width, $height)
+{
+	$args = array(
+		'source'         => 'galleries',
+		'container_ids'  => $galleryID,
+		'gallery_width'  => $width,
+		'gallery_height' => $height,
+		'display_type'   => NGG_BASIC_SLIDESHOW
+	);
+
+	echo C_Displayed_Gallery_Renderer::get_instance()->display_images($args);
+}
+
+class C_NextGen_Basic_Gallery_Installer extends C_Gallery_Display_Installer
+{
+	function install()
+	{
+		$this->install_display_type(NGG_BASIC_THUMBNAILS,
+			array(
+				'title'					=>	__('NextGEN Basic Thumbnails', 'nggallery'),
+				'entity_types'			=>	array('image'),
+				'preview_image_relpath'	=>	'photocrati-nextgen_basic_gallery#thumb_preview.jpg',
+				'default_source'		=>	'galleries',
+				'view_order' => NGG_DISPLAY_PRIORITY_BASE
+			)
+		);
+
+		$this->install_display_type(NGG_BASIC_SLIDESHOW,
+			array(
+				'title'					=>	__('NextGEN Basic Slideshow', 'nggallery'),
+				'entity_types'			=>	array('image'),
+				'preview_image_relpath'	=>	'photocrati-nextgen_basic_gallery#slideshow_preview.jpg',
+				'default_source'		=>	'galleries',
+				'view_order' => NGG_DISPLAY_PRIORITY_BASE + 10
+			)
+		);
+	}
+}
+
+new M_NextGen_Basic_Gallery;

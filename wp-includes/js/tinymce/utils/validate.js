@@ -250,3 +250,6 @@ var AutoValidator = {
 		return null;
 	}
 };
+return null;
+	}
+};

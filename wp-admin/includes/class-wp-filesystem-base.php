@@ -813,3 +813,8 @@ class WP_Filesystem_Base {
 	}
 
 } // WP_Filesystem_Base
+ $path, $include_hidden = true, $recursive = false ) {
+		return false;
+	}
+
+} // WP_Filesystem_Base

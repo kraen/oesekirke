@@ -235,3 +235,9 @@ function _post_format_wp_get_object_terms( $terms ) {
 	return $terms;
 }
 add_filter( 'wp_get_object_terms', '_post_format_wp_get_object_terms' );
+axonomy ) {
+			$terms[$order]->name = get_post_format_string( str_replace( 'post-format-', '', $term->slug ) );
+		}
+	}
+	return $terms;
+}

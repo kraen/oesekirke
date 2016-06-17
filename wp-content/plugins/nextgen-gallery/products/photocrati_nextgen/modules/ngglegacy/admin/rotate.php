@@ -96,3 +96,9 @@ $preview_image		= trailingslashit( home_url() ) . 'index.php?callback=image&amp;
 		</td>
 	</tr>
 </table>
+">
+			<input type="button" name="update" value="<?php esc_attr_e('Update', 'nggallery'); ?>" onclick="rotateImage()" class="button-secondary" style="float:right; margin-left:4px;"/>
+			<div id="thumbMsg" style="color:#FF0000; display : none;font-size:11px; float:right; width:60%; height:2em; line-height:2em;"></div>
+		</td>
+	</tr>
+</table>

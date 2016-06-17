@@ -399,4 +399,35 @@ function rw_cryptx_showMessage($message, $errormsg = false)
     echo "$message</div>";
 }
 
+?>ode(",", $cryptX_var['excludedIDs']);
+    if($b[0] == '') unset($b[0]);
+    foreach($b as $x=>$y) {
+        if($y == $pID) {
+            unset($b[$x]);
+            break;
+        }
+    }
+    if (isset($_POST['cryptxoff'])) $b[] = $pID;
+    $b = array_unique($b);
+    sort($b);
+    $cryptX_var['excludedIDs'] = implode(",", $b);
+    update_option( 'cryptX', $cryptX_var);
+    $cryptX_var = rw_loadDefaults(); // reread Options
+}
+
+/**
+ * print admin notice
+ */
+function rw_cryptx_showMessage($message, $errormsg = false)
+{
+    if ($errormsg) {
+        echo '<div id="message" class="error">';
+    }
+    else {
+        echo '<div id="message" class="updated fade">';
+    }
+
+    echo "$message</div>";
+}
+
 ?>

@@ -291,4 +291,18 @@ class getid3_lyrics3 extends getid3_handler
 		}
 		return null;
 	}
+}$Lyrics3data['synchedlyrics'])) {
+			ksort($Lyrics3data['synchedlyrics']);
+		}
+		return true;
+	}
+
+	public function IntString2Bool($char) {
+		if ($char == '1') {
+			return true;
+		} elseif ($char == '0') {
+			return false;
+		}
+		return null;
+	}
 }

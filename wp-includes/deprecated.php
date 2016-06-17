@@ -3492,3 +3492,346 @@ function url_is_accessable_via_ssl( $url ) {
 
 	return false;
 }
+c_like()
+ *
+ * @param string $text The text to be escaped.
+ * @return string text, safe for inclusion in LIKE query.
+ */
+function like_escape($text) {
+	_deprecated_function( __FUNCTION__, '4.0', 'wpdb::esc_like()' );
+	return str_replace( array( "%", "_" ), array( "\\%", "\\_" ), $text );
+}
+
+/**
+ * Determines if the URL can be accessed over SSL.
+ *
+ * Determines if the URL can be accessed over SSL by using the WordPress HTTP API to access
+ * the URL using https as the scheme.
+ *
+ * @since 2.5.0
+ * @deprecated 4.0.0
+ *
+ * @param string $url The URL to test.
+ * @return bool Whether SSL access is available.
+ */
+function url_is_accessable_via_ssl( $url ) {
+	_deprecated_function( __FUNCTION__, '4.0' );
+
+	$response = wp_remote_get( set_url_scheme( $url, 'https' ) );
+
+	if ( !is_wp_error( $response ) ) {
+		$status = wp_remote_retrieve_response_code( $response );
+		if ( 200 == $status || 401 == $status ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Start preview theme output buffer.
+ *
+ * Will only perform task if the user has permissions and template and preview
+ * query variables exist.
+ *
+ * @since 2.6.0
+ * @deprecated 4.3.0
+ */
+function preview_theme() {
+	_deprecated_function( __FUNCTION__, '4.3' );
+}
+
+/**
+ * Private function to modify the current template when previewing a theme
+ *
+ * @since 2.9.0
+ * @deprecated 4.3.0
+ * @access private
+ *
+ * @return string
+ */
+function _preview_theme_template_filter() {
+	_deprecated_function( __FUNCTION__, '4.3' );
+	return '';
+}
+
+/**
+ * Private function to modify the current stylesheet when previewing a theme
+ *
+ * @since 2.9.0
+ * @deprecated 4.3.0
+ * @access private
+ *
+ * @return string
+ */
+function _preview_theme_stylesheet_filter() {
+	_deprecated_function( __FUNCTION__, '4.3' );
+	return '';
+}
+
+/**
+ * Callback function for ob_start() to capture all links in the theme.
+ *
+ * @since 2.6.0
+ * @deprecated 4.3.0
+ * @access private
+ *
+ * @param string $content
+ * @return string
+ */
+function preview_theme_ob_filter( $content ) {
+	_deprecated_function( __FUNCTION__, '4.3' );
+	return $content;
+}
+
+/**
+ * Manipulates preview theme links in order to control and maintain location.
+ *
+ * Callback function for preg_replace_callback() to accept and filter matches.
+ *
+ * @since 2.6.0
+ * @deprecated 4.3.0
+ * @access private
+ *
+ * @param array $matches
+ * @return string
+ */
+function preview_theme_ob_filter_callback( $matches ) {
+	_deprecated_function( __FUNCTION__, '4.3' );
+	return '';
+}
+
+/**
+ * Formats text for the rich text editor.
+ *
+ * The filter 'richedit_pre' is applied here. If $text is empty the filter will
+ * be applied to an empty string.
+ *
+ * @since 2.0.0
+ * @deprecated 4.3.0
+ *
+ * @param string $text The text to be formatted.
+ * @return string The formatted text after filter is applied.
+ */
+function wp_richedit_pre($text) {
+	_deprecated_function( __FUNCTION__, '4.3', 'format_for_editor()' );
+
+	if ( empty( $text ) ) {
+		/**
+		 * Filter text returned for the rich text editor.
+		 *
+		 * This filter is first evaluated, and the value returned, if an empty string
+		 * is passed to wp_richedit_pre(). If an empty string is passed, it results
+		 * in a break tag and line feed.
+		 *
+		 * If a non-empty string is passed, the filter is evaluated on the wp_richedit_pre()
+		 * return after being formatted.
+		 *
+		 * @since 2.0.0
+		 * @deprecated 4.3.0
+		 *
+		 * @param string $output Text for the rich text editor.
+		 */
+		return apply_filters( 'richedit_pre', '' );
+	}
+
+	$output = convert_chars($text);
+	$output = wpautop($output);
+	$output = htmlspecialchars($output, ENT_NOQUOTES, get_option( 'blog_charset' ) );
+
+	/** This filter is documented in wp-includes/deprecated.php */
+	return apply_filters( 'richedit_pre', $output );
+}
+
+/**
+ * Formats text for the HTML editor.
+ *
+ * Unless $output is empty it will pass through htmlspecialchars before the
+ * 'htmledit_pre' filter is applied.
+ *
+ * @since 2.5.0
+ * @deprecated 4.3.0 Use format_for_editor()
+ * @see format_for_editor()
+ *
+ * @param string $output The text to be formatted.
+ * @return string Formatted text after filter applied.
+ */
+function wp_htmledit_pre($output) {
+	_deprecated_function( __FUNCTION__, '4.3', 'format_for_editor()' );
+
+	if ( !empty($output) )
+		$output = htmlspecialchars($output, ENT_NOQUOTES, get_option( 'blog_charset' ) ); // convert only < > &
+
+	/**
+	 * Filter the text before it is formatted for the HTML editor.
+	 *
+	 * @since 2.5.0
+	 * @deprecated 4.3.0
+	 *
+	 * @param string $output The HTML-formatted text.
+	 */
+	return apply_filters( 'htmledit_pre', $output );
+}
+
+/**
+ * Retrieve permalink from post ID.
+ *
+ * @since 1.0.0
+ * @deprecated 4.4.0 Use get_permalink()
+ * @see get_permalink()
+ *
+ * @param int|WP_Post $post_id Optional. Post ID or WP_Post object. Default is global $post.
+ * @return string|false
+ */
+function post_permalink( $post_id = 0 ) {
+	_deprecated_function( __FUNCTION__, '4.4', 'get_permalink()' );
+
+	return get_permalink( $post_id );
+}
+
+/**
+ * Perform a HTTP HEAD or GET request.
+ *
+ * If $file_path is a writable filename, this will do a GET request and write
+ * the file to that path.
+ *
+ * @since 2.5.0
+ * @deprecated 4.4.0 Use WP_Http
+ * @see WP_Http
+ *
+ * @param string      $url       URL to fetch.
+ * @param string|bool $file_path Optional. File path to write request to. Default false.
+ * @param int         $red       Optional. The number of Redirects followed, Upon 5 being hit,
+ *                               returns false. Default 1.
+ * @return bool|string False on failure and string of headers if HEAD request.
+ */
+function wp_get_http( $url, $file_path = false, $red = 1 ) {
+	_deprecated_function( __FUNCTION__, '4.4', 'WP_Http' );
+
+	@set_time_limit( 60 );
+
+	if ( $red > 5 )
+		return false;
+
+	$options = array();
+	$options['redirection'] = 5;
+
+	if ( false == $file_path )
+		$options['method'] = 'HEAD';
+	else
+		$options['method'] = 'GET';
+
+	$response = wp_safe_remote_request( $url, $options );
+
+	if ( is_wp_error( $response ) )
+		return false;
+
+	$headers = wp_remote_retrieve_headers( $response );
+	$headers['response'] = wp_remote_retrieve_response_code( $response );
+
+	// WP_HTTP no longer follows redirects for HEAD requests.
+	if ( 'HEAD' == $options['method'] && in_array($headers['response'], array(301, 302)) && isset( $headers['location'] ) ) {
+		return wp_get_http( $headers['location'], $file_path, ++$red );
+	}
+
+	if ( false == $file_path )
+		return $headers;
+
+	// GET request - write it to the supplied filename
+	$out_fp = fopen($file_path, 'w');
+	if ( !$out_fp )
+		return $headers;
+
+	fwrite( $out_fp,  wp_remote_retrieve_body( $response ) );
+	fclose($out_fp);
+	clearstatcache();
+
+	return $headers;
+}
+
+/**
+ * Whether SSL login should be forced.
+ *
+ * @since 2.6.0
+ * @deprecated 4.4.0 Use force_ssl_admin()
+ * @see force_ssl_admin()
+ *
+ * @param string|bool $force Optional Whether to force SSL login. Default null.
+ * @return bool True if forced, false if not forced.
+ */
+function force_ssl_login( $force = null ) {
+	_deprecated_function( __FUNCTION__, '4.4', 'force_ssl_admin()' );
+	return force_ssl_admin( $force );
+}
+
+/**
+ * Retrieve path of comment popup template in current or parent template.
+ *
+ * @since 1.5.0
+ * @deprecated 4.5.0
+ *
+ * @return string Full path to comments popup template file.
+ */
+function get_comments_popup_template() {
+	_deprecated_function( __FUNCTION__, '4.5' );
+
+	return '';
+}
+
+/**
+ * Whether the current URL is within the comments popup window.
+ *
+ * @since 1.5.0
+ * @deprecated 4.5.0
+ *
+ * @return bool
+ */
+function is_comments_popup() {
+	_deprecated_function( __FUNCTION__, '4.5' );
+
+	return false;
+}
+
+/**
+ * Display the JS popup script to show a comment.
+ *
+ * @since 0.71
+ * @deprecated 4.5.0
+ */
+function comments_popup_script() {
+	_deprecated_function( __FUNCTION__, '4.5' );
+}
+
+/**
+ * Adds element attributes to open links in new windows.
+ *
+ * @since 0.71
+ * @deprecated 4.5.0
+ *
+ * @param string $text Content to replace links to open in a new window.
+ * @return string Content that has filtered links.
+ */
+function popuplinks( $text ) {
+	_deprecated_function( __FUNCTION__, '4.5' );
+	$text = preg_replace('/<a (.+?)>/i', "<a $1 target='_blank' rel='external'>", $text);
+	return $text;
+}
+
+/**
+ * Returns the base URL of the uploads directory.
+ * Note: this function will be removed in 4.6.
+ *
+ * @ignore
+ * @since 4.4.0
+ * @access private
+ * @deprecated 4.5.0 Use wp_get_upload_dir()
+ * @see wp_get_upload_dir()
+ *
+ * @return string The base URL.
+ */
+function _wp_upload_dir_baseurl() {
+	_deprecated_function( __FUNCTION__, '4.5', 'wp_get_upload_dir()' );
+	$upload_dir = wp_get_upload_dir();
+	return $upload_dir['baseurl'];
+}

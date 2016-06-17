@@ -597,4 +597,4 @@
     root._.string = root._.str = _s;
   }
 
-}(this, String);
+}(this, String););

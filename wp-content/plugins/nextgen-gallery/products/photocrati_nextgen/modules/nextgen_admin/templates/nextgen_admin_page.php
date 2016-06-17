@@ -27,3 +27,8 @@
         <?php endif ?>
 	</form>
 </div>
+on type="submit" name='action_proxy' data-proxy-value="save" value="Save" class="button-primary"><?php _e('Save', 'nggallery'); ?></button>
+            </p>
+        <?php endif ?>
+    </form>
+</div>

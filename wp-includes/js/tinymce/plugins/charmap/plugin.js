@@ -367,4 +367,108 @@ tinymce.PluginManager.add('charmap', function(editor) {
 		onclick: showDialog,
 		context: 'insert'
 	});
+});dex="-1" title="' + chr[1] + '" role="button">' +
+						(chr ? String.fromCharCode(parseInt(chr[0], 10)) : '&nbsp;') + '</div></td>';
+				} else {
+					gridHtml += '<td />';
+				}
+			}
+
+			gridHtml += '</tr>';
+		}
+
+		gridHtml += '</tbody></table>';
+
+		var charMapPanel = {
+			type: 'container',
+			html: gridHtml,
+			onclick: function(e) {
+				var target = e.target;
+
+				if (/^(TD|DIV)$/.test(target.nodeName)) {
+					if (getParentTd(target).firstChild) {
+						insertChar(tinymce.trim(target.innerText || target.textContent));
+
+						if (!e.ctrlKey) {
+							win.close();
+						}
+					}
+				}
+			},
+			onmouseover: function(e) {
+				var td = getParentTd(e.target);
+
+				if (td && td.firstChild) {
+					win.find('#preview').text(td.firstChild.firstChild.data);
+					win.find('#previewTitle').text(td.title);
+				} else {
+					win.find('#preview').text(' ');
+					win.find('#previewTitle').text(' ');
+				}
+			}
+		};
+
+		win = editor.windowManager.open({
+			title: "Special character",
+			spacing: 10,
+			padding: 10,
+			items: [
+				charMapPanel,
+				{
+					type: 'container',
+					layout: 'flex',
+					direction: 'column',
+					align: 'center',
+					spacing: 5,
+					minWidth: 160,
+					minHeight: 160,
+					items: [
+						{
+							type: 'label',
+							name: 'preview',
+							text: ' ',
+							style: 'font-size: 40px; text-align: center',
+							border: 1,
+							minWidth: 140,
+							minHeight: 80
+						},
+						{
+							type: 'label',
+							name: 'previewTitle',
+							text: ' ',
+							style: 'text-align: center',
+							border: 1,
+							minWidth: 140,
+							minHeight: 80
+						}
+					]
+				}
+			],
+			buttons: [
+				{text: "Close", onclick: function() {
+					win.close();
+				}}
+			]
+		});
+	}
+
+	editor.addCommand('mceShowCharmap', showDialog);
+
+	editor.addButton('charmap', {
+		icon: 'charmap',
+		tooltip: 'Special character',
+		cmd: 'mceShowCharmap'
+	});
+
+	editor.addMenuItem('charmap', {
+		icon: 'charmap',
+		text: 'Special character',
+		cmd: 'mceShowCharmap',
+		context: 'insert'
+	});
+
+	return {
+		getCharMap: getCharMap,
+		insertChar: insertChar
+	};
 });

@@ -829,3 +829,100 @@
 	});
 
 }(jQuery, _, Backbone));
+) {
+				mejs.play();
+			}, false );
+		}
+
+		this.mejs = mejs;
+	},
+
+	/**
+	 * @returns {media.view.MediaDetails} Returns itself to allow chaining
+	 */
+	render: function() {
+		AttachmentDisplay.prototype.render.apply( this, arguments );
+
+		setTimeout( _.bind( function() {
+			this.resetFocus();
+		}, this ), 10 );
+
+		this.settings = _.defaults( {
+			success : this.success
+		}, wp.media.mixin.mejsSettings );
+
+		return this.setMedia();
+	},
+
+	resetFocus: function() {
+		this.$( '.embed-media-settings' ).scrollTop( 0 );
+	}
+}, {
+	instances : 0,
+	/**
+	 * When multiple players in the DOM contain the same src, things get weird.
+	 *
+	 * @param {HTMLElement} elem
+	 * @returns {HTMLElement}
+	 */
+	prepareSrc : function( elem ) {
+		var i = MediaDetails.instances++;
+		_.each( $( elem ).find( 'source' ), function( source ) {
+			source.src = [
+				source.src,
+				source.src.indexOf('?') > -1 ? '&' : '?',
+				'_=',
+				i
+			].join('');
+		} );
+
+		return elem;
+	}
+});
+
+module.exports = MediaDetails;
+
+},{}],10:[function(require,module,exports){
+/**
+ * wp.media.view.VideoDetails
+ *
+ * @class
+ * @augments wp.media.view.MediaDetails
+ * @augments wp.media.view.Settings.AttachmentDisplay
+ * @augments wp.media.view.Settings
+ * @augments wp.media.View
+ * @augments wp.Backbone.View
+ * @augments Backbone.View
+ */
+var MediaDetails = wp.media.view.MediaDetails,
+	VideoDetails;
+
+VideoDetails = MediaDetails.extend({
+	className: 'video-details',
+	template:  wp.template('video-details'),
+
+	setMedia: function() {
+		var video = this.$('.wp-video-shortcode');
+
+		if ( video.find( 'source' ).length ) {
+			if ( video.is(':hidden') ) {
+				video.show();
+			}
+
+			if ( ! video.hasClass( 'youtube-video' ) && ! video.hasClass( 'vimeo-video' ) ) {
+				this.media = MediaDetails.prepareSrc( video.get(0) );
+			} else {
+				this.media = video.get(0);
+			}
+		} else {
+			video.hide();
+			this.media = false;
+		}
+
+		return this;
+	}
+});
+
+module.exports = VideoDetails;
+
+},{}]},{},[1]);

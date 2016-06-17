@@ -127,3 +127,25 @@ class M_NextGen_Basic_Singlepic extends C_Base_Module
 }
 
 new M_NextGen_Basic_Singlepic();
+ter.nextgen_basic_singlepic_mapper.php'
+        );
+    }
+}
+
+class C_NextGen_Basic_SinglePic_Installer extends C_Gallery_Display_Installer
+{
+	function install()
+	{
+		$this->install_display_type(
+			NGG_BASIC_SINGLEPIC, array(
+				'title'					=>	__('NextGEN Basic SinglePic', 'nggallery'),
+				'entity_types'			=>	array('image'),
+				'preview_image_relpath'	=>	'photocrati-nextgen_basic_singlepic#preview.gif',
+				'default_source'		=>	'galleries',
+				'view_order' => NGG_DISPLAY_PRIORITY_BASE + 60,
+				'hidden_from_ui'        =>  TRUE
+			));
+	}
+}
+
+new M_NextGen_Basic_Singlepic();

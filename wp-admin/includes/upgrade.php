@@ -2221,3 +2221,555 @@ CREATE TABLE $wpdb->sitecategories (
 	dbDelta( $ms_queries );
 }
 endif;
+$tablefield->Default} to {$default_value}";
+					}
+				}
+
+				// Remove the field from the array (so it's not added).
+				unset($cfields[strtolower($tablefield->Field)]);
+			} else {
+				// This field exists in the table, but not in the creation queries?
+			}
+		}
+
+		// For every remaining field specified for the table.
+		foreach ($cfields as $fieldname => $fielddef) {
+			// Push a query line into $cqueries that adds the field to that table.
+			$cqueries[] = "ALTER TABLE {$table} ADD COLUMN $fielddef";
+			$for_update[$table.'.'.$fieldname] = 'Added column '.$table.'.'.$fieldname;
+		}
+
+		// Index stuff goes here. Fetch the table index structure from the database.
+		$tableindices = $wpdb->get_results("SHOW INDEX FROM {$table};");
+
+		if ($tableindices) {
+			// Clear the index array.
+			$index_ary = array();
+
+			// For every index in the table.
+			foreach ($tableindices as $tableindex) {
+
+				// Add the index to the index data array.
+				$keyname = $tableindex->Key_name;
+				$index_ary[$keyname]['columns'][] = array('fieldname' => $tableindex->Column_name, 'subpart' => $tableindex->Sub_part);
+				$index_ary[$keyname]['unique'] = ($tableindex->Non_unique == 0)?true:false;
+				$index_ary[$keyname]['index_type'] = $tableindex->Index_type;
+			}
+
+			// For each actual index in the index array.
+			foreach ($index_ary as $index_name => $index_data) {
+
+				// Build a create string to compare to the query.
+				$index_string = '';
+				if ($index_name == 'PRIMARY') {
+					$index_string .= 'PRIMARY ';
+				} elseif ( $index_data['unique'] ) {
+					$index_string .= 'UNIQUE ';
+				}
+				if ( 'FULLTEXT' === strtoupper( $index_data['index_type'] ) ) {
+					$index_string .= 'FULLTEXT ';
+				}
+				$index_string .= 'KEY ';
+				if ($index_name != 'PRIMARY') {
+					$index_string .= $index_name;
+				}
+				$index_columns = '';
+
+				// For each column in the index.
+				foreach ($index_data['columns'] as $column_data) {
+					if ($index_columns != '') $index_columns .= ',';
+
+					// Add the field to the column list string.
+					$index_columns .= $column_data['fieldname'];
+					if ($column_data['subpart'] != '') {
+						$index_columns .= '('.$column_data['subpart'].')';
+					}
+				}
+
+				// The alternative index string doesn't care about subparts
+				$alt_index_columns = preg_replace( '/\([^)]*\)/', '', $index_columns );
+
+				// Add the column list to the index create string.
+				$index_strings = array(
+					"$index_string ($index_columns)",
+					"$index_string ($alt_index_columns)",
+				);
+
+				foreach ( $index_strings as $index_string ) {
+					if ( ! ( ( $aindex = array_search( $index_string, $indices ) ) === false ) ) {
+						unset( $indices[ $aindex ] );
+						break;
+						// todo: Remove this?
+						//echo "<pre style=\"border:1px solid #ccc;margin-top:5px;\">{$table}:<br />Found index:".$index_string."</pre>\n";
+					}
+				}
+				// todo: Remove this?
+				//else echo "<pre style=\"border:1px solid #ccc;margin-top:5px;\">{$table}:<br /><b>Did not find index:</b>".$index_string."<br />".print_r($indices, true)."</pre>\n";
+			}
+		}
+
+		// For every remaining index specified for the table.
+		foreach ( (array) $indices as $index ) {
+			// Push a query line into $cqueries that adds the index to that table.
+			$cqueries[] = "ALTER TABLE {$table} ADD $index";
+			$for_update[] = 'Added index ' . $table . ' ' . $index;
+		}
+
+		// Remove the original table creation query from processing.
+		unset( $cqueries[ $table ], $for_update[ $table ] );
+	}
+
+	$allqueries = array_merge($cqueries, $iqueries);
+	if ($execute) {
+		foreach ($allqueries as $query) {
+			// todo: Remove this?
+			//echo "<pre style=\"border:1px solid #ccc;margin-top:5px;\">".print_r($query, true)."</pre>\n";
+			$wpdb->query($query);
+		}
+	}
+
+	return $for_update;
+}
+
+/**
+ * Updates the database tables to a new schema.
+ *
+ * By default, updates all the tables to use the latest defined schema, but can also
+ * be used to update a specific set of tables in wp_get_db_schema().
+ *
+ * @since 1.5.0
+ *
+ * @uses dbDelta
+ *
+ * @param string $tables Optional. Which set of tables to update. Default is 'all'.
+ */
+function make_db_current( $tables = 'all' ) {
+	$alterations = dbDelta( $tables );
+	echo "<ol>\n";
+	foreach ($alterations as $alteration) echo "<li>$alteration</li>\n";
+	echo "</ol>\n";
+}
+
+/**
+ * Updates the database tables to a new schema, but without displaying results.
+ *
+ * By default, updates all the tables to use the latest defined schema, but can
+ * also be used to update a specific set of tables in wp_get_db_schema().
+ *
+ * @since 1.5.0
+ *
+ * @see make_db_current()
+ *
+ * @param string $tables Optional. Which set of tables to update. Default is 'all'.
+ */
+function make_db_current_silent( $tables = 'all' ) {
+	dbDelta( $tables );
+}
+
+/**
+ * Creates a site theme from an existing theme.
+ *
+ * {@internal Missing Long Description}}
+ *
+ * @since 1.5.0
+ *
+ * @param string $theme_name The name of the theme.
+ * @param string $template   The directory name of the theme.
+ * @return bool
+ */
+function make_site_theme_from_oldschool($theme_name, $template) {
+	$home_path = get_home_path();
+	$site_dir = WP_CONTENT_DIR . "/themes/$template";
+
+	if (! file_exists("$home_path/index.php"))
+		return false;
+
+	/*
+	 * Copy files from the old locations to the site theme.
+	 * TODO: This does not copy arbitrary include dependencies. Only the standard WP files are copied.
+	 */
+	$files = array('index.php' => 'index.php', 'wp-layout.css' => 'style.css', 'wp-comments.php' => 'comments.php', 'wp-comments-popup.php' => 'comments-popup.php');
+
+	foreach ($files as $oldfile => $newfile) {
+		if ($oldfile == 'index.php')
+			$oldpath = $home_path;
+		else
+			$oldpath = ABSPATH;
+
+		// Check to make sure it's not a new index.
+		if ($oldfile == 'index.php') {
+			$index = implode('', file("$oldpath/$oldfile"));
+			if (strpos($index, 'WP_USE_THEMES') !== false) {
+				if (! @copy(WP_CONTENT_DIR . '/themes/' . WP_DEFAULT_THEME . '/index.php', "$site_dir/$newfile"))
+					return false;
+
+				// Don't copy anything.
+				continue;
+			}
+		}
+
+		if (! @copy("$oldpath/$oldfile", "$site_dir/$newfile"))
+			return false;
+
+		chmod("$site_dir/$newfile", 0777);
+
+		// Update the blog header include in each file.
+		$lines = explode("\n", implode('', file("$site_dir/$newfile")));
+		if ($lines) {
+			$f = fopen("$site_dir/$newfile", 'w');
+
+			foreach ($lines as $line) {
+				if (preg_match('/require.*wp-blog-header/', $line))
+					$line = '//' . $line;
+
+				// Update stylesheet references.
+				$line = str_replace("<?php echo __get_option('siteurl'); ?>/wp-layout.css", "<?php bloginfo('stylesheet_url'); ?>", $line);
+
+				// Update comments template inclusion.
+				$line = str_replace("<?php include(ABSPATH . 'wp-comments.php'); ?>", "<?php comments_template(); ?>", $line);
+
+				fwrite($f, "{$line}\n");
+			}
+			fclose($f);
+		}
+	}
+
+	// Add a theme header.
+	$header = "/*\nTheme Name: $theme_name\nTheme URI: " . __get_option('siteurl') . "\nDescription: A theme automatically created by the update.\nVersion: 1.0\nAuthor: Moi\n*/\n";
+
+	$stylelines = file_get_contents("$site_dir/style.css");
+	if ($stylelines) {
+		$f = fopen("$site_dir/style.css", 'w');
+
+		fwrite($f, $header);
+		fwrite($f, $stylelines);
+		fclose($f);
+	}
+
+	return true;
+}
+
+/**
+ * Creates a site theme from the default theme.
+ *
+ * {@internal Missing Long Description}}
+ *
+ * @since 1.5.0
+ *
+ * @param string $theme_name The name of the theme.
+ * @param string $template   The directory name of the theme.
+ * @return false|void
+ */
+function make_site_theme_from_default($theme_name, $template) {
+	$site_dir = WP_CONTENT_DIR . "/themes/$template";
+	$default_dir = WP_CONTENT_DIR . '/themes/' . WP_DEFAULT_THEME;
+
+	// Copy files from the default theme to the site theme.
+	//$files = array('index.php', 'comments.php', 'comments-popup.php', 'footer.php', 'header.php', 'sidebar.php', 'style.css');
+
+	$theme_dir = @ opendir($default_dir);
+	if ($theme_dir) {
+		while(($theme_file = readdir( $theme_dir )) !== false) {
+			if (is_dir("$default_dir/$theme_file"))
+				continue;
+			if (! @copy("$default_dir/$theme_file", "$site_dir/$theme_file"))
+				return;
+			chmod("$site_dir/$theme_file", 0777);
+		}
+	}
+	@closedir($theme_dir);
+
+	// Rewrite the theme header.
+	$stylelines = explode("\n", implode('', file("$site_dir/style.css")));
+	if ($stylelines) {
+		$f = fopen("$site_dir/style.css", 'w');
+
+		foreach ($stylelines as $line) {
+			if (strpos($line, 'Theme Name:') !== false) $line = 'Theme Name: ' . $theme_name;
+			elseif (strpos($line, 'Theme URI:') !== false) $line = 'Theme URI: ' . __get_option('url');
+			elseif (strpos($line, 'Description:') !== false) $line = 'Description: Your theme.';
+			elseif (strpos($line, 'Version:') !== false) $line = 'Version: 1';
+			elseif (strpos($line, 'Author:') !== false) $line = 'Author: You';
+			fwrite($f, $line . "\n");
+		}
+		fclose($f);
+	}
+
+	// Copy the images.
+	umask(0);
+	if (! mkdir("$site_dir/images", 0777)) {
+		return false;
+	}
+
+	$images_dir = @ opendir("$default_dir/images");
+	if ($images_dir) {
+		while(($image = readdir($images_dir)) !== false) {
+			if (is_dir("$default_dir/images/$image"))
+				continue;
+			if (! @copy("$default_dir/images/$image", "$site_dir/images/$image"))
+				return;
+			chmod("$site_dir/images/$image", 0777);
+		}
+	}
+	@closedir($images_dir);
+}
+
+/**
+ * Creates a site theme.
+ *
+ * {@internal Missing Long Description}}
+ *
+ * @since 1.5.0
+ *
+ * @return false|string
+ */
+function make_site_theme() {
+	// Name the theme after the blog.
+	$theme_name = __get_option('blogname');
+	$template = sanitize_title($theme_name);
+	$site_dir = WP_CONTENT_DIR . "/themes/$template";
+
+	// If the theme already exists, nothing to do.
+	if ( is_dir($site_dir)) {
+		return false;
+	}
+
+	// We must be able to write to the themes dir.
+	if (! is_writable(WP_CONTENT_DIR . "/themes")) {
+		return false;
+	}
+
+	umask(0);
+	if (! mkdir($site_dir, 0777)) {
+		return false;
+	}
+
+	if (file_exists(ABSPATH . 'wp-layout.css')) {
+		if (! make_site_theme_from_oldschool($theme_name, $template)) {
+			// TODO: rm -rf the site theme directory.
+			return false;
+		}
+	} else {
+		if (! make_site_theme_from_default($theme_name, $template))
+			// TODO: rm -rf the site theme directory.
+			return false;
+	}
+
+	// Make the new site theme active.
+	$current_template = __get_option('template');
+	if ($current_template == WP_DEFAULT_THEME) {
+		update_option('template', $template);
+		update_option('stylesheet', $template);
+	}
+	return $template;
+}
+
+/**
+ * Translate user level to user role name.
+ *
+ * @since 2.0.0
+ *
+ * @param int $level User level.
+ * @return string User role name.
+ */
+function translate_level_to_role($level) {
+	switch ($level) {
+	case 10:
+	case 9:
+	case 8:
+		return 'administrator';
+	case 7:
+	case 6:
+	case 5:
+		return 'editor';
+	case 4:
+	case 3:
+	case 2:
+		return 'author';
+	case 1:
+		return 'contributor';
+	case 0:
+		return 'subscriber';
+	}
+}
+
+/**
+ * Checks the version of the installed MySQL binary.
+ *
+ * @since 2.1.0
+ *
+ * @global wpdb  $wpdb
+ */
+function wp_check_mysql_version() {
+	global $wpdb;
+	$result = $wpdb->check_database_version();
+	if ( is_wp_error( $result ) )
+		die( $result->get_error_message() );
+}
+
+/**
+ * Disables the Automattic widgets plugin, which was merged into core.
+ *
+ * @since 2.2.0
+ */
+function maybe_disable_automattic_widgets() {
+	$plugins = __get_option( 'active_plugins' );
+
+	foreach ( (array) $plugins as $plugin ) {
+		if ( basename( $plugin ) == 'widgets.php' ) {
+			array_splice( $plugins, array_search( $plugin, $plugins ), 1 );
+			update_option( 'active_plugins', $plugins );
+			break;
+		}
+	}
+}
+
+/**
+ * Disables the Link Manager on upgrade if, at the time of upgrade, no links exist in the DB.
+ *
+ * @since 3.5.0
+ *
+ * @global int  $wp_current_db_version
+ * @global wpdb $wpdb WordPress database abstraction object.
+ */
+function maybe_disable_link_manager() {
+	global $wp_current_db_version, $wpdb;
+
+	if ( $wp_current_db_version >= 22006 && get_option( 'link_manager_enabled' ) && ! $wpdb->get_var( "SELECT link_id FROM $wpdb->links LIMIT 1" ) )
+		update_option( 'link_manager_enabled', 0 );
+}
+
+/**
+ * Runs before the schema is upgraded.
+ *
+ * @since 2.9.0
+ *
+ * @global int  $wp_current_db_version
+ * @global wpdb $wpdb WordPress database abstraction object.
+ */
+function pre_schema_upgrade() {
+	global $wp_current_db_version, $wpdb;
+
+	// Upgrade versions prior to 2.9
+	if ( $wp_current_db_version < 11557 ) {
+		// Delete duplicate options. Keep the option with the highest option_id.
+		$wpdb->query("DELETE o1 FROM $wpdb->options AS o1 JOIN $wpdb->options AS o2 USING (`option_name`) WHERE o2.option_id > o1.option_id");
+
+		// Drop the old primary key and add the new.
+		$wpdb->query("ALTER TABLE $wpdb->options DROP PRIMARY KEY, ADD PRIMARY KEY(option_id)");
+
+		// Drop the old option_name index. dbDelta() doesn't do the drop.
+		$wpdb->query("ALTER TABLE $wpdb->options DROP INDEX option_name");
+	}
+
+	// Multisite schema upgrades.
+	if ( $wp_current_db_version < 25448 && is_multisite() && wp_should_upgrade_global_tables() ) {
+
+		// Upgrade verions prior to 3.7
+		if ( $wp_current_db_version < 25179 ) {
+			// New primary key for signups.
+			$wpdb->query( "ALTER TABLE $wpdb->signups ADD signup_id BIGINT(20) NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST" );
+			$wpdb->query( "ALTER TABLE $wpdb->signups DROP INDEX domain" );
+		}
+
+		if ( $wp_current_db_version < 25448 ) {
+			// Convert archived from enum to tinyint.
+			$wpdb->query( "ALTER TABLE $wpdb->blogs CHANGE COLUMN archived archived varchar(1) NOT NULL default '0'" );
+			$wpdb->query( "ALTER TABLE $wpdb->blogs CHANGE COLUMN archived archived tinyint(2) NOT NULL default 0" );
+		}
+	}
+
+	// Upgrade versions prior to 4.2.
+	if ( $wp_current_db_version < 31351 ) {
+		if ( ! is_multisite() && wp_should_upgrade_global_tables() ) {
+			$wpdb->query( "ALTER TABLE $wpdb->usermeta DROP INDEX meta_key, ADD INDEX meta_key(meta_key(191))" );
+		}
+		$wpdb->query( "ALTER TABLE $wpdb->terms DROP INDEX slug, ADD INDEX slug(slug(191))" );
+		$wpdb->query( "ALTER TABLE $wpdb->terms DROP INDEX name, ADD INDEX name(name(191))" );
+		$wpdb->query( "ALTER TABLE $wpdb->commentmeta DROP INDEX meta_key, ADD INDEX meta_key(meta_key(191))" );
+		$wpdb->query( "ALTER TABLE $wpdb->postmeta DROP INDEX meta_key, ADD INDEX meta_key(meta_key(191))" );
+		$wpdb->query( "ALTER TABLE $wpdb->posts DROP INDEX post_name, ADD INDEX post_name(post_name(191))" );
+	}
+
+	// Upgrade versions prior to 4.4.
+	if ( $wp_current_db_version < 34978 ) {
+		// If compatible termmeta table is found, use it, but enforce a proper index and update collation.
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$wpdb->termmeta}'" ) && $wpdb->get_results( "SHOW INDEX FROM {$wpdb->termmeta} WHERE Column_name = 'meta_key'" ) ) {
+			$wpdb->query( "ALTER TABLE $wpdb->termmeta DROP INDEX meta_key, ADD INDEX meta_key(meta_key(191))" );
+			maybe_convert_table_to_utf8mb4( $wpdb->termmeta );
+		}
+	}
+}
+
+/**
+ * Install global terms.
+ *
+ * @since 3.0.0
+ *
+ * @global wpdb   $wpdb
+ * @global string $charset_collate
+ */
+if ( !function_exists( 'install_global_terms' ) ) :
+function install_global_terms() {
+	global $wpdb, $charset_collate;
+	$ms_queries = "
+CREATE TABLE $wpdb->sitecategories (
+  cat_ID bigint(20) NOT NULL auto_increment,
+  cat_name varchar(55) NOT NULL default '',
+  category_nicename varchar(200) NOT NULL default '',
+  last_updated timestamp NOT NULL,
+  PRIMARY KEY  (cat_ID),
+  KEY category_nicename (category_nicename),
+  KEY last_updated (last_updated)
+) $charset_collate;
+";
+// now create tables
+	dbDelta( $ms_queries );
+}
+endif;
+
+/**
+ * Determine if global tables should be upgraded.
+ *
+ * This function performs a series of checks to ensure the environment allows
+ * for the safe upgrading of global WordPress database tables. It is necessary
+ * because global tables will commonly grow to millions of rows on large
+ * installations, and the ability to control their upgrade routines can be
+ * critical to the operation of large networks.
+ *
+ * In a future iteration, this function may use `wp_is_large_network()` to more-
+ * intelligently prevent global table upgrades. Until then, we make sure
+ * WordPress is on the main site of the main network, to avoid running queries
+ * more than once in multi-site or multi-network environments.
+ *
+ * @since 4.3.0
+ *
+ * @return bool Whether to run the upgrade routines on global tables.
+ */
+function wp_should_upgrade_global_tables() {
+
+	// Return false early if explicitly not upgrading
+	if ( defined( 'DO_NOT_UPGRADE_GLOBAL_TABLES' ) ) {
+		return false;
+	}
+
+	// Assume global tables should be upgraded
+	$should_upgrade = true;
+
+	// Set to false if not on main network (does not matter if not multi-network)
+	if ( ! is_main_network() ) {
+		$should_upgrade = false;
+	}
+
+	// Set to false if not on main site of current network (does not matter if not multi-site)
+	if ( ! is_main_site() ) {
+		$should_upgrade = false;
+	}
+
+	/**
+	 * Filter if upgrade routines should be run on global tables.
+	 *
+	 * @param bool $should_upgrade Whether to run the upgrade routines on global tables.
+	 */
+	return apply_filters( 'wp_should_upgrade_global_tables', $should_upgrade );
+}

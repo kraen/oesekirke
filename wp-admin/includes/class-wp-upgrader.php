@@ -3251,3 +3251,249 @@ UPDATE LOG
 		wp_mail( $email['to'], wp_specialchars_decode( $email['subject'] ), $email['body'], $email['headers'] );
 	}
 }
+dPress, %2$s.' ), home_url(), $core_update->current );
+
+				$body .= "\n\n" . __( "This means your site may be offline or broken. Don't panic; this can be fixed." );
+
+				$body .= "\n\n" . __( "Please check out your site now. It's possible that everything is working. If it says you need to update, you should do so:" );
+				$body .= "\n" . network_admin_url( 'update-core.php' );
+				break;
+		}
+
+		$critical_support = 'critical' === $type && ! empty( $core_update->support_email );
+		if ( $critical_support ) {
+			// Support offer if available.
+			$body .= "\n\n" . sprintf( __( "The WordPress team is willing to help you. Forward this email to %s and the team will work with you to make sure your site is working." ), $core_update->support_email );
+		} else {
+			// Add a note about the support forums.
+			$body .= "\n\n" . __( 'If you experience any issues or need support, the volunteers in the WordPress.org support forums may be able to help.' );
+			$body .= "\n" . __( 'https://wordpress.org/support/' );
+		}
+
+		// Updates are important!
+		if ( $type != 'success' || $newer_version_available ) {
+			$body .= "\n\n" . __( 'Keeping your site updated is important for security. It also makes the internet a safer place for you and your readers.' );
+		}
+
+		if ( $critical_support ) {
+			$body .= " " . __( "If you reach out to us, we'll also ensure you'll never have this problem again." );
+		}
+
+		// If things are successful and we're now on the latest, mention plugins and themes if any are out of date.
+		if ( $type == 'success' && ! $newer_version_available && ( get_plugin_updates() || get_theme_updates() ) ) {
+			$body .= "\n\n" . __( 'You also have some plugins or themes with updates available. Update them now:' );
+			$body .= "\n" . network_admin_url();
+		}
+
+		$body .= "\n\n" . __( 'The WordPress Team' ) . "\n";
+
+		if ( 'critical' == $type && is_wp_error( $result ) ) {
+			$body .= "\n***\n\n";
+			$body .= sprintf( __( 'Your site was running version %s.' ), $GLOBALS['wp_version'] );
+			$body .= ' ' . __( 'We have some data that describes the error your site encountered.' );
+			$body .= ' ' . __( 'Your hosting company, support forum volunteers, or a friendly developer may be able to use this information to help you:' );
+
+			// If we had a rollback and we're still critical, then the rollback failed too.
+			// Loop through all errors (the main WP_Error, the update result, the rollback result) for code, data, etc.
+			if ( 'rollback_was_required' == $result->get_error_code() )
+				$errors = array( $result, $result->get_error_data()->update, $result->get_error_data()->rollback );
+			else
+				$errors = array( $result );
+
+			foreach ( $errors as $error ) {
+				if ( ! is_wp_error( $error ) )
+					continue;
+				$error_code = $error->get_error_code();
+				$body .= "\n\n" . sprintf( __( "Error code: %s" ), $error_code );
+				if ( 'rollback_was_required' == $error_code )
+					continue;
+				if ( $error->get_error_message() )
+					$body .= "\n" . $error->get_error_message();
+				$error_data = $error->get_error_data();
+				if ( $error_data )
+					$body .= "\n" . implode( ', ', (array) $error_data );
+			}
+			$body .= "\n";
+		}
+
+		$to  = get_site_option( 'admin_email' );
+		$headers = '';
+
+		$email = compact( 'to', 'subject', 'body', 'headers' );
+
+		/**
+		 * Filter the email sent following an automatic background core update.
+		 *
+		 * @since 3.7.0
+		 *
+		 * @param array $email {
+		 *     Array of email arguments that will be passed to wp_mail().
+		 *
+		 *     @type string $to      The email recipient. An array of emails
+		 *                            can be returned, as handled by wp_mail().
+		 *     @type string $subject The email's subject.
+		 *     @type string $body    The email message body.
+		 *     @type string $headers Any email headers, defaults to no headers.
+		 * }
+		 * @param string $type        The type of email being sent. Can be one of
+		 *                            'success', 'fail', 'manual', 'critical'.
+		 * @param object $core_update The update offer that was attempted.
+		 * @param mixed  $result      The result for the core update. Can be WP_Error.
+		 */
+		$email = apply_filters( 'auto_core_update_email', $email, $type, $core_update, $result );
+
+		wp_mail( $email['to'], wp_specialchars_decode( $email['subject'] ), $email['body'], $email['headers'] );
+	}
+
+	/**
+	 * Prepares and sends an email of a full log of background update results, useful for debugging and geekery.
+	 *
+	 * @since 3.7.0
+	 * @access protected
+	 */
+	protected function send_debug_email() {
+		$update_count = 0;
+		foreach ( $this->update_results as $type => $updates )
+			$update_count += count( $updates );
+
+		$body = array();
+		$failures = 0;
+
+		$body[] = sprintf( __( 'WordPress site: %s' ), network_home_url( '/' ) );
+
+		// Core
+		if ( isset( $this->update_results['core'] ) ) {
+			$result = $this->update_results['core'][0];
+			if ( $result->result && ! is_wp_error( $result->result ) ) {
+				$body[] = sprintf( __( 'SUCCESS: WordPress was successfully updated to %s' ), $result->name );
+			} else {
+				$body[] = sprintf( __( 'FAILED: WordPress failed to update to %s' ), $result->name );
+				$failures++;
+			}
+			$body[] = '';
+		}
+
+		// Plugins, Themes, Translations
+		foreach ( array( 'plugin', 'theme', 'translation' ) as $type ) {
+			if ( ! isset( $this->update_results[ $type ] ) )
+				continue;
+			$success_items = wp_list_filter( $this->update_results[ $type ], array( 'result' => true ) );
+			if ( $success_items ) {
+				$messages = array(
+					'plugin'      => __( 'The following plugins were successfully updated:' ),
+					'theme'       => __( 'The following themes were successfully updated:' ),
+					'translation' => __( 'The following translations were successfully updated:' ),
+				);
+
+				$body[] = $messages[ $type ];
+				foreach ( wp_list_pluck( $success_items, 'name' ) as $name ) {
+					$body[] = ' * ' . sprintf( __( 'SUCCESS: %s' ), $name );
+				}
+			}
+			if ( $success_items != $this->update_results[ $type ] ) {
+				// Failed updates
+				$messages = array(
+					'plugin'      => __( 'The following plugins failed to update:' ),
+					'theme'       => __( 'The following themes failed to update:' ),
+					'translation' => __( 'The following translations failed to update:' ),
+				);
+
+				$body[] = $messages[ $type ];
+				foreach ( $this->update_results[ $type ] as $item ) {
+					if ( ! $item->result || is_wp_error( $item->result ) ) {
+						$body[] = ' * ' . sprintf( __( 'FAILED: %s' ), $item->name );
+						$failures++;
+					}
+				}
+			}
+			$body[] = '';
+		}
+
+		$site_title = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+		if ( $failures ) {
+			$body[] = trim( __(
+"BETA TESTING?
+=============
+
+This debugging email is sent when you are using a development version of WordPress.
+
+If you think these failures might be due to a bug in WordPress, could you report it?
+ * Open a thread in the support forums: https://wordpress.org/support/forum/alphabeta
+ * Or, if you're comfortable writing a bug report: https://core.trac.wordpress.org/
+
+Thanks! -- The WordPress Team" ) );
+			$body[] = '';
+
+			$subject = sprintf( __( '[%s] There were failures during background updates' ), $site_title );
+		} else {
+			$subject = sprintf( __( '[%s] Background updates have finished' ), $site_title );
+		}
+
+		$body[] = trim( __(
+'UPDATE LOG
+==========' ) );
+		$body[] = '';
+
+		foreach ( array( 'core', 'plugin', 'theme', 'translation' ) as $type ) {
+			if ( ! isset( $this->update_results[ $type ] ) )
+				continue;
+			foreach ( $this->update_results[ $type ] as $update ) {
+				$body[] = $update->name;
+				$body[] = str_repeat( '-', strlen( $update->name ) );
+				foreach ( $update->messages as $message )
+					$body[] = "  " . html_entity_decode( str_replace( '&#8230;', '...', $message ) );
+				if ( is_wp_error( $update->result ) ) {
+					$results = array( 'update' => $update->result );
+					// If we rolled back, we want to know an error that occurred then too.
+					if ( 'rollback_was_required' === $update->result->get_error_code() )
+						$results = (array) $update->result->get_error_data();
+					foreach ( $results as $result_type => $result ) {
+						if ( ! is_wp_error( $result ) )
+							continue;
+
+						if ( 'rollback' === $result_type ) {
+							/* translators: 1: Error code, 2: Error message. */
+							$body[] = '  ' . sprintf( __( 'Rollback Error: [%1$s] %2$s' ), $result->get_error_code(), $result->get_error_message() );
+						} else {
+							/* translators: 1: Error code, 2: Error message. */
+							$body[] = '  ' . sprintf( __( 'Error: [%1$s] %2$s' ), $result->get_error_code(), $result->get_error_message() );
+						}
+
+						if ( $result->get_error_data() )
+							$body[] = '         ' . implode( ', ', (array) $result->get_error_data() );
+					}
+				}
+				$body[] = '';
+			}
+		}
+
+		$email = array(
+			'to'      => get_site_option( 'admin_email' ),
+			'subject' => $subject,
+			'body'    => implode( "\n", $body ),
+			'headers' => ''
+		);
+
+		/**
+		 * Filter the debug email that can be sent following an automatic
+		 * background core update.
+		 *
+		 * @since 3.8.0
+		 *
+		 * @param array $email {
+		 *     Array of email arguments that will be passed to wp_mail().
+		 *
+		 *     @type string $to      The email recipient. An array of emails
+		 *                           can be returned, as handled by wp_mail().
+		 *     @type string $subject Email subject.
+		 *     @type string $body    Email message body.
+		 *     @type string $headers Any email headers. Default empty.
+		 * }
+		 * @param int   $failures The number of failures encountered while upgrading.
+		 * @param mixed $results  The results of all attempted updates.
+		 */
+		$email = apply_filters( 'automatic_updates_debug_email', $email, $failures, $this->update_results );
+
+		wp_mail( $email['to'], wp_specialchars_decode( $email['subject'] ), $email['body'], $email['headers'] );
+	}
+}

@@ -231,3 +231,72 @@ if (!class_exists('C_Photocrati_Installer'))
 		}
 	}
 }
+ller->gallerypath_replace($global_settings->gallerypath);
+                $local_settings->save();
+            }
+
+			// Update the module list, and remove the update flag
+			if ($can_upgrade) {
+				update_option('pope_module_list', $current_module_list);
+				self::done_upgrade();
+			}
+		}
+
+        static function _get_last_module_list($reset=FALSE)
+        {
+            // Return empty array to reset
+            if ($reset) return array();
+
+            // First try getting the list from a single WP option, "pope_module_list"
+            $retval = get_option('pope_module_list', array());
+            if (!$retval) {
+                $local_settings     = C_NextGen_Settings::get_instance();
+                $retval = $local_settings->get('pope_module_list', array());
+                $local_settings->delete('pope_module_list');
+            }
+
+            return $retval;
+        }
+
+		static function _generate_module_info()
+		{
+			$retval = array();
+			$registry = C_Component_Registry::get_instance();
+			$products  = array('photocrati-nextgen');
+			foreach ($registry->get_product_list() as $product_id) {
+				if ($product_id != 'photocrati-nextgen') $products[] = $product_id;
+			}
+
+			foreach ($products as $product_id) {
+				foreach ($registry->get_module_list($product_id) as $module_id) {
+					if (($module = $registry->get_module($module_id))) {
+						$module_version = $module->module_version;
+						$module_string = "{$module_id}|{$module_version}";
+						if (!in_array($module_string, $retval)) $retval[] = $module_string;
+					}
+				}
+			}
+
+			return $retval;
+		}
+
+		static function refresh_cron()
+		{
+            if (!extension_loaded('suhosin')) @ini_set('memory_limit', -1);
+
+			// Remove all cron jobs created by NextGEN Gallery
+			$cron = _get_cron_array();
+			if (is_array($cron)) {
+				foreach ($cron as $timestamp => $job) {
+					if (is_array($job)) {
+						unset($cron[$timestamp]['ngg_delete_expired_transients']);
+						if (empty($cron[$timestamp])) {
+							unset($cron[$timestamp]);
+						}
+					}
+				}
+			}
+			_set_cron_array($cron);
+		}
+	}
+}

@@ -183,3 +183,21 @@ if ( isset( $_GET['enabled'] ) ) {
 
 </div>
 <?php include(ABSPATH . 'wp-admin/admin-footer.php'); ?>
+own on this screen.' ) ?></p>
+
+<form method="get">
+<?php $wp_list_table->search_box( __( 'Search Installed Themes' ), 'theme' ); ?>
+<input type="hidden" name="id" value="<?php echo esc_attr( $id ) ?>" />
+</form>
+
+<?php $wp_list_table->views(); ?>
+
+<form method="post" action="site-themes.php?action=update-site">
+	<input type="hidden" name="id" value="<?php echo esc_attr( $id ) ?>" />
+
+<?php $wp_list_table->display(); ?>
+
+</form>
+
+</div>
+<?php include(ABSPATH . 'wp-admin/admin-footer.php'); ?>

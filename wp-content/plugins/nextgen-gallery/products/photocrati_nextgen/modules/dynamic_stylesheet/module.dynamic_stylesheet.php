@@ -51,3 +51,26 @@ class M_Dynamic_Stylesheet extends C_Base_Module
 }
 
 new M_Dynamic_Stylesheet;
+ get_type_list()
+    {
+        return array(
+			'C_Dynamic_Stylesheet_Installer'	=> 'class.dynamic_stylesheet_installer.php',
+            'C_Dynamic_Stylesheet_Controller' 	=> 'class.dynamic_stylesheet_controller.php'
+        );
+    }
+}
+
+class C_Dynamic_Stylesheet_Installer
+{
+	function __construct()
+	{
+		$this->settings = C_NextGen_Settings::get_instance();
+	}
+
+	function install()
+	{
+		$this->settings->set_default_value('dynamic_stylesheet_slug', 'nextgen-dcss');
+	}
+}
+
+new M_Dynamic_Stylesheet;

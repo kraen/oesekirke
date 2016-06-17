@@ -130,3 +130,4 @@ if ( current_user_can('install_plugins') )
 <?php
 
 include( ABSPATH . 'wp-admin/admin-footer.php' );
+ ABSPATH . 'wp-admin/admin-footer.php' );

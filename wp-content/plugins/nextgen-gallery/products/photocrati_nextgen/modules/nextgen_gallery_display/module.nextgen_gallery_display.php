@@ -368,3 +368,170 @@ class M_Gallery_Display extends C_Base_Module
 }
 
 new M_Gallery_Display();
+splay#trigger_buttons.css'));
+        }
+    }
+
+
+	/**
+	 * Adds the display settings page to wp-admin
+	 */
+	function add_display_settings_page()
+	{
+		add_submenu_page(
+			NGGFOLDER,
+			__('NextGEN Gallery & Album Settings', 'nggallery'),
+			__('Gallery Settings', 'nggallery'),
+			'NextGEN Change options',
+			NGG_DISPLAY_SETTINGS_SLUG,
+			array(&$this->controller, 'index_action')
+		);
+	}
+
+	/**
+	 * Provides the [display_images] shortcode
+	 * @param array $params
+	 * @param string $inner_content
+	 * @return string
+	 */
+	function display_images($params, $inner_content=NULL)
+	{
+		$renderer = C_Displayed_Gallery_Renderer::get_instance();
+		return $renderer->display_images($params, $inner_content);
+	}
+
+    /**
+     * Gets a value from the parameter array, and if not available, uses the default value
+     *
+     * @param string $name
+     * @param mixed $default
+     * @param array $params
+     * @return mixed
+     */
+    function _get_param($name, $default, $params)
+    {
+        return (isset($params[$name])) ? $params[$name] : $default;
+    }
+
+    function get_type_list()
+    {
+        return array(
+            'C_Displayed_Gallery_Trigger'           => 'class.displayed_gallery_trigger.php',
+            'C_Displayed_Gallery_Trigger_Manager'   =>  'class.displayed_gallery_trigger_manager.php',
+            'A_Displayed_Gallery_Trigger_Element'   =>  'adapter.displayed_gallery_trigger_element.php',
+            'A_Displayed_Gallery_Trigger_Resources' =>  'adapter.displayed_gallery_trigger_resources.php',
+            'A_Display_Settings_Controller' => 'adapter.display_settings_controller.php',
+            'A_Display_Settings_Page' 		=> 'adapter.display_settings_page.php',
+            'A_Gallery_Display_Factory' 	=> 'adapter.gallery_display_factory.php',
+            'C_Display_Type_Installer' 	=> 'class.gallery_display_installer.php',
+            'A_Gallery_Display_View' 		=> 'adapter.gallery_display_view.php',
+            'C_Displayed_Gallery' 			=> 'class.displayed_gallery.php',
+            'C_Displayed_Gallery_Mapper' 	=> 'class.displayed_gallery_mapper.php',
+            'C_Displayed_Gallery_Renderer' 	=> 'class.displayed_gallery_renderer.php',
+            'C_Displayed_Gallery_Source_Manager'    =>  'class.displayed_gallery_source_manager.php',
+            'C_Display_Type' 				=> 'class.display_type.php',
+            'C_Display_Type_Controller' 	=> 'class.display_type_controller.php',
+            'C_Display_Type_Mapper' 		=> 'class.display_type_mapper.php',
+            'Hook_Propagate_Thumbnail_Dimensions_To_Settings' => 'hook.propagate_thumbnail_dimensions_to_settings.php',
+            'Mixin_Display_Type_Form' 		=> 'mixin.display_type_form.php'
+        );
+    }
+}
+
+class C_Display_Type_Installer
+{
+	function get_registry()
+	{
+		return C_Component_Registry::get_instance();
+	}
+
+	/**
+	 * Installs a display type
+	 * @param string $name
+	 * @param array $properties
+	 */
+	function install_display_type($name, $properties=array())
+	{
+		// Try to find the existing entity. If it doesn't exist, we'll create
+		$fs					= C_Fs::get_instance();
+		$mapper				= C_Display_Type_Mapper::get_instance();
+		$display_type		= $mapper->find_by_name($name);
+		if (!$display_type)	$display_type = new stdClass;
+
+		// Update the properties of the display type
+		$properties['name'] = $name;
+		$properties['installed_at_version'] = NGG_PLUGIN_VERSION;
+		foreach ($properties as $key=>$val) {
+			if ($key == 'preview_image_relpath') {
+				$val = $fs->find_static_abspath($val, FALSE, TRUE);
+			}
+			$display_type->$key = $val;
+		}
+
+		// Save the entity
+		$retval = $mapper->save($display_type);
+		return $retval;
+	}
+
+	/**
+	 * Deletes all displayed galleries
+	 */
+	function uninstall_displayed_galleries()
+	{
+		$mapper = C_Displayed_Gallery_Mapper::get_instance();
+		$mapper->delete()->run_query();
+	}
+
+	/**
+	 * Uninstalls all display types
+	 */
+	function uninstall_display_types()
+	{
+		$mapper = C_Display_Type_Mapper::get_instance();
+		$mapper->delete()->run_query();
+	}
+
+	/**
+	 * Installs displayed gallery sources
+	 */
+	function install($reset=FALSE)
+	{
+		// Display types are registered in other modules
+	}
+
+	/**
+	 * Uninstalls this module
+	 */
+	function uninstall($hard = FALSE)
+	{
+		C_Photocrati_Transient_Manager::flush();
+
+		$this->uninstall_display_types();
+
+		// TODO temporary Don't remove galleries on uninstall
+		//if ($hard) $this->uninstall_displayed_galleries();
+	}
+}
+
+/**
+ * Show related images for a post/page. Ngglegacy function
+ * @param $taglist
+ * @param int $maxImages
+ */
+function nggShowRelatedGallery($taglist, $maxImages = 0)
+{
+	return M_Gallery_Display::_render_related_string($taglist, $maxImages, $type=NULL);
+}
+
+function nggShowRelatedImages($type=NULL, $maxImages=0)
+{
+	return M_Gallery_Display::_render_related_string(NULL, $maxImages, $type);
+}
+
+function the_related_images($type = 'tags', $maxNumbers = 7)
+{
+	echo nggShowRelatedImages($type, $maxNumbers);
+}
+
+
+new M_Gallery_Display();

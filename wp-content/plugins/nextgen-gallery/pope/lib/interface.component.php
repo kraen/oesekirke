@@ -7,4 +7,9 @@
 interface I_Component
 {
 
+}rticular context, if desired)
+ */
+interface I_Component
+{
+
 }

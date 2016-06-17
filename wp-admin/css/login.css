@@ -267,3 +267,9 @@ body.interim-login {
 		margin: -3px 0 0 -4px;
 	}
 }
+type=checkbox]:checked:before {
+		width: 16px;
+		font: normal 21px/1 dashicons;
+		margin: -3px 0 0 -4px;
+	}
+}

@@ -515,3 +515,462 @@ tinymce.PluginManager.add( 'wordpress', function( editor ) {
 		_getEmbed: _getEmbed
 	};
 });
+ine styles
+					event.content = event.content.replace( /(<[^>]+) style="[^"]*"([^>]*>)/gi, '$1$2' );
+
+					// Put back the internal styles
+					event.content = event.content.replace(/(<[^>]+) data-mce-style=([^>]+>)/gi, '$1 style=$2' );
+				}
+			});
+
+			editor.on( 'PastePostProcess', function( event ) {
+				// Remove empty paragraphs
+				each( dom.select( 'p', event.node ), function( node ) {
+					if ( dom.isEmpty( node ) ) {
+						dom.remove( node );
+					}
+				});
+			});
+		}
+	});
+
+	editor.on( 'SaveContent', function( event ) {
+		// If editor is hidden, we just want the textarea's value to be saved
+		if ( ! editor.inline && editor.isHidden() ) {
+			event.content = event.element.value;
+			return;
+		}
+
+		// Keep empty paragraphs :(
+		event.content = event.content.replace( /<p>(?:<br ?\/?>|\u00a0|\uFEFF| )*<\/p>/g, '<p>&nbsp;</p>' );
+
+		if ( hasWpautop ) {
+			event.content = wp.editor.removep( event.content );
+		}
+	});
+
+	editor.on( 'preInit', function() {
+		var validElementsSetting = '@[id|accesskey|class|dir|lang|style|tabindex|' +
+			'title|contenteditable|draggable|dropzone|hidden|spellcheck|translate],' + // Global attributes.
+			'i,' + // Don't replace <i> with <em> and <b> with <strong> and don't remove them when empty.
+			'b,' +
+			'script[src|async|defer|type|charset|crossorigin|integrity]'; // Add support for <script>.
+
+		editor.schema.addValidElements( validElementsSetting );
+
+		if ( tinymce.Env.iOS ) {
+			editor.settings.height = 300;
+		}
+
+		each( {
+			c: 'JustifyCenter',
+			r: 'JustifyRight',
+			l: 'JustifyLeft',
+			j: 'JustifyFull',
+			q: 'mceBlockQuote',
+			u: 'InsertUnorderedList',
+			o: 'InsertOrderedList',
+			s: 'unlink',
+			m: 'WP_Medialib',
+			z: 'WP_Adv',
+			t: 'WP_More',
+			d: 'Strikethrough',
+			h: 'WP_Help',
+			p: 'WP_Page',
+			x: 'WP_Code'
+		}, function( command, key ) {
+			editor.shortcuts.add( 'access+' + key, '', command );
+		} );
+
+		editor.addShortcut( 'meta+s', '', function() {
+			if ( wp && wp.autosave ) {
+				wp.autosave.server.triggerSave();
+			}
+		} );
+
+		if ( window.getUserSetting( 'editor_plain_text_paste_warning' ) > 1 ) {
+			editor.settings.paste_plaintext_inform = false;
+		}
+	} );
+
+	editor.on( 'PastePlainTextToggle', function( event ) {
+		// Warn twice, then stop.
+		if ( event.state === true ) {
+			var times = parseInt( window.getUserSetting( 'editor_plain_text_paste_warning' ), 10 ) || 0;
+
+			if ( times < 2 ) {
+				window.setUserSetting( 'editor_plain_text_paste_warning', ++times );
+			}
+		}
+	});
+
+	/**
+	 * Experimental: create a floating toolbar.
+	 * This functionality will change in the next releases. Not recommended for use by plugins.
+	 */
+	editor.on( 'preinit', function() {
+		var Factory = tinymce.ui.Factory,
+			settings = editor.settings,
+			activeToolbar,
+			currentSelection,
+			timeout,
+			container = editor.getContainer(),
+			wpAdminbar = document.getElementById( 'wpadminbar' ),
+			mceIframe = document.getElementById( editor.id + '_ifr' ),
+			mceToolbar,
+			mceStatusbar,
+			wpStatusbar;
+
+			if ( container ) {
+				mceToolbar = tinymce.$( '.mce-toolbar-grp', container )[0];
+				mceStatusbar = tinymce.$( '.mce-statusbar', container )[0];
+			}
+
+			if ( editor.id === 'content' ) {
+				wpStatusbar = document.getElementById( 'post-status-info' );
+			}
+
+		function create( buttons, bottom ) {
+			var toolbar,
+				toolbarItems = [],
+				buttonGroup;
+
+			each( buttons, function( item ) {
+				var itemName;
+
+				function bindSelectorChanged() {
+					var selection = editor.selection;
+
+					if ( itemName === 'bullist' ) {
+						selection.selectorChanged( 'ul > li', function( state, args ) {
+							var i = args.parents.length,
+								nodeName;
+
+							while ( i-- ) {
+								nodeName = args.parents[ i ].nodeName;
+
+								if ( nodeName === 'OL' || nodeName == 'UL' ) {
+									break;
+								}
+							}
+
+							item.active( state && nodeName === 'UL' );
+						} );
+					}
+
+					if ( itemName === 'numlist' ) {
+						selection.selectorChanged( 'ol > li', function( state, args ) {
+							var i = args.parents.length,
+								nodeName;
+
+							while ( i-- ) {
+								nodeName = args.parents[ i ].nodeName;
+
+								if ( nodeName === 'OL' || nodeName === 'UL' ) {
+									break;
+								}
+							}
+
+							item.active( state && nodeName === 'OL' );
+						} );
+					}
+
+					if ( item.settings.stateSelector ) {
+						selection.selectorChanged( item.settings.stateSelector, function( state ) {
+							item.active( state );
+						}, true );
+					}
+
+					if ( item.settings.disabledStateSelector ) {
+						selection.selectorChanged( item.settings.disabledStateSelector, function( state ) {
+							item.disabled( state );
+						} );
+					}
+				}
+
+				if ( item === '|' ) {
+					buttonGroup = null;
+				} else {
+					if ( Factory.has( item ) ) {
+						item = {
+							type: item
+						};
+
+						if ( settings.toolbar_items_size ) {
+							item.size = settings.toolbar_items_size;
+						}
+
+						toolbarItems.push( item );
+
+						buttonGroup = null;
+					} else {
+						if ( ! buttonGroup ) {
+							buttonGroup = {
+								type: 'buttongroup',
+								items: []
+							};
+
+							toolbarItems.push( buttonGroup );
+						}
+
+						if ( editor.buttons[ item ] ) {
+							itemName = item;
+							item = editor.buttons[ itemName ];
+
+							if ( typeof item === 'function' ) {
+								item = item();
+							}
+
+							item.type = item.type || 'button';
+
+							if ( settings.toolbar_items_size ) {
+								item.size = settings.toolbar_items_size;
+							}
+
+							item = Factory.create( item );
+
+							buttonGroup.items.push( item );
+
+							if ( editor.initialized ) {
+								bindSelectorChanged();
+							} else {
+								editor.on( 'init', bindSelectorChanged );
+							}
+						}
+					}
+				}
+			} );
+
+			toolbar = Factory.create( {
+				type: 'panel',
+				layout: 'stack',
+				classes: 'toolbar-grp inline-toolbar-grp',
+				ariaRoot: true,
+				ariaRemember: true,
+				items: [ {
+					type: 'toolbar',
+					layout: 'flow',
+					items: toolbarItems
+				} ]
+			} );
+
+			toolbar.bottom = bottom;
+
+			function reposition() {
+				if ( ! currentSelection ) {
+					return this;
+				}
+
+				var scrollX = window.pageXOffset || document.documentElement.scrollLeft,
+					scrollY = window.pageYOffset || document.documentElement.scrollTop,
+					windowWidth = window.innerWidth,
+					windowHeight = window.innerHeight,
+					iframeRect = mceIframe ? mceIframe.getBoundingClientRect() : {
+						top: 0,
+						right: windowWidth,
+						bottom: windowHeight,
+						left: 0,
+						width: windowWidth,
+						height: windowHeight
+					},
+					toolbar = this.getEl(),
+					toolbarWidth = toolbar.offsetWidth,
+					toolbarHeight = toolbar.offsetHeight,
+					selection = currentSelection.getBoundingClientRect(),
+					selectionMiddle = ( selection.left + selection.right ) / 2,
+					buffer = 5,
+					margin = 8,
+					spaceNeeded = toolbarHeight + margin + buffer,
+					wpAdminbarBottom = wpAdminbar ? wpAdminbar.getBoundingClientRect().bottom : 0,
+					mceToolbarBottom = mceToolbar ? mceToolbar.getBoundingClientRect().bottom : 0,
+					mceStatusbarTop = mceStatusbar ? windowHeight - mceStatusbar.getBoundingClientRect().top : 0,
+					wpStatusbarTop = wpStatusbar ? windowHeight - wpStatusbar.getBoundingClientRect().top : 0,
+					blockedTop = Math.max( 0, wpAdminbarBottom, mceToolbarBottom, iframeRect.top ),
+					blockedBottom = Math.max( 0, mceStatusbarTop, wpStatusbarTop, windowHeight - iframeRect.bottom ),
+					spaceTop = selection.top + iframeRect.top - blockedTop,
+					spaceBottom = windowHeight - iframeRect.top - selection.bottom - blockedBottom,
+					editorHeight = windowHeight - blockedTop - blockedBottom,
+					className = '',
+					iosOffsetTop = 0,
+					iosOffsetBottom = 0,
+					top, left;
+
+				if ( spaceTop >= editorHeight || spaceBottom >= editorHeight ) {
+					this.scrolling = true;
+					this.hide();
+					this.scrolling = false;
+					return this;
+				}
+
+				// Add offset in iOS to move the menu over the image, out of the way of the default iOS menu.
+				if ( tinymce.Env.iOS && currentSelection.nodeName === 'IMG' ) {
+					iosOffsetTop = 54;
+					iosOffsetBottom = 46;
+				}
+
+				if ( this.bottom ) {
+					if ( spaceBottom >= spaceNeeded ) {
+						className = ' mce-arrow-up';
+						top = selection.bottom + iframeRect.top + scrollY - iosOffsetBottom;
+					} else if ( spaceTop >= spaceNeeded ) {
+						className = ' mce-arrow-down';
+						top = selection.top + iframeRect.top + scrollY - toolbarHeight - margin + iosOffsetTop;
+					}
+				} else {
+					if ( spaceTop >= spaceNeeded ) {
+						className = ' mce-arrow-down';
+						top = selection.top + iframeRect.top + scrollY - toolbarHeight - margin + iosOffsetTop;
+					} else if ( spaceBottom >= spaceNeeded && editorHeight / 2 > selection.bottom + iframeRect.top - blockedTop ) {
+						className = ' mce-arrow-up';
+						top = selection.bottom + iframeRect.top + scrollY - iosOffsetBottom;
+					}
+				}
+
+				if ( typeof top === 'undefined' ) {
+					top = scrollY + blockedTop + buffer + iosOffsetBottom;
+				}
+
+				left = selectionMiddle - toolbarWidth / 2 + iframeRect.left + scrollX;
+
+				if ( selection.left < 0 || selection.right > iframeRect.width ) {
+					left = iframeRect.left + scrollX + ( iframeRect.width - toolbarWidth ) / 2;
+				} else if ( toolbarWidth >= windowWidth ) {
+					className += ' mce-arrow-full';
+					left = 0;
+				} else if ( ( left < 0 && selection.left + toolbarWidth > windowWidth ) || ( left + toolbarWidth > windowWidth && selection.right - toolbarWidth < 0 ) ) {
+					left = ( windowWidth - toolbarWidth ) / 2;
+				} else if ( left < iframeRect.left + scrollX ) {
+					className += ' mce-arrow-left';
+					left = selection.left + iframeRect.left + scrollX;
+				} else if ( left + toolbarWidth > iframeRect.width + iframeRect.left + scrollX ) {
+					className += ' mce-arrow-right';
+					left = selection.right - toolbarWidth + iframeRect.left + scrollX;
+				}
+
+				// No up/down arrows on the menu over images in iOS.
+				if ( tinymce.Env.iOS && currentSelection.nodeName === 'IMG' ) {
+					className = className.replace( / ?mce-arrow-(up|down)/g, '' );
+				}
+
+				toolbar.className = toolbar.className.replace( / ?mce-arrow-[\w]+/g, '' ) + className;
+
+				DOM.setStyles( toolbar, {
+					'left': left,
+					'top': top
+				} );
+
+				return this;
+			}
+
+			toolbar.on( 'show', function() {
+				this.reposition();
+			} );
+
+			toolbar.on( 'keydown', function( event ) {
+				if ( event.keyCode === 27 ) {
+					this.hide();
+					editor.focus();
+				}
+			} );
+
+			editor.on( 'remove', function() {
+				toolbar.remove();
+			} );
+
+			toolbar.reposition = reposition;
+			toolbar.hide().renderTo( document.body );
+
+			return toolbar;
+		}
+
+		editor.shortcuts.add( 'alt+119', '', function() {
+			var node;
+
+			if ( activeToolbar ) {
+				node = activeToolbar.find( 'toolbar' )[0];
+				node && node.focus( true );
+			}
+		} );
+
+		editor.on( 'nodechange', function( event ) {
+			var collapsed = editor.selection.isCollapsed();
+
+			var args = {
+				element: event.element,
+				parents: event.parents,
+				collapsed: collapsed
+			};
+
+			editor.fire( 'wptoolbar', args );
+
+			currentSelection = args.selection || args.element;
+
+			if ( activeToolbar && activeToolbar !== args.toolbar ) {
+				activeToolbar.hide();
+			}
+
+			if ( args.toolbar ) {
+				if ( activeToolbar !== args.toolbar ) {
+					activeToolbar = args.toolbar;
+					activeToolbar.show();
+				} else {
+					activeToolbar.reposition();
+				}
+			} else {
+				activeToolbar = false;
+			}
+		} );
+
+		editor.on( 'focus', function() {
+			if ( activeToolbar ) {
+				activeToolbar.show();
+			}
+		} );
+
+		function hide( event ) {
+			if ( activeToolbar ) {
+				if ( activeToolbar.tempHide || event.type === 'hide' ) {
+					activeToolbar.hide();
+					activeToolbar = false;
+				} else if ( ( event.type === 'resize' || event.type === 'scroll' ) && ! activeToolbar.blockHide ) {
+					clearTimeout( timeout );
+
+					timeout = setTimeout( function() {
+						if ( activeToolbar && typeof activeToolbar.show === 'function' ) {
+							activeToolbar.scrolling = false;
+							activeToolbar.show();
+						}
+					}, 250 );
+
+					activeToolbar.scrolling = true;
+					activeToolbar.hide();
+				}
+			}
+		}
+
+		DOM.bind( window, 'resize scroll', hide );
+		editor.dom.bind( editor.getWin(), 'resize scroll', hide );
+
+		editor.on( 'remove', function() {
+			DOM.unbind( window, 'resize scroll', hide );
+			editor.dom.unbind( editor.getWin(), 'resize scroll', hide );
+		} );
+
+		editor.on( 'blur hide', hide );
+
+		editor.wp = editor.wp || {};
+		editor.wp._createToolbar = create;
+	}, true );
+
+	function noop() {}
+
+	// Expose some functions (back-compat)
+	return {
+		_showButtons: noop,
+		_hideButtons: noop,
+		_setEmbed: noop,
+		_getEmbed: noop
+	};
+});
+
+}( window.tinymce ));

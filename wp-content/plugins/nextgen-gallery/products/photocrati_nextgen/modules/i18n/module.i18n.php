@@ -202,3 +202,53 @@ class M_I18N extends C_Base_Module
 }
 
 new M_I18N();
+\/\.]*$%im', $path, $pathinfo))
+        {
+            if (array_key_exists(1, $pathinfo))
+                $ret['dirname'] = $pathinfo[1];
+            if (array_key_exists(2, $pathinfo))
+                $ret['basename'] = $pathinfo[2];
+            if (array_key_exists(5, $pathinfo))
+                $ret['extension'] = $pathinfo[5];
+            if (array_key_exists(3, $pathinfo))
+                $ret['filename'] = $pathinfo[3];
+        }
+        switch ($options) {
+            case PATHINFO_DIRNAME:
+            case 'dirname':
+                return $ret['dirname'];
+            case PATHINFO_BASENAME:
+            case 'basename':
+                return $ret['basename'];
+            case PATHINFO_EXTENSION:
+            case 'extension':
+                return $ret['extension'];
+            case PATHINFO_FILENAME:
+            case 'filename':
+                return $ret['filename'];
+            default:
+                return $ret;
+        }
+    }
+
+    static function mb_basename($path)
+    {
+        $separator = " qq ";
+        $path = preg_replace("/[^ ]/u", $separator . "\$0" . $separator, $path);
+        $base = basename($path);
+        return str_replace($separator, "", $base);
+    }
+
+    function get_type_list()
+    {
+        return array(
+            'A_I18N_Displayed_Gallery_Translation' => 'adapter.i18n_displayed_gallery_translation.php',
+            'A_I18N_Image_Translation' => 'adapter.i18n_image_translation.php',
+            'A_I18N_Album_Translation' => 'adapter.i18n_album_translation.php',
+            'A_I18N_Gallery_Translation' => 'adapter.i18n_gallery_translation.php',
+            'A_I18N_Routing_App' => 'adapter.i18n_routing_app.php'
+        );
+    }
+}
+
+new M_I18N();

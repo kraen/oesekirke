@@ -1764,3 +1764,50 @@ function wp_list_post_revisions( $post_id = 0, $type = 'all' ) {
 	echo $rows;
 	echo "</ul>";
 }
+                    wp_post_revision_title_expanded().
+	 */
+	return apply_filters( 'wp_post_revision_title_expanded', $revision_date_author, $revision, $link );
+}
+
+/**
+ * Display list of a post's revisions.
+ *
+ * Can output either a UL with edit links or a TABLE with diff interface, and
+ * restore action links.
+ *
+ * @since 2.6.0
+ *
+ * @param int|WP_Post $post_id Optional. Post ID or WP_Post object. Default is global $post.
+ * @param string      $type    'all' (default), 'revision' or 'autosave'
+ */
+function wp_list_post_revisions( $post_id = 0, $type = 'all' ) {
+	if ( ! $post = get_post( $post_id ) )
+		return;
+
+	// $args array with (parent, format, right, left, type) deprecated since 3.6
+	if ( is_array( $type ) ) {
+		$type = ! empty( $type['type'] ) ? $type['type']  : $type;
+		_deprecated_argument( __FUNCTION__, '3.6' );
+	}
+
+	if ( ! $revisions = wp_get_post_revisions( $post->ID ) )
+		return;
+
+	$rows = '';
+	foreach ( $revisions as $revision ) {
+		if ( ! current_user_can( 'read_post', $revision->ID ) )
+			continue;
+
+		$is_autosave = wp_is_post_autosave( $revision );
+		if ( ( 'revision' === $type && $is_autosave ) || ( 'autosave' === $type && ! $is_autosave ) )
+			continue;
+
+		$rows .= "\t<li>" . wp_post_revision_title_expanded( $revision ) . "</li>\n";
+	}
+
+	echo "<div class='hide-if-js'><p>" . __( 'JavaScript must be enabled to use this feature.' ) . "</p></div>\n";
+
+	echo "<ul class='post-revisions hide-if-no-js'>\n";
+	echo $rows;
+	echo "</ul>";
+}

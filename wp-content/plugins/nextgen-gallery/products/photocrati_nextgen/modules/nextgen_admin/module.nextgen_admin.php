@@ -162,3 +162,75 @@ class M_NextGen_Admin extends C_Base_Module
 }
 
 new M_NextGen_Admin();
+ 'class.form_manager.php',
+            'C_Nextgen_Admin_Page_Controller' => 'class.nextgen_admin_page_controller.php',
+            'C_Page_Manager' => 'class.page_manager.php',
+	        'C_Admin_Notification_Manager'  =>  'class.admin_notification_manager.php'
+        );
+    }
+}
+
+class C_NextGen_Admin_Installer
+{
+	function install()
+	{
+		$settings = C_NextGen_Settings::get_instance();
+
+		// In version 0.2 of this module and earlier, the following values
+		// were statically set rather than dynamically using a handler. Therefore, we need
+		// to delete those static values
+		$module_name = 'photocrati-nextgen_admin';
+		$modules = get_option('pope_module_list', array());
+		if (!$modules) {
+			$modules = $settings->get('pope_module_list', array());
+		}
+
+		$cleanup = FALSE;
+		foreach ($modules as $module) {
+			if (strpos($module, $module_name) !== FALSE) {
+				if (version_compare(array_pop(explode('|', $module)), '0.3') == -1) {
+					$cleanup = TRUE;
+				}
+				break;
+			}
+		}
+
+		if ($cleanup) {
+			$keys = array(
+				'jquery_ui_theme',
+				'jquery_ui_theme_version',
+				'jquery_ui_theme_url'
+			);
+			foreach ($keys as $key) $settings->delete($key);
+		}
+	}
+}
+
+class C_NextGen_Admin_Option_Handler
+{
+	function get_router()
+	{
+		return C_Router::get_instance();
+	}
+
+	function get($key, $default=NULL)
+	{
+		$retval = $default;
+
+		switch ($key) {
+			case 'jquery_ui_theme':
+				$retval = 'jquery-ui-nextgen';
+				break;
+			case 'jquery_ui_theme_version':
+				$retval = '1.8';
+				break;
+			case 'jquery_ui_theme_url':
+				$retval = $this->get_router()->get_static_url('photocrati-nextgen_admin#jquery-ui/jquery-ui-1.10.4.custom.css');
+				break;
+		}
+
+		return $retval;
+	}
+}
+
+new M_NextGen_Admin();

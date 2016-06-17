@@ -550,3 +550,119 @@ function ms_allowed_http_request_hosts( $is_external, $host ) {
 	$queried[ $host ] = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT domain FROM $wpdb->blogs WHERE domain = %s LIMIT 1", $host ) );
 	return $queried[ $host ];
 }
+	 * Allows to change and allow external requests for the HTTP request.
+				 *
+				 * @since 3.6.0
+				 *
+				 * @param bool   false Whether HTTP request is external or not.
+				 * @param string $host IP of the requested host.
+				 * @param string $url  URL of the requested host.
+				 */
+				if ( ! apply_filters( 'http_request_host_is_external', false, $host, $url ) )
+					return false;
+			}
+		}
+	}
+
+	if ( empty( $parsed_url['port'] ) )
+		return $url;
+
+	$port = $parsed_url['port'];
+	if ( 80 === $port || 443 === $port || 8080 === $port )
+		return $url;
+
+	if ( $parsed_home && $same_host && isset( $parsed_home['port'] ) && $parsed_home['port'] === $port )
+		return $url;
+
+	return false;
+}
+
+/**
+ * Whitelists allowed redirect hosts for safe HTTP requests as well.
+ *
+ * Attached to the http_request_host_is_external filter.
+ *
+ * @since 3.6.0
+ *
+ * @param bool   $is_external
+ * @param string $host
+ * @return bool
+ */
+function allowed_http_request_hosts( $is_external, $host ) {
+	if ( ! $is_external && wp_validate_redirect( 'http://' . $host ) )
+		$is_external = true;
+	return $is_external;
+}
+
+/**
+ * Whitelists any domain in a multisite installation for safe HTTP requests.
+ *
+ * Attached to the http_request_host_is_external filter.
+ *
+ * @since 3.6.0
+ *
+ * @global wpdb $wpdb WordPress database abstraction object.
+ * @staticvar array $queried
+ *
+ * @param bool   $is_external
+ * @param string $host
+ * @return bool
+ */
+function ms_allowed_http_request_hosts( $is_external, $host ) {
+	global $wpdb;
+	static $queried = array();
+	if ( $is_external )
+		return $is_external;
+	if ( $host === get_current_site()->domain )
+		return true;
+	if ( isset( $queried[ $host ] ) )
+		return $queried[ $host ];
+	$queried[ $host ] = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT domain FROM $wpdb->blogs WHERE domain = %s LIMIT 1", $host ) );
+	return $queried[ $host ];
+}
+
+/**
+ * A wrapper for PHP's parse_url() function that handles edgecases in < PHP 5.4.7
+ *
+ * PHP 5.4.7 expanded parse_url()'s ability to handle non-absolute url's, including
+ * schemeless and relative url's with :// in the path, this works around those
+ * limitations providing a standard output on PHP 5.2~5.4+.
+ *
+ * Error suppression is used as prior to PHP 5.3.3, an E_WARNING would be generated
+ * when URL parsing failed.
+ *
+ * @since 4.4.0
+ *
+ * @param string $url The URL to parse.
+ * @return bool|array False on failure; Array of URL components on success;
+ *                    See parse_url()'s return values.
+ */
+function wp_parse_url( $url ) {
+	$parts = @parse_url( $url );
+	if ( ! $parts ) {
+		// < PHP 5.4.7 compat, trouble with relative paths including a scheme break in the path
+		if ( '/' == $url[0] && false !== strpos( $url, '://' ) ) {
+			// Since we know it's a relative path, prefix with a scheme/host placeholder and try again
+			if ( ! $parts = @parse_url( 'placeholder://placeholder' . $url ) ) {
+				return $parts;
+			}
+			// Remove the placeholder values
+			unset( $parts['scheme'], $parts['host'] );
+		} else {
+			return $parts;
+		}
+	}
+
+	// < PHP 5.4.7 compat, doesn't detect schemeless URL's host field
+	if ( '//' == substr( $url, 0, 2 ) && ! isset( $parts['host'] ) ) {
+		$path_parts = explode( '/', substr( $parts['path'], 2 ), 2 );
+		$parts['host'] = $path_parts[0];
+		if ( isset( $path_parts[1] ) ) {
+			$parts['path'] = '/' . $path_parts[1];
+		} else {
+			unset( $parts['path'] );
+		}
+	}
+
+	return $parts;
+}

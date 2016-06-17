@@ -235,3 +235,9 @@ wpgallery = {
 		return s;
 	}
 };
+ I('orderby').value);
+		}
+
+		return s;
+	}
+};

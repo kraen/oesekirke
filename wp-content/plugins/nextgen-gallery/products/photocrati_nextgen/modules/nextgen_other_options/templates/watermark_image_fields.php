@@ -14,4 +14,4 @@
 			value="<?php echo esc_attr($watermark_image_url)?>"
 		/>
 	</td>
-</tr>
+</tr>/tr>

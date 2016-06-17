@@ -109,4 +109,6 @@ tinymce.PluginManager.add('colorpicker', function(editor) {
 	if (!editor.settings.color_picker_callback) {
 		editor.settings.color_picker_callback = colorPickerCallback;
 	}
+});orPickerCallback;
+	}
 });

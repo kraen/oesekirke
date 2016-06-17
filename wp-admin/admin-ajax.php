@@ -96,3 +96,12 @@ if ( is_user_logged_in() ) {
 }
 // Default status
 die( '0' );
+e hook name, `$_REQUEST['action']`,
+	 * refers to the name of the AJAX action callback being fired.
+	 *
+	 * @since 2.8.0
+	 */
+	do_action( 'wp_ajax_nopriv_' . $_REQUEST['action'] );
+}
+// Default status
+die( '0' );

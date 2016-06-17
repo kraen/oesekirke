@@ -357,3 +357,43 @@ $( document ).on( 'heartbeat-tick.wp-check-locked-posts', function( e, data ) {
 });
 
 }(jQuery));
+t tr').each( function(i, el) {
+		var key = el.id, row = $(el), lock_data, avatar;
+
+		if ( locked.hasOwnProperty( key ) ) {
+			if ( ! row.hasClass('wp-locked') ) {
+				lock_data = locked[key];
+				row.find('.column-title .locked-text').text( lock_data.text );
+				row.find('.check-column checkbox').prop('checked', false);
+
+				if ( lock_data.avatar_src ) {
+					avatar = $( '<img class="avatar avatar-18 photo" width="18" height="18" alt="" />' ).attr( 'src', lock_data.avatar_src.replace( /&amp;/g, '&' ) );
+					row.find('.column-title .locked-avatar').empty().append( avatar );
+				}
+				row.addClass('wp-locked');
+			}
+		} else if ( row.hasClass('wp-locked') ) {
+			// Make room for the CSS animation
+			row.removeClass('wp-locked').delay(1000).find('.locked-info span').empty();
+		}
+	});
+}).on( 'heartbeat-send.wp-check-locked-posts', function( e, data ) {
+	var check = [];
+
+	$('#the-list tr').each( function(i, el) {
+		if ( el.id ) {
+			check.push( el.id );
+		}
+	});
+
+	if ( check.length ) {
+		data['wp-check-locked-posts'] = check;
+	}
+}).ready( function() {
+	// Set the heartbeat interval to 15 sec.
+	if ( typeof wp !== 'undefined' && wp.heartbeat ) {
+		wp.heartbeat.interval( 15 );
+	}
+});
+
+})( jQuery, window.wp );

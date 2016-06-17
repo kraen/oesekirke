@@ -1114,3 +1114,23 @@ a.rsswidget {
 		margin: 0;
 	}
 }
+and (max-width: 600px) {
+	/* Keep the close icon from overlapping the Welcome text. */
+	.welcome-panel .welcome-panel-close {
+		overflow: hidden;
+		text-indent: 40px;
+		white-space: nowrap;
+		width: 20px;
+		height: 20px;
+		padding: 5px;
+		top: 5px;
+		left: 5px;
+	}
+
+	/* Make the close icon larger for tappability. */
+	.welcome-panel .welcome-panel-close:before {
+		font-size: 20px;
+		top: 5px;
+		right: -35px;
+	}
+}

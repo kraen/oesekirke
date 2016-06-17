@@ -363,3 +363,27 @@ if ( typeof(jQuery) != 'undefined' ) {
 	})(document, window);
 
 }
+-admin-bar-logout'), 'click', function() {
+					if ( 'sessionStorage' in window ) {
+						try {
+							for ( var key in sessionStorage ) {
+								if ( key.indexOf('wp-autosave-') != -1 )
+									sessionStorage.removeItem(key);
+							}
+						} catch(e) {}
+					}
+				});
+			}
+
+			if ( w.location.hash )
+				w.scrollBy(0,-32);
+
+			if ( navigator.userAgent && document.body.className.indexOf( 'no-font-face' ) === -1 &&
+				/Android (1.0|1.1|1.5|1.6|2.0|2.1)|Nokia|Opera Mini|w(eb)?OSBrowser|webOS|UCWEB|Windows Phone OS 7|XBLWP7|ZuneWP7|MSIE 7/.test( navigator.userAgent ) ) {
+
+				document.body.className += ' no-font-face';
+			}
+		});
+	})(document, window);
+
+}

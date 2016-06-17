@@ -89,4 +89,15 @@
         }
     };
 
+})(jQuery);           this.enable_ajax_pagination();
+                }
+            }
+        }
+
+        // We maintain a count of all the current AJAX actions initiated
+        if (typeof(window['ngg_ajax_operation_count']) == 'undefined') {
+            window['ngg_ajax_operaton_count'] = 0;
+        }
+    };
+
 })(jQuery);

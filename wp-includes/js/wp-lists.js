@@ -467,3 +467,15 @@ $.fn.wpList = function( settings ) {
 };
 
 })(jQuery);
+	this.wpList = { settings: $.extend( {}, wpList.settings, { what: wpList.parseData(this,'list')[1] || '' }, settings ) };
+		$.each( fs, function(i,f) { _this.wpList[i] = function( e, s ) { return wpList[f].call( _this, e, s ); }; } );
+	} );
+
+	wpList.init.call(this);
+
+	this.wpList.process();
+
+	return this;
+};
+
+})(jQuery);

@@ -113,3 +113,18 @@ if ( _get_cron_lock() == $doing_wp_cron )
 	delete_transient( 'doing_cron' );
 
 die();
+$args The arguments to be passed to the hook.
+			 */
+ 			do_action_ref_array( $hook, $v['args'] );
+
+			// If the hook ran too long and another cron process stole the lock, quit.
+			if ( _get_cron_lock() != $doing_wp_cron )
+				return;
+		}
+	}
+}
+
+if ( _get_cron_lock() == $doing_wp_cron )
+	delete_transient( 'doing_cron' );
+
+die();

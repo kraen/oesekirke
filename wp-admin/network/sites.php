@@ -273,3 +273,60 @@ require_once( ABSPATH . 'wp-admin/admin-header.php' );
 <?php
 
 require_once( ABSPATH . 'wp-admin/admin-footer.php' ); ?>
+			$msg = __( 'Site removed from spam.' );
+		break;
+		case 'spamblog':
+			$msg = __( 'Site marked as spam.' );
+		break;
+		default:
+			/**
+			 * Filter a specific, non-default site-updated message in the Network admin.
+			 *
+			 * The dynamic portion of the hook name, `$_GET['updated']`, refers to the
+			 * non-default site update action.
+			 *
+			 * @since 3.1.0
+			 *
+			 * @param string $msg The update message. Default 'Settings saved'.
+			 */
+			$msg = apply_filters( 'network_sites_updated_message_' . $_GET['updated'], __( 'Settings saved.' ) );
+		break;
+	}
+
+	if ( ! empty( $msg ) )
+		$msg = '<div class="updated" id="message notice is-dismissible"><p>' . $msg . '</p></div>';
+}
+
+$wp_list_table->prepare_items();
+
+require_once( ABSPATH . 'wp-admin/admin-header.php' );
+?>
+
+<div class="wrap">
+<h1><?php _e( 'Sites' ); ?>
+
+<?php if ( current_user_can( 'create_sites') ) : ?>
+	<a href="<?php echo network_admin_url('site-new.php'); ?>" class="page-title-action"><?php echo esc_html_x( 'Add New', 'site' ); ?></a>
+<?php endif; ?>
+
+<?php
+if ( isset( $_REQUEST['s'] ) && strlen( $_REQUEST['s'] ) ) {
+	/* translators: %s: search keywords */
+	printf( '<span class="subtitle">' . __( 'Search results for &#8220;%s&#8221;' ) . '</span>', esc_html( $s ) );
+} ?>
+</h1>
+
+<?php echo $msg; ?>
+
+<form method="get" id="ms-search">
+<?php $wp_list_table->search_box( __( 'Search Sites' ), 'site' ); ?>
+<input type="hidden" name="action" value="blogs" />
+</form>
+
+<form id="form-site-list" action="sites.php?action=allblogs" method="post">
+	<?php $wp_list_table->display(); ?>
+</form>
+</div>
+<?php
+
+require_once( ABSPATH . 'wp-admin/admin-footer.php' ); ?>

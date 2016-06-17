@@ -98,3 +98,7 @@
 		</td>
 	</tr>
 </table>
+)?></p>
+		</td>
+	</tr>
+</table>

@@ -515,3 +515,51 @@ class WP_Admin_Bar {
 		do_action( 'add_admin_bar_menus' );
 	}
 }
+
+			?>
+		</li><?php
+	}
+
+	/**
+	 * @param string $id    Unused.
+	 * @param object $node
+	 */
+	public function recursive_render( $id, $node ) {
+		_deprecated_function( __METHOD__, '3.3', 'WP_Admin_bar::render(), WP_Admin_Bar::_render_item()' );
+		$this->_render_item( $node );
+	}
+
+	/**
+	 * @access public
+	 */
+	public function add_menus() {
+		// User related, aligned right.
+		add_action( 'admin_bar_menu', 'wp_admin_bar_my_account_menu', 0 );
+		add_action( 'admin_bar_menu', 'wp_admin_bar_search_menu', 4 );
+		add_action( 'admin_bar_menu', 'wp_admin_bar_my_account_item', 7 );
+
+		// Site related.
+		add_action( 'admin_bar_menu', 'wp_admin_bar_sidebar_toggle', 0 );
+		add_action( 'admin_bar_menu', 'wp_admin_bar_wp_menu', 10 );
+		add_action( 'admin_bar_menu', 'wp_admin_bar_my_sites_menu', 20 );
+		add_action( 'admin_bar_menu', 'wp_admin_bar_site_menu', 30 );
+		add_action( 'admin_bar_menu', 'wp_admin_bar_customize_menu', 40 );
+		add_action( 'admin_bar_menu', 'wp_admin_bar_updates_menu', 50 );
+
+		// Content related.
+		if ( ! is_network_admin() && ! is_user_admin() ) {
+			add_action( 'admin_bar_menu', 'wp_admin_bar_comments_menu', 60 );
+			add_action( 'admin_bar_menu', 'wp_admin_bar_new_content_menu', 70 );
+		}
+		add_action( 'admin_bar_menu', 'wp_admin_bar_edit_menu', 80 );
+
+		add_action( 'admin_bar_menu', 'wp_admin_bar_add_secondary_groups', 200 );
+
+		/**
+		 * Fires after menus are added to the menu bar.
+		 *
+		 * @since 3.1.0
+		 */
+		do_action( 'add_admin_bar_menus' );
+	}
+}

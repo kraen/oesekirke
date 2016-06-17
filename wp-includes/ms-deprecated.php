@@ -342,4 +342,119 @@ function get_blogaddress_by_domain( $domain, $path ) {
 		}
 	}
 	return esc_url_raw( $url );
+}s simply returned as such.
+ *
+ * @since MU
+ * @deprecated 3.6.0 Use get_user_by()
+ * @see get_user_by()
+ *
+ * @param string $string Either an email address or a login.
+ * @return int
+ */
+function get_user_id_from_string( $string ) {
+	_deprecated_function( __FUNCTION__, '3.6', 'get_user_by()' );
+
+	if ( is_email( $string ) )
+		$user = get_user_by( 'email', $string );
+	elseif ( is_numeric( $string ) )
+		return $string;
+	else
+		$user = get_user_by( 'login', $string );
+
+	if ( $user )
+		return $user->ID;
+	return 0;
+}
+
+/**
+ * Get a full blog URL, given a domain and a path.
+ *
+ * @since MU
+ * @deprecated 3.7.0
+ *
+ * @param string $domain
+ * @param string $path
+ * @return string
+ */
+function get_blogaddress_by_domain( $domain, $path ) {
+	_deprecated_function( __FUNCTION__, '3.7' );
+
+	if ( is_subdomain_install() ) {
+		$url = "http://" . $domain.$path;
+	} else {
+		if ( $domain != $_SERVER['HTTP_HOST'] ) {
+			$blogname = substr( $domain, 0, strpos( $domain, '.' ) );
+			$url = 'http://' . substr( $domain, strpos( $domain, '.' ) + 1 ) . $path;
+			// we're not installing the main blog
+			if ( $blogname != 'www.' )
+				$url .= $blogname . '/';
+		} else { // main blog
+			$url = 'http://' . $domain . $path;
+		}
+	}
+	return esc_url_raw( $url );
+}
+
+/**
+ * Create an empty blog.
+ *
+ * @since MU 1.0
+ * @deprecated 4.4.0
+ *
+ * @param string $domain       The new blog's domain.
+ * @param string $path         The new blog's path.
+ * @param string $weblog_title The new blog's title.
+ * @param int    $site_id      Optional. Defaults to 1.
+ * @return string|int The ID of the newly created blog
+ */
+function create_empty_blog( $domain, $path, $weblog_title, $site_id = 1 ) {
+	_deprecated_function( __FUNCTION__, '4.4' );
+
+	if ( empty($path) )
+		$path = '/';
+
+	// Check if the domain has been used already. We should return an error message.
+	if ( domain_exists($domain, $path, $site_id) )
+		return __( '<strong>ERROR</strong>: Site URL already taken.' );
+
+	// Need to back up wpdb table names, and create a new wp_blogs entry for new blog.
+	// Need to get blog_id from wp_blogs, and create new table names.
+	// Must restore table names at the end of function.
+
+	if ( ! $blog_id = insert_blog($domain, $path, $site_id) )
+		return __( '<strong>ERROR</strong>: problem creating site entry.' );
+
+	switch_to_blog($blog_id);
+	install_blog($blog_id);
+	restore_current_blog();
+
+	return $blog_id;
+}
+
+/**
+ * Get the admin for a domain/path combination.
+ *
+ * @since MU 1.0
+ * @deprecated 4.4.0
+ *
+ * @global wpdb $wpdb WordPress database abstraction object.
+ *
+ * @param string $sitedomain Optional. Site domain.
+ * @param string $path       Optional. Site path.
+ * @return array|false The network admins
+ */
+function get_admin_users_for_domain( $sitedomain = '', $path = '' ) {
+	_deprecated_function( __FUNCTION__, '4.4' );
+
+	global $wpdb;
+
+	if ( ! $sitedomain )
+		$site_id = $wpdb->siteid;
+	else
+		$site_id = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $wpdb->site WHERE domain = %s AND path = %s", $sitedomain, $path ) );
+
+	if ( $site_id )
+		return $wpdb->get_results( $wpdb->prepare( "SELECT u.ID, u.user_login, u.user_pass FROM $wpdb->users AS u, $wpdb->sitemeta AS sm WHERE sm.meta_key = 'admin_user_id' AND u.ID = sm.meta_value AND sm.site_id = %d", $site_id ), ARRAY_A );
+
+	return false;
 }

@@ -109,3 +109,8 @@ var findPosts;
 		});
 	});
 })( jQuery );
+box-inside' ).on( 'click', 'tr', function() {
+			$( this ).find( '.found-radio input' ).prop( 'checked', true );
+		});
+	});
+})( jQuery );

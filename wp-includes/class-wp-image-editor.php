@@ -483,3 +483,9 @@ abstract class WP_Image_Editor {
 	}
 }
 
+false;
+
+		return $extensions[0];
+	}
+}
+

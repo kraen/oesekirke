@@ -140,3 +140,90 @@ function get_the_post_thumbnail( $post_id = null, $size = 'post-thumbnail', $att
 	 */
 	return apply_filters( 'post_thumbnail_html', $html, $post_id, $post_thumbnail_id, $size, $attr );
 }
+size or array of width and height
+	 *                           values (in that order). Default 'post-thumbnail'.
+	 */
+	$size = apply_filters( 'post_thumbnail_size', $size );
+
+	if ( $post_thumbnail_id ) {
+
+		/**
+		 * Fires before fetching the post thumbnail HTML.
+		 *
+		 * Provides "just in time" filtering of all filters in wp_get_attachment_image().
+		 *
+		 * @since 2.9.0
+		 *
+		 * @param int          $post_id           The post ID.
+		 * @param string       $post_thumbnail_id The post thumbnail ID.
+		 * @param string|array $size              The post thumbnail size. Image size or array of width
+		 *                                        and height values (in that order). Default 'post-thumbnail'.
+		 */
+		do_action( 'begin_fetch_post_thumbnail_html', $post->ID, $post_thumbnail_id, $size );
+		if ( in_the_loop() )
+			update_post_thumbnail_cache();
+		$html = wp_get_attachment_image( $post_thumbnail_id, $size, false, $attr );
+
+		/**
+		 * Fires after fetching the post thumbnail HTML.
+		 *
+		 * @since 2.9.0
+		 *
+		 * @param int          $post_id           The post ID.
+		 * @param string       $post_thumbnail_id The post thumbnail ID.
+		 * @param string|array $size              The post thumbnail size. Image size or array of width
+		 *                                        and height values (in that order). Default 'post-thumbnail'.
+		 */
+		do_action( 'end_fetch_post_thumbnail_html', $post->ID, $post_thumbnail_id, $size );
+
+	} else {
+		$html = '';
+	}
+	/**
+	 * Filter the post thumbnail HTML.
+	 *
+	 * @since 2.9.0
+	 *
+	 * @param string       $html              The post thumbnail HTML.
+	 * @param int          $post_id           The post ID.
+	 * @param string       $post_thumbnail_id The post thumbnail ID.
+	 * @param string|array $size              The post thumbnail size. Image size or array of width and height
+	 *                                        values (in that order). Default 'post-thumbnail'.
+	 * @param string       $attr              Query string of attributes.
+	 */
+	return apply_filters( 'post_thumbnail_html', $html, $post->ID, $post_thumbnail_id, $size, $attr );
+}
+
+/**
+ * Return the post thumbnail URL.
+ *
+ * @since 4.4.0
+ *
+ * @param int|WP_Post  $post Optional. Post ID or WP_Post object.  Default is global `$post`.
+ * @param string|array $size Optional. Registered image size to retrieve the source for or a flat
+ *                           array of height and width dimensions. Default 'post-thumbnail'.
+ * @return string|false Post thumbnail URL or false if no URL is available.
+ */
+function get_the_post_thumbnail_url( $post = null, $size = 'post-thumbnail' ) {
+	$post_thumbnail_id = get_post_thumbnail_id( $post );
+	if ( ! $post_thumbnail_id ) {
+		return false;
+	}
+	return wp_get_attachment_image_url( $post_thumbnail_id, $size );
+}
+
+/**
+ * Display the post thumbnail URL.
+ *
+ * @since 4.4.0
+ *
+ * @param string|array $size Optional. Image size to use. Accepts any valid image size,
+ *                           or an array of width and height values in pixels (in that order).
+ *                           Default 'post-thumbnail'.
+ */
+function the_post_thumbnail_url( $size = 'post-thumbnail' ) {
+	$url = get_the_post_thumbnail_url( null, $size );
+	if ( $url ) {
+		echo esc_url( $url );
+	}
+}

@@ -4699,3 +4699,454 @@ function setup_postdata( $post ) {
 
 	return false;
 }
+ as $pagepath ) {
+				if ( ! strpos( $pagepath, '/' ) ) {
+					continue;
+				}
+				$pagepath_obj = get_page_by_path( $pagepath );
+
+				if ( $pagepath_obj && ( $pagepath_obj->ID == $page_obj->ID ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Is the query for paged result and not for the first page?
+	 *
+	 * @since 3.1.0
+	 *
+	 * @return bool
+	 */
+	public function is_paged() {
+		return (bool) $this->is_paged;
+	}
+
+	/**
+	 * Is the query for a post or page preview?
+	 *
+	 * @since 3.1.0
+	 *
+	 * @return bool
+	 */
+	public function is_preview() {
+		return (bool) $this->is_preview;
+	}
+
+	/**
+	 * Is the query for the robots file?
+	 *
+	 * @since 3.1.0
+	 *
+	 * @return bool
+	 */
+	public function is_robots() {
+		return (bool) $this->is_robots;
+	}
+
+	/**
+	 * Is the query for a search?
+	 *
+	 * @since 3.1.0
+	 *
+	 * @return bool
+	 */
+	public function is_search() {
+		return (bool) $this->is_search;
+	}
+
+	/**
+	 * Is the query for an existing single post?
+	 *
+	 * Works for any post type, except attachments and pages
+	 *
+	 * If the $post parameter is specified, this function will additionally
+	 * check if the query is for one of the Posts specified.
+	 *
+	 * @see WP_Query::is_page()
+	 * @see WP_Query::is_singular()
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param int|string|array $post Optional. Post ID, title, slug, path, or array of such. Default empty.
+	 * @return bool Whether the query is for an existing single post.
+	 */
+	public function is_single( $post = '' ) {
+		if ( !$this->is_single )
+			return false;
+
+		if ( empty($post) )
+			return true;
+
+		$post_obj = $this->get_queried_object();
+
+		$post = array_map( 'strval', (array) $post );
+
+		if ( in_array( (string) $post_obj->ID, $post ) ) {
+			return true;
+		} elseif ( in_array( $post_obj->post_title, $post ) ) {
+			return true;
+		} elseif ( in_array( $post_obj->post_name, $post ) ) {
+			return true;
+		} else {
+			foreach ( $post as $postpath ) {
+				if ( ! strpos( $postpath, '/' ) ) {
+					continue;
+				}
+				$postpath_obj = get_page_by_path( $postpath, OBJECT, $post_obj->post_type );
+
+				if ( $postpath_obj && ( $postpath_obj->ID == $post_obj->ID ) ) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Is the query for an existing single post of any post type (post, attachment, page, ... )?
+	 *
+	 * If the $post_types parameter is specified, this function will additionally
+	 * check if the query is for one of the Posts Types specified.
+	 *
+	 * @see WP_Query::is_page()
+	 * @see WP_Query::is_single()
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param string|array $post_types Optional. Post type or array of post types. Default empty.
+	 * @return bool Whether the query is for an existing single post of any of the given post types.
+	 */
+	public function is_singular( $post_types = '' ) {
+		if ( empty( $post_types ) || !$this->is_singular )
+			return (bool) $this->is_singular;
+
+		$post_obj = $this->get_queried_object();
+
+		return in_array( $post_obj->post_type, (array) $post_types );
+	}
+
+	/**
+	 * Is the query for a specific time?
+	 *
+	 * @since 3.1.0
+	 *
+	 * @return bool
+	 */
+	public function is_time() {
+		return (bool) $this->is_time;
+	}
+
+	/**
+	 * Is the query for a trackback endpoint call?
+	 *
+	 * @since 3.1.0
+	 *
+	 * @return bool
+	 */
+	public function is_trackback() {
+		return (bool) $this->is_trackback;
+	}
+
+	/**
+	 * Is the query for an existing year archive?
+	 *
+	 * @since 3.1.0
+	 *
+	 * @return bool
+	 */
+	public function is_year() {
+		return (bool) $this->is_year;
+	}
+
+	/**
+	 * Is the query a 404 (returns no results)?
+	 *
+	 * @since 3.1.0
+	 *
+	 * @return bool
+	 */
+	public function is_404() {
+		return (bool) $this->is_404;
+	}
+
+	/**
+	 * Is the query for an embedded post?
+	 *
+	 * @since 4.4.0
+	 *
+	 * @return bool
+	 */
+	public function is_embed() {
+		return (bool) $this->is_embed;
+	}
+
+	/**
+	 * Is the query the main query?
+	 *
+	 * @since 3.3.0
+	 *
+	 * @global WP_Query $wp_query Global WP_Query instance.
+	 *
+	 * @return bool
+	 */
+	public function is_main_query() {
+		global $wp_the_query;
+		return $wp_the_query === $this;
+	}
+
+	/**
+	 * Set up global post data.
+	 *
+	 * @since 4.1.0
+	 * @since 4.4.0 Added the ability to pass a post ID to `$post`.
+	 *
+	 * @global int             $id
+	 * @global WP_User         $authordata
+	 * @global string|int|bool $currentday
+	 * @global string|int|bool $currentmonth
+	 * @global int             $page
+	 * @global array           $pages
+	 * @global int             $multipage
+	 * @global int             $more
+	 * @global int             $numpages
+	 *
+	 * @param WP_Post|object|int $post WP_Post instance or Post ID/object.
+	 * @return true True when finished.
+	 */
+	public function setup_postdata( $post ) {
+		global $id, $authordata, $currentday, $currentmonth, $page, $pages, $multipage, $more, $numpages;
+
+		if ( ! ( $post instanceof WP_Post ) ) {
+			$post = get_post( $post );
+		}
+
+		if ( ! $post ) {
+			return;
+		}
+
+		$id = (int) $post->ID;
+
+		$authordata = get_userdata($post->post_author);
+
+		$currentday = mysql2date('d.m.y', $post->post_date, false);
+		$currentmonth = mysql2date('m', $post->post_date, false);
+		$numpages = 1;
+		$multipage = 0;
+		$page = $this->get( 'page' );
+		if ( ! $page )
+			$page = 1;
+
+		/*
+		 * Force full post content when viewing the permalink for the $post,
+		 * or when on an RSS feed. Otherwise respect the 'more' tag.
+		 */
+		if ( $post->ID === get_queried_object_id() && ( $this->is_page() || $this->is_single() ) ) {
+			$more = 1;
+		} elseif ( $this->is_feed() ) {
+			$more = 1;
+		} else {
+			$more = 0;
+		}
+
+		$content = $post->post_content;
+		if ( false !== strpos( $content, '<!--nextpage-->' ) ) {
+			$content = str_replace( "\n<!--nextpage-->\n", '<!--nextpage-->', $content );
+			$content = str_replace( "\n<!--nextpage-->", '<!--nextpage-->', $content );
+			$content = str_replace( "<!--nextpage-->\n", '<!--nextpage-->', $content );
+
+			// Ignore nextpage at the beginning of the content.
+			if ( 0 === strpos( $content, '<!--nextpage-->' ) )
+				$content = substr( $content, 15 );
+
+			$pages = explode('<!--nextpage-->', $content);
+		} else {
+			$pages = array( $post->post_content );
+		}
+
+		/**
+		 * Filter the "pages" derived from splitting the post content.
+		 *
+		 * "Pages" are determined by splitting the post content based on the presence
+		 * of `<!-- nextpage -->` tags.
+		 *
+		 * @since 4.4.0
+		 *
+		 * @param array   $pages Array of "pages" derived from the post content.
+		 *                       of `<!-- nextpage -->` tags..
+		 * @param WP_Post $post  Current post object.
+		 */
+		$pages = apply_filters( 'content_pagination', $pages, $post );
+
+		$numpages = count( $pages );
+
+		if ( $numpages > 1 ) {
+			if ( $page > 1 ) {
+				$more = 1;
+			}
+			$multipage = 1;
+		} else {
+	 		$multipage = 0;
+	 	}
+
+		/**
+		 * Fires once the post data has been setup.
+		 *
+		 * @since 2.8.0
+		 * @since 4.1.0 Introduced `$this` parameter.
+		 *
+		 * @param WP_Post  &$post The Post object (passed by reference).
+		 * @param WP_Query &$this The current Query object (passed by reference).
+		 */
+		do_action_ref_array( 'the_post', array( &$post, &$this ) );
+
+		return true;
+	}
+	/**
+	 * After looping through a nested query, this function
+	 * restores the $post global to the current post in this query.
+	 *
+	 * @since 3.7.0
+	 *
+	 * @global WP_Post $post
+	 */
+	public function reset_postdata() {
+		if ( ! empty( $this->post ) ) {
+			$GLOBALS['post'] = $this->post;
+			$this->setup_postdata( $this->post );
+		}
+	}
+
+	/**
+	 * Lazyload term meta for posts in the loop.
+	 *
+	 * @since 4.4.0
+	 * @deprecated 4.5.0 See wp_queue_posts_for_term_meta_lazyload().
+	 *
+	 * @param mixed $check
+	 * @param int   $term_id
+	 * @return mixed
+	 */
+	public function lazyload_term_meta( $check, $term_id ) {
+		_deprecated_function( __METHOD__, '4.5.0' );
+		return $check;
+	}
+
+	/**
+	 * Lazyload comment meta for comments in the loop.
+	 *
+	 * @since 4.4.0
+	 * @deprecated 4.5.0 See wp_queue_comments_for_comment_meta_lazyload().
+	 *
+	 * @param mixed $check
+	 * @param int   $comment_id
+	 * @return mixed
+	 */
+	public function lazyload_comment_meta( $check, $comment_id ) {
+		_deprecated_function( __METHOD__, '4.5.0' );
+		return $check;
+	}
+}
+
+/**
+ * Redirect old slugs to the correct permalink.
+ *
+ * Attempts to find the current slug from the past slugs.
+ *
+ * @since 2.1.0
+ *
+ * @global WP_Query   $wp_query   Global WP_Query instance.
+ * @global wpdb       $wpdb       WordPress database abstraction object.
+ */
+function wp_old_slug_redirect() {
+	global $wp_query;
+
+	if ( is_404() && '' !== $wp_query->query_vars['name'] ) :
+		global $wpdb;
+
+		// Guess the current post_type based on the query vars.
+		if ( get_query_var( 'post_type' ) ) {
+			$post_type = get_query_var( 'post_type' );
+		} elseif ( get_query_var( 'attachment' ) ) {
+			$post_type = 'attachment';
+		} elseif ( ! empty( $wp_query->query_vars['pagename'] ) ) {
+			$post_type = 'page';
+		} else {
+			$post_type = 'post';
+		}
+
+		if ( is_array( $post_type ) ) {
+			if ( count( $post_type ) > 1 )
+				return;
+			$post_type = reset( $post_type );
+		}
+
+		// Do not attempt redirect for hierarchical post types
+		if ( is_post_type_hierarchical( $post_type ) )
+			return;
+
+		$query = $wpdb->prepare("SELECT post_id FROM $wpdb->postmeta, $wpdb->posts WHERE ID = post_id AND post_type = %s AND meta_key = '_wp_old_slug' AND meta_value = %s", $post_type, $wp_query->query_vars['name']);
+
+		// if year, monthnum, or day have been specified, make our query more precise
+		// just in case there are multiple identical _wp_old_slug values
+		if ( '' != $wp_query->query_vars['year'] )
+			$query .= $wpdb->prepare(" AND YEAR(post_date) = %d", $wp_query->query_vars['year']);
+		if ( '' != $wp_query->query_vars['monthnum'] )
+			$query .= $wpdb->prepare(" AND MONTH(post_date) = %d", $wp_query->query_vars['monthnum']);
+		if ( '' != $wp_query->query_vars['day'] )
+			$query .= $wpdb->prepare(" AND DAYOFMONTH(post_date) = %d", $wp_query->query_vars['day']);
+
+		$id = (int) $wpdb->get_var($query);
+
+		if ( ! $id )
+			return;
+
+		$link = get_permalink( $id );
+
+		if ( isset( $GLOBALS['wp_query']->query_vars['paged'] ) && $GLOBALS['wp_query']->query_vars['paged'] > 1 ) {
+			$link = user_trailingslashit( trailingslashit( $link ) . 'page/' . $GLOBALS['wp_query']->query_vars['paged'] );
+		} elseif( is_embed() ) {
+			$link = user_trailingslashit( trailingslashit( $link ) . 'embed' );
+		}
+
+		/**
+		 * Filter the old slug redirect URL.
+		 *
+		 * @since 4.4.0
+		 *
+		 * @param string $link The redirect URL.
+		 */
+		$link = apply_filters( 'old_slug_redirect_url', $link );
+
+		if ( ! $link ) {
+			return;
+		}
+
+		wp_redirect( $link, 301 ); // Permanent redirect
+		exit;
+	endif;
+}
+
+/**
+ * Set up global post data.
+ *
+ * @since 1.5.0
+ * @since 4.4.0 Added the ability to pass a post ID to `$post`.
+ *
+ * @global WP_Query $wp_query Global WP_Query instance.
+ *
+ * @param WP_Post|object|int $post WP_Post instance or Post ID/object.
+ * @return bool True when finished.
+ */
+function setup_postdata( $post ) {
+	global $wp_query;
+
+	if ( ! empty( $wp_query ) && $wp_query instanceof WP_Query ) {
+		return $wp_query->setup_postdata( $post );
+	}
+
+	return false;
+}

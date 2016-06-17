@@ -371,3 +371,84 @@ function is_rtl() {
 	global $wp_locale;
 	return $wp_locale->is_rtl();
 }
+her 'am', 'pm', 'AM', or 'PM'. Not translated version.
+	 * @return string Translated version
+	 */
+	public function get_meridiem($meridiem) {
+		return $this->meridiem[$meridiem];
+	}
+
+	/**
+	 * Global variables are deprecated. For backwards compatibility only.
+	 *
+	 * @deprecated For backwards compatibility only.
+	 * @access private
+	 *
+	 * @global array $weekday
+	 * @global array $weekday_initial
+	 * @global array $weekday_abbrev
+	 * @global array $month
+	 * @global array $month_abbrev
+	 *
+	 * @since 2.1.0
+	 */
+	public function register_globals() {
+		$GLOBALS['weekday']         = $this->weekday;
+		$GLOBALS['weekday_initial'] = $this->weekday_initial;
+		$GLOBALS['weekday_abbrev']  = $this->weekday_abbrev;
+		$GLOBALS['month']           = $this->month;
+		$GLOBALS['month_abbrev']    = $this->month_abbrev;
+	}
+
+	/**
+	 * Constructor which calls helper methods to set up object variables
+	 *
+	 * @since 2.1.0
+	 */
+	public function __construct() {
+		$this->init();
+		$this->register_globals();
+	}
+
+	/**
+	 * Checks if current locale is RTL.
+	 *
+	 * @since 3.0.0
+	 * @return bool Whether locale is RTL.
+	 */
+	public function is_rtl() {
+		return 'rtl' == $this->text_direction;
+	}
+
+	/**
+	 * Register date/time format strings for general POT.
+	 *
+	 * Private, unused method to add some date/time formats translated
+	 * on wp-admin/options-general.php to the general POT that would
+	 * otherwise be added to the admin POT.
+	 *
+	 * @since 3.6.0
+	 */
+	public function _strings_for_pot() {
+		/* translators: localized date format, see http://php.net/date */
+		__( 'F j, Y' );
+		/* translators: localized time format, see http://php.net/date */
+		__( 'g:i a' );
+		/* translators: localized date and time format, see http://php.net/date */
+		__( 'F j, Y g:i a' );
+	}
+}
+
+/**
+ * Checks if current locale is RTL.
+ *
+ * @since 3.0.0
+ *
+ * @global WP_Locale $wp_locale
+ *
+ * @return bool Whether locale is RTL.
+ */
+function is_rtl() {
+	global $wp_locale;
+	return $wp_locale->is_rtl();
+}

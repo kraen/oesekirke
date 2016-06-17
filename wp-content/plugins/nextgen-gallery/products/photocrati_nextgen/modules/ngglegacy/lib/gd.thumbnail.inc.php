@@ -940,4 +940,7 @@ class ngg_Thumbnail {
         imagecopyresampled($dst_image , $src_image , $dst_x , $dst_y , $src_x , $src_y , $dst_w , $dst_h , $src_w , $src_h);
         return true;
     }
+}_w , $src_h);
+        return true;
+    }
 }

@@ -2277,3 +2277,248 @@ function wp_text_diff( $left_string, $right_string, $args = null ) {
 }
 endif;
 
+ringly and is really only meant for single-time
+ * application. Leveraging this improperly in a plugin or theme could result in an endless loop
+ * of password resets if precautions are not taken to ensure it does not execute on every page load.
+ *
+ * @since 2.5.0
+ *
+ * @global wpdb $wpdb WordPress database abstraction object.
+ *
+ * @param string $password The plaintext new user password
+ * @param int    $user_id  User ID
+ */
+function wp_set_password( $password, $user_id ) {
+	global $wpdb;
+
+	$hash = wp_hash_password( $password );
+	$wpdb->update($wpdb->users, array('user_pass' => $hash, 'user_activation_key' => ''), array('ID' => $user_id) );
+
+	wp_cache_delete($user_id, 'users');
+}
+endif;
+
+if ( !function_exists( 'get_avatar' ) ) :
+/**
+ * Retrieve the avatar `<img>` tag for a user, email address, MD5 hash, comment, or post.
+ *
+ * @since 2.5.0
+ * @since 4.2.0 Optional `$args` parameter added.
+ *
+ * @param mixed $id_or_email The Gravatar to retrieve. Accepts a user_id, gravatar md5 hash,
+ *                           user email, WP_User object, WP_Post object, or WP_Comment object.
+ * @param int    $size       Optional. Height and width of the avatar image file in pixels. Default 96.
+ * @param string $default    Optional. URL for the default image or a default type. Accepts '404'
+ *                           (return a 404 instead of a default image), 'retro' (8bit), 'monsterid'
+ *                           (monster), 'wavatar' (cartoon face), 'indenticon' (the "quilt"),
+ *                           'mystery', 'mm', or 'mysteryman' (The Oyster Man), 'blank' (transparent GIF),
+ *                           or 'gravatar_default' (the Gravatar logo). Default is the value of the
+ *                           'avatar_default' option, with a fallback of 'mystery'.
+ * @param string $alt        Optional. Alternative text to use in &lt;img&gt; tag. Default empty.
+ * @param array  $args       {
+ *     Optional. Extra arguments to retrieve the avatar.
+ *
+ *     @type int          $height        Display height of the avatar in pixels. Defaults to $size.
+ *     @type int          $width         Display width of the avatar in pixels. Defaults to $size.
+ *     @type bool         $force_default Whether to always show the default image, never the Gravatar. Default false.
+ *     @type string       $rating        What rating to display avatars up to. Accepts 'G', 'PG', 'R', 'X', and are
+ *                                       judged in that order. Default is the value of the 'avatar_rating' option.
+ *     @type string       $scheme        URL scheme to use. See set_url_scheme() for accepted values.
+ *                                       Default null.
+ *     @type array|string $class         Array or string of additional classes to add to the &lt;img&gt; element.
+ *                                       Default null.
+ *     @type bool         $force_display Whether to always show the avatar - ignores the show_avatars option.
+ *                                       Default false.
+ *     @type string       $extra_attr    HTML attributes to insert in the IMG element. Is not sanitized. Default empty.
+ * }
+ * @return false|string `<img>` tag for the user's avatar. False on failure.
+ */
+function get_avatar( $id_or_email, $size = 96, $default = '', $alt = '', $args = null ) {
+	$defaults = array(
+		// get_avatar_data() args.
+		'size'          => 96,
+		'height'        => null,
+		'width'         => null,
+		'default'       => get_option( 'avatar_default', 'mystery' ),
+		'force_default' => false,
+		'rating'        => get_option( 'avatar_rating' ),
+		'scheme'        => null,
+		'alt'           => '',
+		'class'         => null,
+		'force_display' => false,
+		'extra_attr'    => '',
+	);
+
+	if ( empty( $args ) ) {
+		$args = array();
+	}
+
+	$args['size']    = (int) $size;
+	$args['default'] = $default;
+	$args['alt']     = $alt;
+
+	$args = wp_parse_args( $args, $defaults );
+
+	if ( empty( $args['height'] ) ) {
+		$args['height'] = $args['size'];
+	}
+	if ( empty( $args['width'] ) ) {
+		$args['width'] = $args['size'];
+	}
+
+	if ( is_object( $id_or_email ) && isset( $id_or_email->comment_ID ) ) {
+		$id_or_email = get_comment( $id_or_email );
+	}
+
+	/**
+	 * Filter whether to retrieve the avatar URL early.
+	 *
+	 * Passing a non-null value will effectively short-circuit get_avatar(), passing
+	 * the value through the {@see 'get_avatar'} filter and returning early.
+	 *
+	 * @since 4.2.0
+	 *
+	 * @param string $avatar      HTML for the user's avatar. Default null.
+	 * @param mixed  $id_or_email The Gravatar to retrieve. Accepts a user_id, gravatar md5 hash,
+	 *                            user email, WP_User object, WP_Post object, or WP_Comment object.
+	 * @param array  $args        Arguments passed to get_avatar_url(), after processing.
+	 */
+	$avatar = apply_filters( 'pre_get_avatar', null, $id_or_email, $args );
+
+	if ( ! is_null( $avatar ) ) {
+		/** This filter is documented in wp-includes/pluggable.php */
+		return apply_filters( 'get_avatar', $avatar, $id_or_email, $args['size'], $args['default'], $args['alt'], $args );
+	}
+
+	if ( ! $args['force_display'] && ! get_option( 'show_avatars' ) ) {
+		return false;
+	}
+
+	$url2x = get_avatar_url( $id_or_email, array_merge( $args, array( 'size' => $args['size'] * 2 ) ) );
+
+	$args = get_avatar_data( $id_or_email, $args );
+
+	$url = $args['url'];
+
+	if ( ! $url || is_wp_error( $url ) ) {
+		return false;
+	}
+
+	$class = array( 'avatar', 'avatar-' . (int) $args['size'], 'photo' );
+
+	if ( ! $args['found_avatar'] || $args['force_default'] ) {
+		$class[] = 'avatar-default';
+	}
+
+	if ( $args['class'] ) {
+		if ( is_array( $args['class'] ) ) {
+			$class = array_merge( $class, $args['class'] );
+		} else {
+			$class[] = $args['class'];
+		}
+	}
+
+	$avatar = sprintf(
+		"<img alt='%s' src='%s' srcset='%s' class='%s' height='%d' width='%d' %s/>",
+		esc_attr( $args['alt'] ),
+		esc_url( $url ),
+		esc_attr( "$url2x 2x" ),
+		esc_attr( join( ' ', $class ) ),
+		(int) $args['height'],
+		(int) $args['width'],
+		$args['extra_attr']
+	);
+
+	/**
+	 * Filter the avatar to retrieve.
+	 *
+	 * @since 2.5.0
+	 * @since 4.2.0 The `$args` parameter was added.
+	 *
+	 * @param string $avatar      &lt;img&gt; tag for the user's avatar.
+	 * @param mixed  $id_or_email The Gravatar to retrieve. Accepts a user_id, gravatar md5 hash,
+	 *                            user email, WP_User object, WP_Post object, or WP_Comment object.
+	 * @param int    $size        Square avatar width and height in pixels to retrieve.
+	 * @param string $alt         Alternative text to use in the avatar image tag.
+	 *                                       Default empty.
+	 * @param array  $args        Arguments passed to get_avatar_data(), after processing.
+	 */
+	return apply_filters( 'get_avatar', $avatar, $id_or_email, $args['size'], $args['default'], $args['alt'], $args );
+}
+endif;
+
+if ( !function_exists( 'wp_text_diff' ) ) :
+/**
+ * Displays a human readable HTML representation of the difference between two strings.
+ *
+ * The Diff is available for getting the changes between versions. The output is
+ * HTML, so the primary use is for displaying the changes. If the two strings
+ * are equivalent, then an empty string will be returned.
+ *
+ * The arguments supported and can be changed are listed below.
+ *
+ * 'title' : Default is an empty string. Titles the diff in a manner compatible
+ *		with the output.
+ * 'title_left' : Default is an empty string. Change the HTML to the left of the
+ *		title.
+ * 'title_right' : Default is an empty string. Change the HTML to the right of
+ *		the title.
+ *
+ * @since 2.6.0
+ *
+ * @see wp_parse_args() Used to change defaults to user defined settings.
+ * @uses Text_Diff
+ * @uses WP_Text_Diff_Renderer_Table
+ *
+ * @param string       $left_string  "old" (left) version of string
+ * @param string       $right_string "new" (right) version of string
+ * @param string|array $args         Optional. Change 'title', 'title_left', and 'title_right' defaults.
+ * @return string Empty string if strings are equivalent or HTML with differences.
+ */
+function wp_text_diff( $left_string, $right_string, $args = null ) {
+	$defaults = array( 'title' => '', 'title_left' => '', 'title_right' => '' );
+	$args = wp_parse_args( $args, $defaults );
+
+	if ( ! class_exists( 'WP_Text_Diff_Renderer_Table', false ) )
+		require( ABSPATH . WPINC . '/wp-diff.php' );
+
+	$left_string  = normalize_whitespace($left_string);
+	$right_string = normalize_whitespace($right_string);
+
+	$left_lines  = explode("\n", $left_string);
+	$right_lines = explode("\n", $right_string);
+	$text_diff = new Text_Diff($left_lines, $right_lines);
+	$renderer  = new WP_Text_Diff_Renderer_Table( $args );
+	$diff = $renderer->render($text_diff);
+
+	if ( !$diff )
+		return '';
+
+	$r  = "<table class='diff'>\n";
+
+	if ( ! empty( $args[ 'show_split_view' ] ) ) {
+		$r .= "<col class='content diffsplit left' /><col class='content diffsplit middle' /><col class='content diffsplit right' />";
+	} else {
+		$r .= "<col class='content' />";
+	}
+
+	if ( $args['title'] || $args['title_left'] || $args['title_right'] )
+		$r .= "<thead>";
+	if ( $args['title'] )
+		$r .= "<tr class='diff-title'><th colspan='4'>$args[title]</th></tr>\n";
+	if ( $args['title_left'] || $args['title_right'] ) {
+		$r .= "<tr class='diff-sub-title'>\n";
+		$r .= "\t<td></td><th>$args[title_left]</th>\n";
+		$r .= "\t<td></td><th>$args[title_right]</th>\n";
+		$r .= "</tr>\n";
+	}
+	if ( $args['title'] || $args['title_left'] || $args['title_right'] )
+		$r .= "</thead>\n";
+
+	$r .= "<tbody>\n$diff\n</tbody>\n";
+	$r .= "</table>";
+
+	return $r;
+}
+endif;
+

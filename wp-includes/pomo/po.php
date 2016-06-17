@@ -406,3 +406,47 @@ class PO extends Gettext_Translations {
 	}
 }
 endif;
+	if ('clear' == $action) {
+			$last_line = '';
+			return true;
+		}
+		if ('put-back' == $action) {
+			$use_last_line = true;
+			return true;
+		}
+		$line = $use_last_line? $last_line : fgets($f);
+		$line = ( "\r\n" == substr( $line, -2 ) ) ? rtrim( $line, "\r\n" ) . "\n" : $line;
+		$last_line = $line;
+		$use_last_line = false;
+		return $line;
+	}
+
+	/**
+	 * @param Translation_Entry $entry
+	 * @param string            $po_comment_line
+	 */
+	function add_comment_to_entry(&$entry, $po_comment_line) {
+		$first_two = substr($po_comment_line, 0, 2);
+		$comment = trim(substr($po_comment_line, 2));
+		if ('#:' == $first_two) {
+			$entry->references = array_merge($entry->references, preg_split('/\s+/', $comment));
+		} elseif ('#.' == $first_two) {
+			$entry->extracted_comments = trim($entry->extracted_comments . "\n" . $comment);
+		} elseif ('#,' == $first_two) {
+			$entry->flags = array_merge($entry->flags, preg_split('/,\s*/', $comment));
+		} else {
+			$entry->translator_comments = trim($entry->translator_comments . "\n" . $comment);
+		}
+	}
+
+	/**
+	 * @param string $s
+	 * @return sring
+	 */
+	public static function trim_quotes($s) {
+		if ( substr($s, 0, 1) == '"') $s = substr($s, 1);
+		if ( substr($s, -1, 1) == '"') $s = substr($s, 0, -1);
+		return $s;
+	}
+}
+endif;

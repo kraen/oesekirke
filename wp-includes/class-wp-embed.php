@@ -355,3 +355,24 @@ class WP_Embed {
 	}
 }
 $GLOBALS['wp_embed'] = new WP_Embed();
+ or the original URL. False if 'return_false_on_fail' is true.
+	 */
+	public function maybe_make_link( $url ) {
+		if ( $this->return_false_on_fail ) {
+			return false;
+		}
+
+		$output = ( $this->linkifunknown ) ? '<a href="' . esc_url($url) . '">' . esc_html($url) . '</a>' : $url;
+
+		/**
+		 * Filter the returned, maybe-linked embed URL.
+		 *
+		 * @since 2.9.0
+		 *
+		 * @param string $output The linked or original URL.
+		 * @param string $url    The original URL.
+		 */
+		return apply_filters( 'embed_maybe_make_link', $output, $url );
+	}
+}
+$GLOBALS['wp_embed'] = new WP_Embed();

@@ -602,3 +602,11 @@ function _copy_image_file( $attachment_id ) {
 
 	return $dst_file;
 }
+e, $dst_file ) )
+			$dst_file = false;
+	} else {
+		$dst_file = false;
+	}
+
+	return $dst_file;
+}

@@ -796,3 +796,51 @@ require_once( ABSPATH . 'wp-admin/admin-header.php' );
 	<?php endif; ?>
 </div><!-- /.wrap-->
 <?php include( ABSPATH . 'wp-admin/admin-footer.php' ); ?>
+cally add new top-level pages to this menu' ), esc_url( admin_url( 'edit.php?post_type=page' ) ) ); ?></label></dd>
+								</dl>
+
+								<?php if ( current_theme_supports( 'menus' ) ) : ?>
+
+									<dl class="menu-theme-locations">
+										<dt class="howto"><?php _e( 'Theme locations' ); ?></dt>
+										<?php foreach ( $locations as $location => $description ) : ?>
+										<dd class="checkbox-input">
+											<input type="checkbox"<?php checked( isset( $menu_locations[ $location ] ) && $menu_locations[ $location ] == $nav_menu_selected_id ); ?> name="menu-locations[<?php echo esc_attr( $location ); ?>]" id="locations-<?php echo esc_attr( $location ); ?>" value="<?php echo esc_attr( $nav_menu_selected_id ); ?>" />
+											<label for="locations-<?php echo esc_attr( $location ); ?>"><?php echo $description; ?></label>
+											<?php if ( ! empty( $menu_locations[ $location ] ) && $menu_locations[ $location ] != $nav_menu_selected_id ) : ?>
+												<span class="theme-location-set"><?php
+													/* translators: %s: menu name */
+													printf( _x( '(Currently set to: %s)', 'menu location' ),
+														wp_get_nav_menu_object( $menu_locations[ $location ] )->name
+													);
+												?></span>
+											<?php endif; ?>
+										</dd>
+										<?php endforeach; ?>
+									</dl>
+
+								<?php endif; ?>
+
+							</div>
+						</div><!-- /#post-body-content -->
+					</div><!-- /#post-body -->
+					<div id="nav-menu-footer">
+						<div class="major-publishing-actions wp-clearfix">
+							<?php if ( 0 != $menu_count && ! $add_new_screen ) : ?>
+							<span class="delete-action">
+								<a class="submitdelete deletion menu-delete" href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'action' => 'delete', 'menu' => $nav_menu_selected_id ), admin_url( 'nav-menus.php' ) ), 'delete-nav_menu-' . $nav_menu_selected_id) ); ?>"><?php _e('Delete Menu'); ?></a>
+							</span><!-- END .delete-action -->
+							<?php endif; ?>
+							<div class="publishing-action">
+								<?php submit_button( empty( $nav_menu_selected_id ) ? __( 'Create Menu' ) : __( 'Save Menu' ), 'button-primary menu-save', 'save_menu', false, array( 'id' => 'save_menu_footer' ) ); ?>
+							</div><!-- END .publishing-action -->
+						</div><!-- END .major-publishing-actions -->
+					</div><!-- /#nav-menu-footer -->
+				</div><!-- /.menu-edit -->
+			</form><!-- /#update-nav-menu -->
+		</div><!-- /#menu-management -->
+	</div><!-- /#menu-management-liquid -->
+	</div><!-- /#nav-menus-frame -->
+	<?php endif; ?>
+</div><!-- /.wrap-->
+<?php include( ABSPATH . 'wp-admin/admin-footer.php' ); ?>

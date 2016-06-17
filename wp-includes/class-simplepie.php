@@ -3117,3 +3117,4 @@ class SimplePie
 	}
 }
 endif;
+endif;

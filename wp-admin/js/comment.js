@@ -48,3 +48,22 @@ jQuery(document).ready( function($) {
 		return false;
 	});
 });
+mpwrap.removeClass( 'form-invalid' );
+		}
+
+		$timestamp.html(
+			commentL10n.submittedOn + ' <b>' +
+			commentL10n.dateFormat
+				.replace( '%1$s', $( 'option[value="' + mm + '"]', '#mm' ).attr( 'data-text' ) )
+				.replace( '%2$s', parseInt( jj, 10 ) )
+				.replace( '%3$s', aa )
+				.replace( '%4$s', ( '00' + hh ).slice( -2 ) )
+				.replace( '%5$s', ( '00' + mn ).slice( -2 ) ) +
+				'</b> '
+		);
+
+		// Move focus back to the Edit link.
+		$edittimestamp.show().focus();
+		$timestampdiv.slideUp( 'fast' );
+	});
+});

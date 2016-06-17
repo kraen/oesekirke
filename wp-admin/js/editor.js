@@ -322,3 +322,47 @@ window.switchEditors = {
 		return o.data;
 	}
 };
+( 'beforeWpautop', [ obj ] );
+			}
+
+			obj.data = autop( obj.data );
+
+			if ( $ ) {
+				$( 'body' ).trigger( 'afterWpautop', [ obj ] );
+			}
+
+			return obj.data;
+		}
+
+		if ( $ ) {
+			$( document ).ready( init );
+		} else if ( document.addEventListener ) {
+			document.addEventListener( 'DOMContentLoaded', init, false );
+			window.addEventListener( 'load', init, false );
+		} else if ( window.attachEvent ) {
+			window.attachEvent( 'onload', init );
+			document.attachEvent( 'onreadystatechange', function() {
+				if ( 'complete' === document.readyState ) {
+					init();
+				}
+			} );
+		}
+
+		window.wp = window.wp || {};
+		window.wp.editor = window.wp.editor || {};
+		window.wp.editor.autop = wpautop;
+		window.wp.editor.removep = pre_wpautop;
+
+		exports = {
+			go: switchEditor,
+			wpautop: wpautop,
+			pre_wpautop: pre_wpautop,
+			_wp_Autop: autop,
+			_wp_Nop: removep
+		};
+
+		return exports;
+	}
+
+	window.switchEditors = new SwitchEditors();
+}( window.jQuery ));

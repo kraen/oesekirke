@@ -277,3 +277,23 @@ jQuery(document).ready(function($){
 	break;
 }
 include(ABSPATH . "wp-admin/admin-footer.php");
+ry', 'submit', false );
+		}
+	?>
+	</p>
+<?php else : ?>
+	<p><em><?php _e('You need to make this file writable before you can save your changes. See <a href="https://codex.wordpress.org/Changing_File_Permissions">the Codex</a> for more information.'); ?></em></p>
+<?php endif; ?>
+</form>
+<br class="clear" />
+</div>
+<script type="text/javascript">
+jQuery(document).ready(function($){
+	$('#template').submit(function(){ $('#scrollto').val( $('#newcontent').scrollTop() ); });
+	$('#newcontent').scrollTop( $('#scrollto').val() );
+});
+</script>
+<?php
+	break;
+}
+include(ABSPATH . "wp-admin/admin-footer.php");

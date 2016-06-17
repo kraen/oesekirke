@@ -1700,3 +1700,145 @@ jQuery(document).ready( function($) {
 
 	$(window).resize(function(){ tb_position(); });
 });
+ort': 'sort',
+		'theme-install.php?upload': 'upload',
+		'theme-install.php?search=:query': 'search',
+		'theme-install.php': 'sort'
+	},
+
+	baseUrl: function( url ) {
+		return 'theme-install.php' + url;
+	},
+
+	themePath: '?theme=',
+	browsePath: '?browse=',
+	searchPath: '?search=',
+
+	search: function( query ) {
+		$( '.wp-filter-search' ).val( query );
+	},
+
+	navigate: function() {
+		if ( Backbone.history._hasPushState ) {
+			Backbone.Router.prototype.navigate.apply( this, arguments );
+		}
+	}
+});
+
+
+themes.RunInstaller = {
+
+	init: function() {
+		// Set up the view
+		// Passes the default 'section' as an option
+		this.view = new themes.view.Installer({
+			section: 'featured',
+			SearchView: themes.view.InstallerSearch
+		});
+
+		// Render results
+		this.render();
+
+	},
+
+	render: function() {
+
+		// Render results
+		this.view.render();
+		this.routes();
+
+		Backbone.history.start({
+			root: themes.data.settings.adminUrl,
+			pushState: true,
+			hashChange: false
+		});
+	},
+
+	routes: function() {
+		var self = this,
+			request = {};
+
+		// Bind to our global `wp.themes` object
+		// so that the router is available to sub-views
+		themes.router = new themes.InstallerRouter();
+
+		// Handles `theme` route event
+		// Queries the API for the passed theme slug
+		themes.router.on( 'route:preview', function( slug ) {
+			request.theme = slug;
+			self.view.collection.query( request );
+			self.view.collection.once( 'update', function() {
+				self.view.view.theme.preview();
+			});
+		});
+
+		// Handles sorting / browsing routes
+		// Also handles the root URL triggering a sort request
+		// for `featured`, the default view
+		themes.router.on( 'route:sort', function( sort ) {
+			if ( ! sort ) {
+				sort = 'featured';
+			}
+			self.view.sort( sort );
+			self.view.trigger( 'theme:close' );
+		});
+
+		// Support the `upload` route by going straight to upload section
+		themes.router.on( 'route:upload', function() {
+			$( 'a.upload' ).trigger( 'click' );
+		});
+
+		// The `search` route event. The router populates the input field.
+		themes.router.on( 'route:search', function() {
+			$( '.wp-filter-search' ).focus().trigger( 'keyup' );
+		});
+
+		this.extraRoutes();
+	},
+
+	extraRoutes: function() {
+		return false;
+	}
+};
+
+// Ready...
+$( document ).ready(function() {
+	if ( themes.isInstall ) {
+		themes.RunInstaller.init();
+	} else {
+		themes.Run.init();
+	}
+
+	$( '.broken-themes .delete-theme' ).on( 'click', function() {
+		return confirm( _wpThemeSettings.settings.confirmDelete );
+	});
+});
+
+})( jQuery );
+
+// Align theme browser thickbox
+var tb_position;
+jQuery(document).ready( function($) {
+	tb_position = function() {
+		var tbWindow = $('#TB_window'),
+			width = $(window).width(),
+			H = $(window).height(),
+			W = ( 1040 < width ) ? 1040 : width,
+			adminbar_height = 0;
+
+		if ( $('#wpadminbar').length ) {
+			adminbar_height = parseInt( $('#wpadminbar').css('height'), 10 );
+		}
+
+		if ( tbWindow.size() ) {
+			tbWindow.width( W - 50 ).height( H - 45 - adminbar_height );
+			$('#TB_iframeContent').width( W - 50 ).height( H - 75 - adminbar_height );
+			tbWindow.css({'margin-left': '-' + parseInt( ( ( W - 50 ) / 2 ), 10 ) + 'px'});
+			if ( typeof document.body.style.maxWidth !== 'undefined' ) {
+				tbWindow.css({'top': 20 + adminbar_height + 'px', 'margin-top': '0'});
+			}
+		}
+	};
+
+	$(window).resize(function(){ tb_position(); });
+});

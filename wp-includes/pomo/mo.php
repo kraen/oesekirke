@@ -263,3 +263,30 @@ class MO extends Gettext_Translations {
 	}
 }
 endif;
+		$parts = explode(chr(0), $original);
+		$entry->singular = $parts[0];
+		if (isset($parts[1])) {
+			$entry->is_plural = true;
+			$entry->plural = $parts[1];
+		}
+		// plural translations are also separated by \0
+		$entry->translations = explode(chr(0), $translation);
+		return $entry;
+	}
+
+	/**
+	 * @param int $count
+	 * @return string
+	 */
+	function select_plural_form($count) {
+		return $this->gettext_select_plural_form($count);
+	}
+
+	/**
+	 * @return int
+	 */
+	function get_plural_forms_count() {
+		return $this->_nplurals;
+	}
+}
+endif;

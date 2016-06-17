@@ -1342,3 +1342,207 @@ class WP_Posts_List_Table extends WP_List_Table {
 <?php
 	}
 }
+title',  __( 'Default Template' ), 'quick-edit' );
+    				?>
+					<option value="default"><?php echo esc_html( $default_title ); ?></option>
+					<?php page_template_dropdown() ?>
+				</select>
+			</label>
+
+	<?php
+			endif; // page post_type
+		endif; // page-attributes
+	?>
+
+	<?php if ( count( $flat_taxonomies ) && !$bulk ) : ?>
+
+	<?php foreach ( $flat_taxonomies as $taxonomy ) : ?>
+		<?php if ( current_user_can( $taxonomy->cap->assign_terms ) ) : ?>
+			<label class="inline-edit-tags">
+				<span class="title"><?php echo esc_html( $taxonomy->labels->name ) ?></span>
+				<textarea cols="22" rows="1" name="tax_input[<?php echo esc_attr( $taxonomy->name )?>]" class="tax_input_<?php echo esc_attr( $taxonomy->name )?>"></textarea>
+			</label>
+		<?php endif; ?>
+
+	<?php endforeach; //$flat_taxonomies as $taxonomy ?>
+
+	<?php endif; // count( $flat_taxonomies ) && !$bulk  ?>
+
+	<?php if ( post_type_supports( $screen->post_type, 'comments' ) || post_type_supports( $screen->post_type, 'trackbacks' ) ) :
+		if ( $bulk ) : ?>
+
+			<div class="inline-edit-group wp-clearfix">
+		<?php if ( post_type_supports( $screen->post_type, 'comments' ) ) : ?>
+			<label class="alignleft">
+				<span class="title"><?php _e( 'Comments' ); ?></span>
+				<select name="comment_status">
+					<option value=""><?php _e( '&mdash; No Change &mdash;' ); ?></option>
+					<option value="open"><?php _e( 'Allow' ); ?></option>
+					<option value="closed"><?php _e( 'Do not allow' ); ?></option>
+				</select>
+			</label>
+		<?php endif; if ( post_type_supports( $screen->post_type, 'trackbacks' ) ) : ?>
+			<label class="alignright">
+				<span class="title"><?php _e( 'Pings' ); ?></span>
+				<select name="ping_status">
+					<option value=""><?php _e( '&mdash; No Change &mdash;' ); ?></option>
+					<option value="open"><?php _e( 'Allow' ); ?></option>
+					<option value="closed"><?php _e( 'Do not allow' ); ?></option>
+				</select>
+			</label>
+		<?php endif; ?>
+			</div>
+
+	<?php else : // $bulk ?>
+
+			<div class="inline-edit-group wp-clearfix">
+			<?php if ( post_type_supports( $screen->post_type, 'comments' ) ) : ?>
+				<label class="alignleft">
+					<input type="checkbox" name="comment_status" value="open" />
+					<span class="checkbox-title"><?php _e( 'Allow Comments' ); ?></span>
+				</label>
+			<?php endif; if ( post_type_supports( $screen->post_type, 'trackbacks' ) ) : ?>
+				<label class="alignleft">
+					<input type="checkbox" name="ping_status" value="open" />
+					<span class="checkbox-title"><?php _e( 'Allow Pings' ); ?></span>
+				</label>
+			<?php endif; ?>
+			</div>
+
+	<?php endif; // $bulk
+	endif; // post_type_supports comments or pings ?>
+
+			<div class="inline-edit-group wp-clearfix">
+				<label class="inline-edit-status alignleft">
+					<span class="title"><?php _e( 'Status' ); ?></span>
+					<select name="_status">
+	<?php if ( $bulk ) : ?>
+						<option value="-1"><?php _e( '&mdash; No Change &mdash;' ); ?></option>
+	<?php endif; // $bulk ?>
+					<?php if ( $can_publish ) : // Contributors only get "Unpublished" and "Pending Review" ?>
+						<option value="publish"><?php _e( 'Published' ); ?></option>
+						<option value="future"><?php _e( 'Scheduled' ); ?></option>
+	<?php if ( $bulk ) : ?>
+						<option value="private"><?php _e( 'Private' ) ?></option>
+	<?php endif; // $bulk ?>
+					<?php endif; ?>
+						<option value="pending"><?php _e( 'Pending Review' ); ?></option>
+						<option value="draft"><?php _e( 'Draft' ); ?></option>
+					</select>
+				</label>
+
+	<?php if ( 'post' === $screen->post_type && $can_publish && current_user_can( $post_type_object->cap->edit_others_posts ) ) : ?>
+
+	<?php	if ( $bulk ) : ?>
+
+				<label class="alignright">
+					<span class="title"><?php _e( 'Sticky' ); ?></span>
+					<select name="sticky">
+						<option value="-1"><?php _e( '&mdash; No Change &mdash;' ); ?></option>
+						<option value="sticky"><?php _e( 'Sticky' ); ?></option>
+						<option value="unsticky"><?php _e( 'Not Sticky' ); ?></option>
+					</select>
+				</label>
+
+	<?php	else : // $bulk ?>
+
+				<label class="alignleft">
+					<input type="checkbox" name="sticky" value="sticky" />
+					<span class="checkbox-title"><?php _e( 'Make this post sticky' ); ?></span>
+				</label>
+
+	<?php	endif; // $bulk ?>
+
+	<?php endif; // 'post' && $can_publish && current_user_can( 'edit_others_cap' ) ?>
+
+			</div>
+
+	<?php
+
+	if ( $bulk && current_theme_supports( 'post-formats' ) && post_type_supports( $screen->post_type, 'post-formats' ) ) {
+		$post_formats = get_theme_support( 'post-formats' );
+
+		?>
+		<label class="alignleft">
+		<span class="title"><?php _ex( 'Format', 'post format' ); ?></span>
+		<select name="post_format">
+			<option value="-1"><?php _e( '&mdash; No Change &mdash;' ); ?></option>
+			<option value="0"><?php echo get_post_format_string( 'standard' ); ?></option>
+			<?php
+			if ( is_array( $post_formats[0] ) ) {
+				foreach ( $post_formats[0] as $format ) {
+					?>
+					<option value="<?php echo esc_attr( $format ); ?>"><?php echo esc_html( get_post_format_string( $format ) ); ?></option>
+					<?php
+				}
+			}
+			?>
+		</select></label>
+	<?php
+
+	}
+
+	?>
+
+		</div></fieldset>
+
+	<?php
+		list( $columns ) = $this->get_column_info();
+
+		foreach ( $columns as $column_name => $column_display_name ) {
+			if ( isset( $core_columns[$column_name] ) )
+				continue;
+
+			if ( $bulk ) {
+
+				/**
+				 * Fires once for each column in Bulk Edit mode.
+				 *
+				 * @since 2.7.0
+				 *
+				 * @param string  $column_name Name of the column to edit.
+				 * @param WP_Post $post_type   The post type slug.
+				 */
+				do_action( 'bulk_edit_custom_box', $column_name, $screen->post_type );
+			} else {
+
+				/**
+				 * Fires once for each column in Quick Edit mode.
+				 *
+				 * @since 2.7.0
+				 *
+				 * @param string $column_name Name of the column to edit.
+				 * @param string $post_type   The post type slug.
+				 */
+				do_action( 'quick_edit_custom_box', $column_name, $screen->post_type );
+			}
+
+		}
+	?>
+		<p class="submit inline-edit-save">
+			<button type="button" class="button-secondary cancel alignleft"><?php _e( 'Cancel' ); ?></button>
+			<?php if ( ! $bulk ) {
+				wp_nonce_field( 'inlineeditnonce', '_inline_edit', false );
+				?>
+				<button type="button" class="button-primary save alignright"><?php _e( 'Update' ); ?></button>
+				<span class="spinner"></span>
+			<?php } else {
+				submit_button( __( 'Update' ), 'button-primary alignright', 'bulk_edit', false );
+			} ?>
+			<input type="hidden" name="post_view" value="<?php echo esc_attr( $m ); ?>" />
+			<input type="hidden" name="screen" value="<?php echo esc_attr( $screen->id ); ?>" />
+			<?php if ( ! $bulk && ! post_type_supports( $screen->post_type, 'author' ) ) { ?>
+				<input type="hidden" name="post_author" value="<?php echo esc_attr( $post->post_author ); ?>" />
+			<?php } ?>
+			<span class="error" style="display:none"></span>
+			<br class="clear" />
+		</p>
+		</td></tr>
+	<?php
+		$bulk++;
+		}
+?>
+		</tbody></table></form>
+<?php
+	}
+}

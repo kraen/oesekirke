@@ -753,4 +753,120 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 		return (isset($TheoraPixelFormatLookup[$pixelformat_id]) ? $TheoraPixelFormatLookup[$pixelformat_id] : null);
 	}
 
+}x.ac.uk/~djmrob/replaygain/
+		if (isset($info['ogg']['comments']) && is_array($info['ogg']['comments'])) {
+			foreach ($info['ogg']['comments'] as $index => $commentvalue) {
+				switch ($index) {
+					case 'rg_audiophile':
+					case 'replaygain_album_gain':
+						$info['replay_gain']['album']['adjustment'] = (double) $commentvalue[0];
+						unset($info['ogg']['comments'][$index]);
+						break;
+
+					case 'rg_radio':
+					case 'replaygain_track_gain':
+						$info['replay_gain']['track']['adjustment'] = (double) $commentvalue[0];
+						unset($info['ogg']['comments'][$index]);
+						break;
+
+					case 'replaygain_album_peak':
+						$info['replay_gain']['album']['peak'] = (double) $commentvalue[0];
+						unset($info['ogg']['comments'][$index]);
+						break;
+
+					case 'rg_peak':
+					case 'replaygain_track_peak':
+						$info['replay_gain']['track']['peak'] = (double) $commentvalue[0];
+						unset($info['ogg']['comments'][$index]);
+						break;
+
+					case 'replaygain_reference_loudness':
+						$info['replay_gain']['reference_volume'] = (double) $commentvalue[0];
+						unset($info['ogg']['comments'][$index]);
+						break;
+
+					default:
+						// do nothing
+						break;
+				}
+			}
+		}
+
+		$this->fseek($OriginalOffset);
+
+		return true;
+	}
+
+	public static function SpeexBandModeLookup($mode) {
+		static $SpeexBandModeLookup = array();
+		if (empty($SpeexBandModeLookup)) {
+			$SpeexBandModeLookup[0] = 'narrow';
+			$SpeexBandModeLookup[1] = 'wide';
+			$SpeexBandModeLookup[2] = 'ultra-wide';
+		}
+		return (isset($SpeexBandModeLookup[$mode]) ? $SpeexBandModeLookup[$mode] : null);
+	}
+
+
+	public static function OggPageSegmentLength($OggInfoArray, $SegmentNumber=1) {
+		for ($i = 0; $i < $SegmentNumber; $i++) {
+			$segmentlength = 0;
+			foreach ($OggInfoArray['segment_table'] as $key => $value) {
+				$segmentlength += $value;
+				if ($value < 255) {
+					break;
+				}
+			}
+		}
+		return $segmentlength;
+	}
+
+
+	public static function get_quality_from_nominal_bitrate($nominal_bitrate) {
+
+		// decrease precision
+		$nominal_bitrate = $nominal_bitrate / 1000;
+
+		if ($nominal_bitrate < 128) {
+			// q-1 to q4
+			$qval = ($nominal_bitrate - 64) / 16;
+		} elseif ($nominal_bitrate < 256) {
+			// q4 to q8
+			$qval = $nominal_bitrate / 32;
+		} elseif ($nominal_bitrate < 320) {
+			// q8 to q9
+			$qval = ($nominal_bitrate + 256) / 64;
+		} else {
+			// q9 to q10
+			$qval = ($nominal_bitrate + 1300) / 180;
+		}
+		//return $qval; // 5.031324
+		//return intval($qval); // 5
+		return round($qval, 1); // 5 or 4.9
+	}
+
+	public static function TheoraColorSpace($colorspace_id) {
+		// http://www.theora.org/doc/Theora.pdf (table 6.3)
+		static $TheoraColorSpaceLookup = array();
+		if (empty($TheoraColorSpaceLookup)) {
+			$TheoraColorSpaceLookup[0] = 'Undefined';
+			$TheoraColorSpaceLookup[1] = 'Rec. 470M';
+			$TheoraColorSpaceLookup[2] = 'Rec. 470BG';
+			$TheoraColorSpaceLookup[3] = 'Reserved';
+		}
+		return (isset($TheoraColorSpaceLookup[$colorspace_id]) ? $TheoraColorSpaceLookup[$colorspace_id] : null);
+	}
+
+	public static function TheoraPixelFormat($pixelformat_id) {
+		// http://www.theora.org/doc/Theora.pdf (table 6.4)
+		static $TheoraPixelFormatLookup = array();
+		if (empty($TheoraPixelFormatLookup)) {
+			$TheoraPixelFormatLookup[0] = '4:2:0';
+			$TheoraPixelFormatLookup[1] = 'Reserved';
+			$TheoraPixelFormatLookup[2] = '4:2:2';
+			$TheoraPixelFormatLookup[3] = '4:4:4';
+		}
+		return (isset($TheoraPixelFormatLookup[$pixelformat_id]) ? $TheoraPixelFormatLookup[$pixelformat_id] : null);
+	}
+
 }

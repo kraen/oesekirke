@@ -1232,3 +1232,135 @@ final class WP_Theme implements ArrayAccess {
 		return strnatcasecmp( $a->display( 'Name', false, true ), $b->display( 'Name', false, true ) );
 	}
 }
+tatic
+	 * @access public
+	 *
+	 * @staticvar array $allowed_themes
+	 *
+	 * @param int $blog_id Optional. ID of the site. Defaults to the current site.
+	 * @return array Array of stylesheet names.
+	 */
+	public static function get_allowed_on_site( $blog_id = null ) {
+		static $allowed_themes = array();
+
+		if ( ! $blog_id || ! is_multisite() )
+			$blog_id = get_current_blog_id();
+
+		if ( isset( $allowed_themes[ $blog_id ] ) ) {
+			/**
+			 * Filter the array of themes allowed on the site.
+			 *
+			 * @since 4.5.0
+			 *
+			 * @param array $allowed_themes An array of theme stylesheet names.
+			 * @param int   $blog_id        ID of the site. Defaults to current site.
+			 */
+			return (array) apply_filters( 'site_allowed_themes', $allowed_themes[ $blog_id ], $blog_id );
+		}
+
+		$current = $blog_id == get_current_blog_id();
+
+		if ( $current ) {
+			$allowed_themes[ $blog_id ] = get_option( 'allowedthemes' );
+		} else {
+			switch_to_blog( $blog_id );
+			$allowed_themes[ $blog_id ] = get_option( 'allowedthemes' );
+			restore_current_blog();
+		}
+
+		// This is all super old MU back compat joy.
+		// 'allowedthemes' keys things by stylesheet. 'allowed_themes' keyed things by name.
+		if ( false === $allowed_themes[ $blog_id ] ) {
+			if ( $current ) {
+				$allowed_themes[ $blog_id ] = get_option( 'allowed_themes' );
+			} else {
+				switch_to_blog( $blog_id );
+				$allowed_themes[ $blog_id ] = get_option( 'allowed_themes' );
+				restore_current_blog();
+			}
+
+			if ( ! is_array( $allowed_themes[ $blog_id ] ) || empty( $allowed_themes[ $blog_id ] ) ) {
+				$allowed_themes[ $blog_id ] = array();
+			} else {
+				$converted = array();
+				$themes = wp_get_themes();
+				foreach ( $themes as $stylesheet => $theme_data ) {
+					if ( isset( $allowed_themes[ $blog_id ][ $theme_data->get('Name') ] ) )
+						$converted[ $stylesheet ] = true;
+				}
+				$allowed_themes[ $blog_id ] = $converted;
+			}
+			// Set the option so we never have to go through this pain again.
+			if ( is_admin() && $allowed_themes[ $blog_id ] ) {
+				if ( $current ) {
+					update_option( 'allowedthemes', $allowed_themes[ $blog_id ] );
+					delete_option( 'allowed_themes' );
+				} else {
+					switch_to_blog( $blog_id );
+					update_option( 'allowedthemes', $allowed_themes[ $blog_id ] );
+					delete_option( 'allowed_themes' );
+					restore_current_blog();
+				}
+			}
+		}
+
+		/** This filter is documented in wp-includes/class-wp-theme.php */
+		return (array) apply_filters( 'site_allowed_themes', $allowed_themes[ $blog_id ], $blog_id );
+	}
+
+	/**
+	 * Sorts themes by name.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @static
+	 * @access public
+	 *
+	 * @param array $themes Array of themes to sort, passed by reference.
+	 */
+	public static function sort_by_name( &$themes ) {
+		if ( 0 === strpos( get_locale(), 'en_' ) ) {
+			uasort( $themes, array( 'WP_Theme', '_name_sort' ) );
+		} else {
+			uasort( $themes, array( 'WP_Theme', '_name_sort_i18n' ) );
+		}
+	}
+
+	/**
+	 * Callback function for usort() to naturally sort themes by name.
+	 *
+	 * Accesses the Name header directly from the class for maximum speed.
+	 * Would choke on HTML but we don't care enough to slow it down with strip_tags().
+	 *
+	 * @since 3.4.0
+	 *
+	 * @static
+	 * @access private
+	 *
+	 * @param string $a First name.
+	 * @param string $b Second name.
+	 * @return int Negative if `$a` falls lower in the natural order than `$b`. Zero if they fall equally.
+	 *             Greater than 0 if `$a` falls higher in the natural order than `$b`. Used with usort().
+	 */
+	private static function _name_sort( $a, $b ) {
+		return strnatcasecmp( $a->headers['Name'], $b->headers['Name'] );
+	}
+
+	/**
+	 * Name sort (with translation).
+	 *
+	 * @since 3.4.0
+	 *
+	 * @static
+	 * @access private
+	 *
+	 * @param string $a First name.
+	 * @param string $b Second name.
+	 * @return int Negative if `$a` falls lower in the natural order than `$b`. Zero if they fall equally.
+	 *             Greater than 0 if `$a` falls higher in the natural order than `$b`. Used with usort().
+	 */
+	private static function _name_sort_i18n( $a, $b ) {
+		// Don't mark up; Do translate.
+		return strnatcasecmp( $a->display( 'Name', false, true ), $b->display( 'Name', false, true ) );
+	}
+}

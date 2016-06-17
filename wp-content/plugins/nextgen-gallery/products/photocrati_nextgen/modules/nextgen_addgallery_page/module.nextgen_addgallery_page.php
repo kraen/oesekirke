@@ -62,3 +62,45 @@ class M_NextGen_AddGallery_Page extends C_Base_Module
     }
 }
 new M_NextGen_AddGallery_Page();
+addgallery_page#plupload-2.1.1/moxie.min.js')
+            );
+            wp_register_script(
+                'ngg.plupload.full',
+                $router->get_static_url('photocrati-nextgen_addgallery_page#plupload-2.1.1/plupload.dev.min.js'),
+                array('ngg.plupload.moxie')
+            );
+            wp_register_script(
+                'ngg.plupload.queue',
+                $router->get_static_url('photocrati-nextgen_addgallery_page#plupload-2.1.1/jquery.plupload.queue/jquery.plupload.queue.min.js'),
+                array('ngg.plupload.full')
+            );
+            wp_register_style(
+                'ngg.plupload.queue',
+                $router->get_static_url('photocrati-nextgen_addgallery_page#plupload-2.1.1/jquery.plupload.queue/css/jquery.plupload.queue.css')
+            );
+            wp_register_style(
+                'nextgen_addgallery_page',
+                $router->get_static_url('photocrati-nextgen_addgallery_page#styles.css')
+            );
+            wp_register_script(
+                'jquery.filetree',
+                $router->get_static_url('photocrati-nextgen_addgallery_page#jquery.filetree/jquery.filetree.js'),
+                array('jquery')
+            );
+            wp_register_style(
+                'jquery.filetree',
+                $router->get_static_url('photocrati-nextgen_addgallery_page#jquery.filetree/jquery.filetree.css')
+            );
+            wp_register_script(
+                'nextgen_media_library_import-js',
+                $router->get_static_url('photocrati-nextgen_addgallery_page#media-library-import.js'),
+                array('jquery', 'ngg_progressbar')
+            );
+            wp_register_style(
+                'nextgen_media_library_import-css',
+                $router->get_static_url('photocrati-nextgen_addgallery_page#media-library-import.css')
+            );
+        }
+    }
+}
+new M_NextGen_AddGallery_Page();

@@ -77,3 +77,4 @@ require_once( ABSPATH . 'wp-admin/admin-header.php' );
 </div><!-- wrap -->
 
 <?php include( ABSPATH . 'wp-admin/admin-footer.php' ); ?>
+); ?>

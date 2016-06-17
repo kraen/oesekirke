@@ -3018,3 +3018,135 @@ function wp_read_audio_metadata( $file ) {
 
 	return $metadata;
 }
+pe'];
+	if ( ! empty( $data['playtime_seconds'] ) )
+		$metadata['length'] = (int) round( $data['playtime_seconds'] );
+	if ( ! empty( $data['playtime_string'] ) )
+		$metadata['length_formatted'] = $data['playtime_string'];
+	if ( ! empty( $data['video']['resolution_x'] ) )
+		$metadata['width'] = (int) $data['video']['resolution_x'];
+	if ( ! empty( $data['video']['resolution_y'] ) )
+		$metadata['height'] = (int) $data['video']['resolution_y'];
+	if ( ! empty( $data['fileformat'] ) )
+		$metadata['fileformat'] = $data['fileformat'];
+	if ( ! empty( $data['video']['dataformat'] ) )
+		$metadata['dataformat'] = $data['video']['dataformat'];
+	if ( ! empty( $data['video']['encoder'] ) )
+		$metadata['encoder'] = $data['video']['encoder'];
+	if ( ! empty( $data['video']['codec'] ) )
+		$metadata['codec'] = $data['video']['codec'];
+
+	if ( ! empty( $data['audio'] ) ) {
+		unset( $data['audio']['streams'] );
+		$metadata['audio'] = $data['audio'];
+	}
+
+	wp_add_id3_tag_data( $metadata, $data );
+
+	return $metadata;
+}
+
+/**
+ * Retrieve metadata from a audio file's ID3 tags
+ *
+ * @since 3.6.0
+ *
+ * @param string $file Path to file.
+ * @return array|bool Returns array of metadata, if found.
+ */
+function wp_read_audio_metadata( $file ) {
+	if ( ! file_exists( $file ) ) {
+		return false;
+	}
+	$metadata = array();
+
+	if ( ! defined( 'GETID3_TEMP_DIR' ) ) {
+		define( 'GETID3_TEMP_DIR', get_temp_dir() );
+	}
+
+	if ( ! class_exists( 'getID3', false ) ) {
+		require( ABSPATH . WPINC . '/ID3/getid3.php' );
+	}
+	$id3 = new getID3();
+	$data = $id3->analyze( $file );
+
+	if ( ! empty( $data['audio'] ) ) {
+		unset( $data['audio']['streams'] );
+		$metadata = $data['audio'];
+	}
+
+	if ( ! empty( $data['fileformat'] ) )
+		$metadata['fileformat'] = $data['fileformat'];
+	if ( ! empty( $data['filesize'] ) )
+		$metadata['filesize'] = (int) $data['filesize'];
+	if ( ! empty( $data['mime_type'] ) )
+		$metadata['mime_type'] = $data['mime_type'];
+	if ( ! empty( $data['playtime_seconds'] ) )
+		$metadata['length'] = (int) round( $data['playtime_seconds'] );
+	if ( ! empty( $data['playtime_string'] ) )
+		$metadata['length_formatted'] = $data['playtime_string'];
+
+	wp_add_id3_tag_data( $metadata, $data );
+
+	return $metadata;
+}
+
+/**
+ * Encapsulate logic for Attach/Detach actions
+ *
+ * @since 4.2.0
+ *
+ * @global wpdb $wpdb WordPress database abstraction object.
+ *
+ * @param int    $parent_id Attachment parent ID.
+ * @param string $action    Optional. Attach/detach action. Accepts 'attach' or 'detach'.
+ *                          Default 'attach'.
+ */
+function wp_media_attach_action( $parent_id, $action = 'attach' ) {
+	global $wpdb;
+
+	if ( ! $parent_id ) {
+		return;
+	}
+
+	if ( ! current_user_can( 'edit_post', $parent_id ) ) {
+		wp_die( __( 'You are not allowed to edit this post.' ) );
+	}
+	$ids = array();
+	foreach ( (array) $_REQUEST['media'] as $att_id ) {
+		$att_id = (int) $att_id;
+
+		if ( ! current_user_can( 'edit_post', $att_id ) ) {
+			continue;
+		}
+
+		$ids[] = $att_id;
+	}
+
+	if ( ! empty( $ids ) ) {
+		$ids_string = implode( ',', $ids );
+		if ( 'attach' === $action ) {
+			$result = $wpdb->query( $wpdb->prepare( "UPDATE $wpdb->posts SET post_parent = %d WHERE post_type = 'attachment' AND ID IN ( $ids_string )", $parent_id ) );
+		} else {
+			$result = $wpdb->query( "UPDATE $wpdb->posts SET post_parent = 0 WHERE post_type = 'attachment' AND ID IN ( $ids_string )" );
+		}
+
+		foreach ( $ids as $att_id ) {
+			clean_attachment_cache( $att_id );
+		}
+	}
+
+	if ( isset( $result ) ) {
+		$location = 'upload.php';
+		if ( $referer = wp_get_referer() ) {
+			if ( false !== strpos( $referer, 'upload.php' ) ) {
+				$location = remove_query_arg( array( 'attached', 'detach' ), $referer );
+			}
+		}
+
+		$key = 'attach' === $action ? 'attached' : 'detach';
+		$location = add_query_arg( array( $key => $result ), $location );
+		wp_redirect( $location );
+		exit;
+	}
+}

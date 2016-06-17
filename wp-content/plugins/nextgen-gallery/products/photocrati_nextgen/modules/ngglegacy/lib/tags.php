@@ -384,3 +384,10 @@ if (!function_exists('nggtags_delete_empty_element')) {
 		}
 	}
 }
+
+		$element = trim($element);
+		if ( !empty($element) ) {
+			return $element;
+		}
+	}
+}

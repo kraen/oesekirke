@@ -11,4 +11,5 @@ if (!defined('POPE_VERSION')) {
 	require_once('interface.pope_module.php');
 	require_once('class.base_module.php');
 	require_once('class.base_product.php');
+}equire_once('class.base_product.php');
 }

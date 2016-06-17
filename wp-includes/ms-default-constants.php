@@ -151,3 +151,14 @@ function ms_subdomain_constants() {
 	}
 }
 add_action( 'init', 'ms_subdomain_constants' );
+se;
+		define( 'VHOST', SUBDOMAIN_INSTALL ? 'yes' : 'no' );
+	} elseif ( defined( 'VHOST' ) ) {
+		$subdomain_error = true;
+		define( 'SUBDOMAIN_INSTALL', 'yes' == VHOST );
+	} else {
+		$subdomain_error = false;
+		define( 'SUBDOMAIN_INSTALL', false );
+		define( 'VHOST', 'no' );
+	}
+}

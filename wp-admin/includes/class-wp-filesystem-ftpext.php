@@ -524,3 +524,46 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 			ftp_close($this->link);
 	}
 }
+		if ( empty($list) ) // Empty array = non-existent folder (real folder will show . at least)
+			return false;
+
+		$dirlist = array();
+		foreach ( $list as $k => $v ) {
+			$entry = $this->parselisting($v);
+			if ( empty($entry) )
+				continue;
+
+			if ( '.' == $entry['name'] || '..' == $entry['name'] )
+				continue;
+
+			if ( ! $include_hidden && '.' == $entry['name'][0] )
+				continue;
+
+			if ( $limit_file && $entry['name'] != $limit_file)
+				continue;
+
+			$dirlist[ $entry['name'] ] = $entry;
+		}
+
+		$ret = array();
+		foreach ( (array)$dirlist as $struc ) {
+			if ( 'd' == $struc['type'] ) {
+				if ( $recursive )
+					$struc['files'] = $this->dirlist($path . '/' . $struc['name'], $include_hidden, $recursive);
+				else
+					$struc['files'] = array();
+			}
+
+			$ret[ $struc['name'] ] = $struc;
+		}
+		return $ret;
+	}
+
+	/**
+	 * @access public
+	 */
+	public function __destruct() {
+		if ( $this->link )
+			ftp_close($this->link);
+	}
+}

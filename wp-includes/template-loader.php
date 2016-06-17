@@ -74,3 +74,13 @@ if ( defined('WP_USE_THEMES') && WP_USE_THEMES ) :
 		include( $template );
 	return;
 endif;
+ers( 'template_include', $template ) ) {
+		include( $template );
+	} elseif ( current_user_can( 'switch_themes' ) ) {
+		$theme = wp_get_theme();
+		if ( $theme->errors() ) {
+			wp_die( $theme->errors() );
+		}
+	}
+	return;
+endif;

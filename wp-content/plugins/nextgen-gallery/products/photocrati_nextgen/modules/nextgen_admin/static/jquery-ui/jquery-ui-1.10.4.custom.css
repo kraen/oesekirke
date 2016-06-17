@@ -1275,3 +1275,19 @@ h3.ui-accordion-header {
     margin: 3px 0 0 0;
     font-size: 13px;
 }
+ion-header a:focus,
+h3.ui-accordion-header:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+h3.ui-accordion-header.ui-state-active .ui-accordion-header-icon {
+}
+
+h3.ui-accordion-header.ui-state-active {
+    border-bottom: 1px solid #eee;
+}
+
+div.accordion {
+    margin-top: 10px;
+}

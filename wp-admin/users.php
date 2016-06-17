@@ -458,3 +458,66 @@ break;
 } // end of the $doaction switch
 
 include( ABSPATH . 'wp-admin/admin-footer.php' );
+ . '</p></div>';
+			$messages[] = '<div id="message" class="updated notice is-dismissible"><p>' . __('Other users have been deleted.') . '</p></div>';
+			break;
+		case 'remove':
+			$messages[] = '<div id="message" class="updated notice is-dismissible fade"><p>' . __('User removed from this site.') . '</p></div>';
+			break;
+		case 'err_admin_remove':
+			$messages[] = '<div id="message" class="error notice is-dismissible"><p>' . __("You can't remove the current user.") . '</p></div>';
+			$messages[] = '<div id="message" class="updated notice is-dismissible fade"><p>' . __('Other users have been removed.') . '</p></div>';
+			break;
+		}
+	endif; ?>
+
+<?php if ( isset($errors) && is_wp_error( $errors ) ) : ?>
+	<div class="error">
+		<ul>
+		<?php
+			foreach ( $errors->get_error_messages() as $err )
+				echo "<li>$err</li>\n";
+		?>
+		</ul>
+	</div>
+<?php endif;
+
+if ( ! empty($messages) ) {
+	foreach ( $messages as $msg )
+		echo $msg;
+} ?>
+
+<div class="wrap">
+<h1>
+<?php
+echo esc_html( $title );
+if ( current_user_can( 'create_users' ) ) { ?>
+	<a href="<?php echo admin_url( 'user-new.php' ); ?>" class="page-title-action"><?php echo esc_html_x( 'Add New', 'user' ); ?></a>
+<?php } elseif ( is_multisite() && current_user_can( 'promote_users' ) ) { ?>
+	<a href="<?php echo admin_url( 'user-new.php' ); ?>" class="page-title-action"><?php echo esc_html_x( 'Add Existing', 'user' ); ?></a>
+<?php }
+
+if ( strlen( $usersearch ) ) {
+	/* translators: %s: search keywords */
+	printf( '<span class="subtitle">' . __( 'Search results for &#8220;%s&#8221;' ) . '</span>', esc_html( $usersearch ) );
+}
+?>
+</h1>
+
+<?php $wp_list_table->views(); ?>
+
+<form method="get">
+
+<?php $wp_list_table->search_box( __( 'Search Users' ), 'user' ); ?>
+
+<?php $wp_list_table->display(); ?>
+</form>
+
+<br class="clear" />
+</div>
+<?php
+break;
+
+} // end of the $doaction switch
+
+include( ABSPATH . 'wp-admin/admin-footer.php' );

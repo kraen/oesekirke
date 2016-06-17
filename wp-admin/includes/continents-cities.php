@@ -491,3 +491,6 @@ __('Truk', 'continents-cities');
 __('Wake', 'continents-cities');
 __('Wallis', 'continents-cities');
 __('Yap', 'continents-cities');
+nents-cities');
+__('Wallis', 'continents-cities');
+__('Yap', 'continents-cities');

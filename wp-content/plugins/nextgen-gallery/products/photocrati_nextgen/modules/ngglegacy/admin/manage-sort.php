@@ -131,3 +131,6 @@ function nggallery_sortorder($galleryID = 0){
 <?php
 }
 ?>
+<?php
+}
+?>

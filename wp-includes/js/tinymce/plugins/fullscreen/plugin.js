@@ -133,4 +133,22 @@ tinymce.PluginManager.add('fullscreen', function(editor) {
 			return fullscreenState;
 		}
 	};
+});, {
+		tooltip: 'Fullscreen',
+		shortcut: 'Meta+Alt+F',
+		onClick: toggleFullscreen,
+		onPostRender: function() {
+			var self = this;
+
+			editor.on('FullscreenStateChanged', function(e) {
+				self.active(e.state);
+			});
+		}
+	});
+
+	return {
+		isFullscreen: function() {
+			return fullscreenState;
+		}
+	};
 });

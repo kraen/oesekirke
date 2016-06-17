@@ -1754,3 +1754,55 @@ body.full-overlay-active {
 		line-height: normal;
 	}
 }
+e: 20px 20px;
+	background-size: 20px 20px;
+}
+
+#customize-preview.wp-full-overlay-main.iframe-ready:before,
+.theme-install-overlay.iframe-ready .wp-full-overlay-main:before {
+	background-image: none;
+}
+
+/* =Media Queries
+-------------------------------------------------------------- */
+
+/**
+ * HiDPI Displays
+ */
+@media print,
+  (-webkit-min-device-pixel-ratio: 1.25),
+  (min-resolution: 120dpi) {
+	.wp-full-overlay .collapse-sidebar-arrow {
+		background-image: url(../images/arrows-2x.png);
+		-webkit-background-size: 15px 123px;
+		background-size: 15px 123px;
+	}
+
+	#customize-preview.wp-full-overlay-main:before,
+	.customize-loading #customize-container:before,
+	.theme-install-overlay .wp-full-overlay-main:before {
+		background-image: url(../images/spinner-2x.gif);
+	}
+}
+
+@media screen and ( max-width: 782px ) {
+	.available-theme .action-links .delete-theme {
+		float: none;
+		margin: 0;
+		padding: 0;
+		clear: both;
+	}
+
+	.available-theme .action-links .delete-theme a {
+		padding: 0;
+	}
+
+	.broken-themes table {
+		width: 100%;
+	}
+
+	.theme-install-overlay .wp-full-overlay-header .theme-install {
+		margin-top: 6px;
+		line-height: normal;
+	}
+}

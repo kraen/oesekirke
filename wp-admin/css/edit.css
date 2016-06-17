@@ -1615,3 +1615,39 @@ table.links-table {
 		padding: 0 10px 0 10px;
 	}
 }
+px;
+	}
+
+	#publishing-action .spinner {
+		float: none;
+		margin-top: -2px; /* Half of the Publish button's bottom margin. */
+	}
+
+	/* Moderate Comment */
+	.comment-ays th,
+	.comment-ays td {
+		padding-bottom: 0;
+	}
+
+	.comment-ays td {
+		padding-top: 6px;
+	}
+
+	/* Links */
+	.links-table #link_rel {
+		max-width: none;
+	}
+
+	.links-table th,
+	.links-table td {
+		padding: 10px 0;
+	}
+}
+
+@media only screen and (max-width: 500px) {
+	/* Align Add Media + Visual + Text tabs */
+	#wp-content-media-buttons a {
+		font-size: 14px;
+		padding: 0 10px 0 10px;
+	}
+}

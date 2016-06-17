@@ -715,3 +715,48 @@ function showDialog() {
 	}
 
 }
+| ' . wp_html_excerpt( esc_html ( M_I18N::translate( $obj['title'] ) ) , 25) . '
+					</div>
+					<div class="itemContent">
+							' . $preview_image . '
+							<p><strong>' . __('Name', 'nggallery') . ' : </strong>' . esc_html ( M_I18N::translate( $obj['name'] ) ). '</p>
+							<p><strong>' . __('Title', 'nggallery') . ' : </strong>' . esc_html ( M_I18N::translate( $obj['title'] ) ) . '</p>
+							<p><strong>' . __('Page', 'nggallery'). ' : </strong>' . esc_html ( M_I18N::translate( $obj['pagenname'] ) ) . '</p>
+							' . apply_filters('ngg_display_album_item_content', '', $obj) . '
+						</div>
+				</div>
+			   </div>';
+	}
+
+	/**
+	 * get all used galleries from all albums
+	 *
+	 * @return array $used_galleries_ids
+	 */
+	function get_used_galleries() {
+
+		$used = array();
+
+		if ($this->albums) {
+			foreach($this->albums as $album) {
+                if (!is_array($album->sortorder)) continue;
+				foreach($album->sortorder as $galleryid) {
+					if (!in_array($galleryid, $used))
+						$used[] = $galleryid;
+				}
+			}
+		}
+
+		return $used;
+	}
+
+	/**
+	 * PHP5 style destructor
+	 *
+	 * @return bool Always true
+	 */
+	function __destruct() {
+		return true;
+	}
+
+}

@@ -1185,3 +1185,135 @@ window.location = 'about.php?updated';
 	exit();
 }
 add_action( '_core_updated_successfully', '_redirect_to_about_wordpress' );
+turn $result;
+		}
+	}
+	return true;
+}
+
+/**
+ * Redirect to the About WordPress page after a successful upgrade.
+ *
+ * This function is only needed when the existing install is older than 3.4.0.
+ *
+ * @since 3.3.0
+ *
+ * @global string $wp_version
+ * @global string $pagenow
+ * @global string $action
+ *
+ * @param string $new_version
+ */
+function _redirect_to_about_wordpress( $new_version ) {
+	global $wp_version, $pagenow, $action;
+
+	if ( version_compare( $wp_version, '3.4-RC1', '>=' ) )
+		return;
+
+	// Ensure we only run this on the update-core.php page. The Core_Upgrader may be used in other contexts.
+	if ( 'update-core.php' != $pagenow )
+		return;
+
+ 	if ( 'do-core-upgrade' != $action && 'do-core-reinstall' != $action )
+ 		return;
+
+	// Load the updated default text localization domain for new strings.
+	load_default_textdomain();
+
+	// See do_core_upgrade()
+	show_message( __('WordPress updated successfully') );
+
+	// self_admin_url() won't exist when upgrading from <= 3.0, so relative URLs are intentional.
+	show_message( '<span class="hide-if-no-js">' . sprintf( __( 'Welcome to WordPress %1$s. You will be redirected to the About WordPress screen. If not, click <a href="%2$s">here</a>.' ), $new_version, 'about.php?updated' ) . '</span>' );
+	show_message( '<span class="hide-if-js">' . sprintf( __( 'Welcome to WordPress %1$s. <a href="%2$s">Learn more</a>.' ), $new_version, 'about.php?updated' ) . '</span>' );
+	echo '</div>';
+	?>
+<script type="text/javascript">
+window.location = 'about.php?updated';
+</script>
+	<?php
+
+	// Include admin-footer.php and exit.
+	include(ABSPATH . 'wp-admin/admin-footer.php');
+	exit();
+}
+
+/**
+ * Cleans up Genericons example files.
+ *
+ * @since 4.2.2
+ *
+ * @global array              $wp_theme_directories
+ * @global WP_Filesystem_Base $wp_filesystem
+ */
+function _upgrade_422_remove_genericons() {
+	global $wp_theme_directories, $wp_filesystem;
+
+	// A list of the affected files using the filesystem absolute paths.
+	$affected_files = array();
+
+	// Themes
+	foreach ( $wp_theme_directories as $directory ) {
+		$affected_theme_files = _upgrade_422_find_genericons_files_in_folder( $directory );
+		$affected_files       = array_merge( $affected_files, $affected_theme_files );
+	}
+
+	// Plugins
+	$affected_plugin_files = _upgrade_422_find_genericons_files_in_folder( WP_PLUGIN_DIR );
+	$affected_files        = array_merge( $affected_files, $affected_plugin_files );
+
+	foreach ( $affected_files as $file ) {
+		$gen_dir = $wp_filesystem->find_folder( trailingslashit( dirname( $file ) ) );
+		if ( empty( $gen_dir ) ) {
+			continue;
+		}
+
+		// The path when the file is accessed via WP_Filesystem may differ in the case of FTP
+		$remote_file = $gen_dir . basename( $file );
+
+		if ( ! $wp_filesystem->exists( $remote_file ) ) {
+			continue;
+		}
+
+		if ( ! $wp_filesystem->delete( $remote_file, false, 'f' ) ) {
+			$wp_filesystem->put_contents( $remote_file, '' );
+		}
+	}
+}
+
+/**
+ * Recursively find Genericons example files in a given folder.
+ *
+ * @ignore
+ * @since 4.2.2
+ *
+ * @param string $directory Directory path. Expects trailingslashed.
+ * @return array
+ */
+function _upgrade_422_find_genericons_files_in_folder( $directory ) {
+	$directory = trailingslashit( $directory );
+	$files     = array();
+
+	if ( file_exists( "{$directory}example.html" ) && false !== strpos( file_get_contents( "{$directory}example.html" ), '<title>Genericons</title>' ) ) {
+		$files[] = "{$directory}example.html";
+	}
+
+	$dirs = glob( $directory . '*', GLOB_ONLYDIR );
+	if ( $dirs ) {
+		foreach ( $dirs as $dir ) {
+			$files = array_merge( $files, _upgrade_422_find_genericons_files_in_folder( $dir ) );
+		}
+	}
+
+	return $files;
+}
+
+/**
+ * @ignore
+ * @since 4.4.0
+ */
+function _upgrade_440_force_deactivate_incompatible_plugins() {
+	if ( defined( 'REST_API_VERSION' ) && version_compare( REST_API_VERSION, '2.0-beta4', '<=' ) ) {
+		deactivate_plugins( array( 'rest-api/plugin.php' ), true );
+	}
+}

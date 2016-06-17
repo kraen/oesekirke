@@ -134,3 +134,12 @@
 	// Register plugin
 	tinymce.PluginManager.add('NextGEN_AttachToPost', tinymce.plugins.NextGEN_AttachToPost);
 })(photocrati_ajax.wp_site_url);
+);
+			jQuery('#ngg_attach_to_post_dialog_ifr').css('overflow-y', 'auto');
+			jQuery('#ngg_attach_to_post_dialog_ifr').css('overflow-x', 'hidden');
+		}
+	});
+
+	// Register plugin
+	tinymce.PluginManager.add('NextGEN_AttachToPost', tinymce.plugins.NextGEN_AttachToPost);
+})(photocrati_ajax.wp_site_url);

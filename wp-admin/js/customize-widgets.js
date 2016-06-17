@@ -1975,3 +1975,231 @@
 	}
 
 })( window.wp, jQuery );
+e {
+				widget.set( 'is_disabled', true ); // Prevent single widget from being added again now
+			}
+
+			$widget = $( controlHtml );
+
+			controlContainer = $( '<li/>' )
+				.addClass( 'customize-control' )
+				.addClass( 'customize-control-' + controlType )
+				.append( $widget );
+
+			// Remove icon which is visible inside the panel
+			controlContainer.find( '> .widget-icon' ).remove();
+
+			if ( widget.get( 'is_multi' ) ) {
+				controlContainer.find( 'input[name="widget_number"]' ).val( widgetNumber );
+				controlContainer.find( 'input[name="multi_number"]' ).val( widgetNumber );
+			}
+
+			widgetId = controlContainer.find( '[name="widget-id"]' ).val();
+
+			controlContainer.hide(); // to be slid-down below
+
+			settingId = 'widget_' + widget.get( 'id_base' );
+			if ( widget.get( 'is_multi' ) ) {
+				settingId += '[' + widgetNumber + ']';
+			}
+			controlContainer.attr( 'id', 'customize-control-' + settingId.replace( /\]/g, '' ).replace( /\[/g, '-' ) );
+
+			// Only create setting if it doesn't already exist (if we're adding a pre-existing inactive widget)
+			isExistingWidget = api.has( settingId );
+			if ( ! isExistingWidget ) {
+				settingArgs = {
+					transport: api.Widgets.data.selectiveRefreshableWidgets[ widget.get( 'id_base' ) ] ? 'postMessage' : 'refresh',
+					previewer: this.setting.previewer
+				};
+				setting = api.create( settingId, settingId, '', settingArgs );
+				setting.set( {} ); // mark dirty, changing from '' to {}
+			}
+
+			controlConstructor = api.controlConstructor[controlType];
+			widgetFormControl = new controlConstructor( settingId, {
+				params: {
+					settings: {
+						'default': settingId
+					},
+					content: controlContainer,
+					sidebar_id: self.params.sidebar_id,
+					widget_id: widgetId,
+					widget_id_base: widget.get( 'id_base' ),
+					type: controlType,
+					is_new: ! isExistingWidget,
+					width: widget.get( 'width' ),
+					height: widget.get( 'height' ),
+					is_wide: widget.get( 'is_wide' ),
+					active: true
+				},
+				previewer: self.setting.previewer
+			} );
+			api.control.add( settingId, widgetFormControl );
+
+			// Make sure widget is removed from the other sidebars
+			api.each( function( otherSetting ) {
+				if ( otherSetting.id === self.setting.id ) {
+					return;
+				}
+
+				if ( 0 !== otherSetting.id.indexOf( 'sidebars_widgets[' ) ) {
+					return;
+				}
+
+				var otherSidebarWidgets = otherSetting().slice(),
+					i = _.indexOf( otherSidebarWidgets, widgetId );
+
+				if ( -1 !== i ) {
+					otherSidebarWidgets.splice( i );
+					otherSetting( otherSidebarWidgets );
+				}
+			} );
+
+			// Add widget to this sidebar
+			sidebarWidgets = this.setting().slice();
+			if ( -1 === _.indexOf( sidebarWidgets, widgetId ) ) {
+				sidebarWidgets.push( widgetId );
+				this.setting( sidebarWidgets );
+			}
+
+			controlContainer.slideDown( function() {
+				if ( isExistingWidget ) {
+					widgetFormControl.updateWidget( {
+						instance: widgetFormControl.setting()
+					} );
+				}
+			} );
+
+			return widgetFormControl;
+		}
+	} );
+
+	// Register models for custom panel, section, and control types
+	$.extend( api.panelConstructor, {
+		widgets: api.Widgets.WidgetsPanel
+	});
+	$.extend( api.sectionConstructor, {
+		sidebar: api.Widgets.SidebarSection
+	});
+	$.extend( api.controlConstructor, {
+		widget_form: api.Widgets.WidgetControl,
+		sidebar_widgets: api.Widgets.SidebarControl
+	});
+
+	/**
+	 * Init Customizer for widgets.
+	 */
+	api.bind( 'ready', function() {
+		// Set up the widgets panel
+		api.Widgets.availableWidgetsPanel = new api.Widgets.AvailableWidgetsPanelView({
+			collection: api.Widgets.availableWidgets
+		});
+
+		// Highlight widget control
+		api.previewer.bind( 'highlight-widget-control', api.Widgets.highlightWidgetFormControl );
+
+		// Open and focus widget control
+		api.previewer.bind( 'focus-widget-control', api.Widgets.focusWidgetFormControl );
+	} );
+
+	/**
+	 * Highlight a widget control.
+	 *
+	 * @param {string} widgetId
+	 */
+	api.Widgets.highlightWidgetFormControl = function( widgetId ) {
+		var control = api.Widgets.getWidgetFormControlForWidget( widgetId );
+
+		if ( control ) {
+			control.highlightSectionAndControl();
+		}
+	},
+
+	/**
+	 * Focus a widget control.
+	 *
+	 * @param {string} widgetId
+	 */
+	api.Widgets.focusWidgetFormControl = function( widgetId ) {
+		var control = api.Widgets.getWidgetFormControlForWidget( widgetId );
+
+		if ( control ) {
+			control.focus();
+		}
+	},
+
+	/**
+	 * Given a widget control, find the sidebar widgets control that contains it.
+	 * @param {string} widgetId
+	 * @return {object|null}
+	 */
+	api.Widgets.getSidebarWidgetControlContainingWidget = function( widgetId ) {
+		var foundControl = null;
+
+		// @todo this can use widgetIdToSettingId(), then pass into wp.customize.control( x ).getSidebarWidgetsControl()
+		api.control.each( function( control ) {
+			if ( control.params.type === 'sidebar_widgets' && -1 !== _.indexOf( control.setting(), widgetId ) ) {
+				foundControl = control;
+			}
+		} );
+
+		return foundControl;
+	};
+
+	/**
+	 * Given a widget ID for a widget appearing in the preview, get the widget form control associated with it.
+	 *
+	 * @param {string} widgetId
+	 * @return {object|null}
+	 */
+	api.Widgets.getWidgetFormControlForWidget = function( widgetId ) {
+		var foundControl = null;
+
+		// @todo We can just use widgetIdToSettingId() here
+		api.control.each( function( control ) {
+			if ( control.params.type === 'widget_form' && control.params.widget_id === widgetId ) {
+				foundControl = control;
+			}
+		} );
+
+		return foundControl;
+	};
+
+	/**
+	 * @param {String} widgetId
+	 * @returns {Object}
+	 */
+	function parseWidgetId( widgetId ) {
+		var matches, parsed = {
+			number: null,
+			id_base: null
+		};
+
+		matches = widgetId.match( /^(.+)-(\d+)$/ );
+		if ( matches ) {
+			parsed.id_base = matches[1];
+			parsed.number = parseInt( matches[2], 10 );
+		} else {
+			// likely an old single widget
+			parsed.id_base = widgetId;
+		}
+
+		return parsed;
+	}
+
+	/**
+	 * @param {String} widgetId
+	 * @returns {String} settingId
+	 */
+	function widgetIdToSettingId( widgetId ) {
+		var parsed = parseWidgetId( widgetId ), settingId;
+
+		settingId = 'widget_' + parsed.id_base;
+		if ( parsed.number ) {
+			settingId += '[' + parsed.number + ']';
+		}
+
+		return settingId;
+	}
+
+})( window.wp, jQuery );

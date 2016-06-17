@@ -1895,3 +1895,33 @@ function wp_clean_plugins_cache( $clear_update_cache = true ) {
 		delete_site_transient( 'update_plugins' );
 	wp_cache_delete( 'plugins', 'plugins' );
 }
+ 2.7.0
+ *
+ * @param string $option_group A settings group name. This should match the group name used in register_setting().
+ */
+function settings_fields($option_group) {
+	echo "<input type='hidden' name='option_page' value='" . esc_attr($option_group) . "' />";
+	echo '<input type="hidden" name="action" value="update" />';
+	wp_nonce_field("$option_group-options");
+}
+
+/**
+ * Clears the Plugins cache used by get_plugins() and by default, the Plugin Update cache.
+ *
+ * @since 3.7.0
+ *
+ * @param bool $clear_update_cache Whether to clear the Plugin updates cache
+ */
+function wp_clean_plugins_cache( $clear_update_cache = true ) {
+	if ( $clear_update_cache )
+		delete_site_transient( 'update_plugins' );
+	wp_cache_delete( 'plugins', 'plugins' );
+}
+
+/**
+ * @param string $plugin
+ */
+function plugin_sandbox_scrape( $plugin ) {
+	wp_register_plugin_realpath( WP_PLUGIN_DIR . '/' . $plugin );
+	include( WP_PLUGIN_DIR . '/' . $plugin );
+}

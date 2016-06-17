@@ -3422,3 +3422,341 @@ class getid3_id3v2 extends getid3_handler
 	}
 
 }
+wise modified by
+			TPOS	Part of a set
+			TPRO	Produced notice
+			TPUB	Publisher
+			TRC	ISRC (International Standard Recording Code)
+			TRCK	Track number/Position in set
+			TRD	Recording dates
+			TRDA	Recording dates
+			TRK	Track number/Position in set
+			TRSN	Internet radio station name
+			TRSO	Internet radio station owner
+			TS2	Album-Artist sort order
+			TSA	Album sort order
+			TSC	Composer sort order
+			TSI	Size
+			TSIZ	Size
+			TSO2	Album-Artist sort order
+			TSOA	Album sort order
+			TSOC	Composer sort order
+			TSOP	Performer sort order
+			TSOT	Title sort order
+			TSP	Performer sort order
+			TSRC	ISRC (international standard recording code)
+			TSS	Software/hardware and settings used for encoding
+			TSSE	Software/Hardware and settings used for encoding
+			TSST	Set subtitle
+			TST	Title sort order
+			TT1	Content group description
+			TT2	Title/Songname/Content description
+			TT3	Subtitle/Description refinement
+			TXT	Lyricist/text writer
+			TXX	User defined text information frame
+			TXXX	User defined text information frame
+			TYE	Year
+			TYER	Year
+			UFI	Unique file identifier
+			UFID	Unique file identifier
+			ULT	Unsychronised lyric/text transcription
+			USER	Terms of use
+			USLT	Unsynchronised lyric/text transcription
+			WAF	Official audio file webpage
+			WAR	Official artist/performer webpage
+			WAS	Official audio source webpage
+			WCM	Commercial information
+			WCOM	Commercial information
+			WCOP	Copyright/Legal information
+			WCP	Copyright/Legal information
+			WOAF	Official audio file webpage
+			WOAR	Official artist/performer webpage
+			WOAS	Official audio source webpage
+			WORS	Official Internet radio station homepage
+			WPAY	Payment
+			WPB	Publishers official webpage
+			WPUB	Publishers official webpage
+			WXX	User defined URL link frame
+			WXXX	User defined URL link frame
+			TFEA	Featured Artist
+			TSTU	Recording Studio
+			rgad	Replay Gain Adjustment
+
+		*/
+
+		return getid3_lib::EmbeddedLookup($framename, $begin, __LINE__, __FILE__, 'id3v2-framename_long');
+
+		// Last three:
+		// from Helium2 [www.helium2.com]
+		// from http://privatewww.essex.ac.uk/~djmrob/replaygain/file_format_id3v2.html
+	}
+
+
+	public static function FrameNameShortLookup($framename) {
+
+		$begin = __LINE__;
+
+		/** This is not a comment!
+
+			AENC	audio_encryption
+			APIC	attached_picture
+			ASPI	audio_seek_point_index
+			BUF	recommended_buffer_size
+			CNT	play_counter
+			COM	comment
+			COMM	comment
+			COMR	commercial_frame
+			CRA	audio_encryption
+			CRM	encrypted_meta_frame
+			ENCR	encryption_method_registration
+			EQU	equalisation
+			EQU2	equalisation
+			EQUA	equalisation
+			ETC	event_timing_codes
+			ETCO	event_timing_codes
+			GEO	general_encapsulated_object
+			GEOB	general_encapsulated_object
+			GRID	group_identification_registration
+			IPL	involved_people_list
+			IPLS	involved_people_list
+			LINK	linked_information
+			LNK	linked_information
+			MCDI	music_cd_identifier
+			MCI	music_cd_identifier
+			MLL	mpeg_location_lookup_table
+			MLLT	mpeg_location_lookup_table
+			OWNE	ownership_frame
+			PCNT	play_counter
+			PIC	attached_picture
+			POP	popularimeter
+			POPM	popularimeter
+			POSS	position_synchronisation_frame
+			PRIV	private_frame
+			RBUF	recommended_buffer_size
+			REV	reverb
+			RVA	relative_volume_adjustment
+			RVA2	relative_volume_adjustment
+			RVAD	relative_volume_adjustment
+			RVRB	reverb
+			SEEK	seek_frame
+			SIGN	signature_frame
+			SLT	synchronised_lyric
+			STC	synced_tempo_codes
+			SYLT	synchronised_lyric
+			SYTC	synchronised_tempo_codes
+			TAL	album
+			TALB	album
+			TBP	bpm
+			TBPM	bpm
+			TCM	composer
+			TCMP	part_of_a_compilation
+			TCO	genre
+			TCOM	composer
+			TCON	genre
+			TCOP	copyright_message
+			TCP	part_of_a_compilation
+			TCR	copyright_message
+			TDA	date
+			TDAT	date
+			TDEN	encoding_time
+			TDLY	playlist_delay
+			TDOR	original_release_time
+			TDRC	recording_time
+			TDRL	release_time
+			TDTG	tagging_time
+			TDY	playlist_delay
+			TEN	encoded_by
+			TENC	encoded_by
+			TEXT	lyricist
+			TFLT	file_type
+			TFT	file_type
+			TIM	time
+			TIME	time
+			TIPL	involved_people_list
+			TIT1	content_group_description
+			TIT2	title
+			TIT3	subtitle
+			TKE	initial_key
+			TKEY	initial_key
+			TLA	language
+			TLAN	language
+			TLE	length
+			TLEN	length
+			TMCL	musician_credits_list
+			TMED	media_type
+			TMOO	mood
+			TMT	media_type
+			TOA	original_artist
+			TOAL	original_album
+			TOF	original_filename
+			TOFN	original_filename
+			TOL	original_lyricist
+			TOLY	original_lyricist
+			TOPE	original_artist
+			TOR	original_year
+			TORY	original_year
+			TOT	original_album
+			TOWN	file_owner
+			TP1	artist
+			TP2	band
+			TP3	conductor
+			TP4	remixer
+			TPA	part_of_a_set
+			TPB	publisher
+			TPE1	artist
+			TPE2	band
+			TPE3	conductor
+			TPE4	remixer
+			TPOS	part_of_a_set
+			TPRO	produced_notice
+			TPUB	publisher
+			TRC	isrc
+			TRCK	track_number
+			TRD	recording_dates
+			TRDA	recording_dates
+			TRK	track_number
+			TRSN	internet_radio_station_name
+			TRSO	internet_radio_station_owner
+			TS2	album_artist_sort_order
+			TSA	album_sort_order
+			TSC	composer_sort_order
+			TSI	size
+			TSIZ	size
+			TSO2	album_artist_sort_order
+			TSOA	album_sort_order
+			TSOC	composer_sort_order
+			TSOP	performer_sort_order
+			TSOT	title_sort_order
+			TSP	performer_sort_order
+			TSRC	isrc
+			TSS	encoder_settings
+			TSSE	encoder_settings
+			TSST	set_subtitle
+			TST	title_sort_order
+			TT1	content_group_description
+			TT2	title
+			TT3	subtitle
+			TXT	lyricist
+			TXX	text
+			TXXX	text
+			TYE	year
+			TYER	year
+			UFI	unique_file_identifier
+			UFID	unique_file_identifier
+			ULT	unsychronised_lyric
+			USER	terms_of_use
+			USLT	unsynchronised_lyric
+			WAF	url_file
+			WAR	url_artist
+			WAS	url_source
+			WCM	commercial_information
+			WCOM	commercial_information
+			WCOP	copyright
+			WCP	copyright
+			WOAF	url_file
+			WOAR	url_artist
+			WOAS	url_source
+			WORS	url_station
+			WPAY	url_payment
+			WPB	url_publisher
+			WPUB	url_publisher
+			WXX	url_user
+			WXXX	url_user
+			TFEA	featured_artist
+			TSTU	recording_studio
+			rgad	replay_gain_adjustment
+
+		*/
+
+		return getid3_lib::EmbeddedLookup($framename, $begin, __LINE__, __FILE__, 'id3v2-framename_short');
+	}
+
+	public static function TextEncodingTerminatorLookup($encoding) {
+		// http://www.id3.org/id3v2.4.0-structure.txt
+		// Frames that allow different types of text encoding contains a text encoding description byte. Possible encodings:
+		static $TextEncodingTerminatorLookup = array(
+			0   => "\x00",     // $00  ISO-8859-1. Terminated with $00.
+			1   => "\x00\x00", // $01  UTF-16 encoded Unicode with BOM. All strings in the same frame SHALL have the same byteorder. Terminated with $00 00.
+			2   => "\x00\x00", // $02  UTF-16BE encoded Unicode without BOM. Terminated with $00 00.
+			3   => "\x00",     // $03  UTF-8 encoded Unicode. Terminated with $00.
+			255 => "\x00\x00"
+		);
+		return (isset($TextEncodingTerminatorLookup[$encoding]) ? $TextEncodingTerminatorLookup[$encoding] : "\x00");
+	}
+
+	public static function TextEncodingNameLookup($encoding) {
+		// http://www.id3.org/id3v2.4.0-structure.txt
+		// Frames that allow different types of text encoding contains a text encoding description byte. Possible encodings:
+		static $TextEncodingNameLookup = array(
+			0   => 'ISO-8859-1', // $00  ISO-8859-1. Terminated with $00.
+			1   => 'UTF-16',     // $01  UTF-16 encoded Unicode with BOM. All strings in the same frame SHALL have the same byteorder. Terminated with $00 00.
+			2   => 'UTF-16BE',   // $02  UTF-16BE encoded Unicode without BOM. Terminated with $00 00.
+			3   => 'UTF-8',      // $03  UTF-8 encoded Unicode. Terminated with $00.
+			255 => 'UTF-16BE'
+		);
+		return (isset($TextEncodingNameLookup[$encoding]) ? $TextEncodingNameLookup[$encoding] : 'ISO-8859-1');
+	}
+
+	public static function IsValidID3v2FrameName($framename, $id3v2majorversion) {
+		switch ($id3v2majorversion) {
+			case 2:
+				return preg_match('#[A-Z][A-Z0-9]{2}#', $framename);
+				break;
+
+			case 3:
+			case 4:
+				return preg_match('#[A-Z][A-Z0-9]{3}#', $framename);
+				break;
+		}
+		return false;
+	}
+
+	public static function IsANumber($numberstring, $allowdecimal=false, $allownegative=false) {
+		for ($i = 0; $i < strlen($numberstring); $i++) {
+			if ((chr($numberstring{$i}) < chr('0')) || (chr($numberstring{$i}) > chr('9'))) {
+				if (($numberstring{$i} == '.') && $allowdecimal) {
+					// allowed
+				} elseif (($numberstring{$i} == '-') && $allownegative && ($i == 0)) {
+					// allowed
+				} else {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	public static function IsValidDateStampString($datestamp) {
+		if (strlen($datestamp) != 8) {
+			return false;
+		}
+		if (!self::IsANumber($datestamp, false)) {
+			return false;
+		}
+		$year  = substr($datestamp, 0, 4);
+		$month = substr($datestamp, 4, 2);
+		$day   = substr($datestamp, 6, 2);
+		if (($year == 0) || ($month == 0) || ($day == 0)) {
+			return false;
+		}
+		if ($month > 12) {
+			return false;
+		}
+		if ($day > 31) {
+			return false;
+		}
+		if (($day > 30) && (($month == 4) || ($month == 6) || ($month == 9) || ($month == 11))) {
+			return false;
+		}
+		if (($day > 29) && ($month == 2)) {
+			return false;
+		}
+		return true;
+	}
+
+	public static function ID3v2HeaderLength($majorversion) {
+		return (($majorversion == 2) ? 6 : 10);
+	}
+
+}
+

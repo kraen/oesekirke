@@ -636,3 +636,100 @@ class WP_Post_Comments_List_Table extends WP_Comments_List_Table {
 		return 10;
 	}
 }
+_url( 'mailto:' . $email ), esc_html( $email ) );
+				}
+			}
+
+			$author_ip = get_comment_author_IP( $comment );
+			if ( $author_ip ) {
+				$author_ip_url = add_query_arg( array( 's' => $author_ip, 'mode' => 'detail' ), admin_url( 'edit-comments.php' ) );
+				if ( 'spam' === $comment_status ) {
+					$author_ip_url = add_query_arg( 'comment_status', 'spam', $author_ip_url );
+				}
+				printf( '<a href="%1$s">%2$s</a>', esc_url( $author_ip_url ), esc_html( $author_ip ) );
+			}
+		}
+	}
+
+	/**
+	 * @access public
+	 *
+	 * @param WP_Comment $comment The comment object.
+	 */
+	public function column_date( $comment ) {
+		/* translators: 1: comment date, 2: comment time */
+		$submitted = sprintf( __( '%1$s at %2$s' ),
+			/* translators: comment date format. See http://php.net/date */
+			get_comment_date( __( 'Y/m/d' ), $comment ),
+			get_comment_date( __( 'g:i a' ), $comment )
+		);
+
+		echo '<div class="submitted-on">';
+		if ( 'approved' === wp_get_comment_status( $comment ) && ! empty ( $comment->comment_post_ID ) ) {
+			printf(
+				'<a href="%s">%s</a>',
+				esc_url( get_comment_link( $comment ) ),
+				$submitted
+			);
+		} else {
+			echo $submitted;
+		}
+		echo '</div>';
+	}
+
+	/**
+	 * @access public
+	 *
+	 * @param WP_Comment $comment The comment object.
+	 */
+	public function column_response( $comment ) {
+		$post = get_post();
+
+		if ( ! $post ) {
+			return;
+		}
+
+		if ( isset( $this->pending_count[$post->ID] ) ) {
+			$pending_comments = $this->pending_count[$post->ID];
+		} else {
+			$_pending_count_temp = get_pending_comments_num( array( $post->ID ) );
+			$pending_comments = $this->pending_count[$post->ID] = $_pending_count_temp[$post->ID];
+		}
+
+		if ( current_user_can( 'edit_post', $post->ID ) ) {
+			$post_link = "<a href='" . get_edit_post_link( $post->ID ) . "' class='comments-edit-item-link'>";
+			$post_link .= esc_html( get_the_title( $post->ID ) ) . '</a>';
+		} else {
+			$post_link = esc_html( get_the_title( $post->ID ) );
+		}
+
+		echo '<div class="response-links">';
+		if ( 'attachment' === $post->post_type && ( $thumb = wp_get_attachment_image( $post->ID, array( 80, 60 ), true ) ) ) {
+			echo $thumb;
+		}
+		echo $post_link;
+		$post_type_object = get_post_type_object( $post->post_type );
+		echo "<a href='" . get_permalink( $post->ID ) . "' class='comments-view-item-link'>" . $post_type_object->labels->view_item . '</a>';
+		echo '<span class="post-com-count-wrapper post-com-count-', $post->ID, '">';
+		$this->comments_bubble( $post->ID, $pending_comments );
+		echo '</span> ';
+		echo '</div>';
+	}
+
+	/**
+	 *
+	 * @param WP_Comment $comment     The comment object.
+	 * @param string     $column_name The custom column's name.
+	 */
+	public function column_default( $comment, $column_name ) {
+		/**
+		 * Fires when the default column output is displayed for a single row.
+		 *
+		 * @since 2.8.0
+		 *
+		 * @param string $column_name         The custom column's name.
+		 * @param int    $comment->comment_ID The custom column's unique ID number.
+		 */
+		do_action( 'manage_comments_custom_column', $column_name, $comment->comment_ID );
+	}
+}

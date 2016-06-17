@@ -586,3 +586,90 @@ class _NGG_Images_List_Table extends WP_List_Table {
 }
 
 ?>
+" class="submit">
+		    		<input class="button-primary" type="submit" name="TB_NewThumbnail" value="<?php _e('OK', 'nggallery');?>" />
+		    		&nbsp;
+		    		<input class="button-secondary dialog-cancel" type="reset" value="&nbsp;<?php _e('Cancel', 'nggallery'); ?>&nbsp;" />
+		    	</td>
+			</tr>
+		</table>
+		</form>
+	</div>
+	<!-- /#new_thumbnail -->
+
+	<script type="text/javascript">
+	/* <![CDATA[ */
+	jQuery(document).ready(function(){columns.init('nggallery-manage-images');});
+	/* ]]> */
+	</script>
+	<?php
+}
+
+/**
+ * Construtor class to create the table layout
+ *
+ * @package WordPress
+ * @subpackage List_Table
+ * @since 1.8.0
+ * @access private
+ */
+class _NGG_Images_List_Table extends WP_List_Table {
+	var $_screen;
+	var $_columns;
+
+	function __construct($screen)
+	{
+		if ( is_string( $screen ) )
+			$screen = convert_to_screen( $screen );
+
+		$this->_screen = $screen;
+		$this->_columns = array() ;
+
+		add_filter( 'manage_' . $screen->id . '_columns', array( &$this, 'get_columns' ), 0 );
+	}
+
+	function get_column_info() {
+
+		$columns = get_column_headers( $this->_screen );
+		$hidden = get_hidden_columns( $this->_screen );
+		$_sortable = $this->get_sortable_columns();
+        $sortable = array();
+
+		foreach ( $_sortable as $id => $data ) {
+			if ( empty( $data ) )
+				continue;
+
+			$data = (array) $data;
+			if ( !isset( $data[1] ) )
+				$data[1] = false;
+
+			$sortable[$id] = $data;
+		}
+
+		return array( $columns, $hidden, $sortable );
+	}
+
+    // define the columns to display, the syntax is 'internal name' => 'display name'
+	function get_columns() {
+    	$columns = array();
+
+    	$columns['cb'] = '<input name="checkall" type="checkbox" onclick="checkAll(document.getElementById(\'updategallery\'));" />';
+    	$columns['id'] = __('ID');
+    	$columns['thumbnail'] = __('Thumbnail', 'nggallery');
+    	$columns['filename'] = __('Filename', 'nggallery');
+    	$columns['alt_title_desc'] = __('Alt &amp; Title Text', 'nggallery') . ' / ' . __('Description', 'nggallery');
+    	$columns['tags'] = __('Tags (comma separated list)', 'nggallery');
+    	$columns = apply_filters('ngg_manage_images_columns', $columns);
+
+    	return $columns;
+	}
+
+	function get_sortable_columns() {
+		return array();
+	}
+
+	function the_list()
+	{
+
+	}
+}

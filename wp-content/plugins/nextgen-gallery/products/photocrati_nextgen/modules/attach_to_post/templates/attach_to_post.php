@@ -27,3 +27,7 @@
 		<?php wp_print_footer_scripts() ?>
 	</body>
 </html>
+y:none;" data-wp-responsive="true"></div>
+		<?php wp_print_footer_scripts() ?>
+	</body>
+</html>

@@ -383,3 +383,38 @@ if ( isset( $_GET['updated'] ) ) {
 </div>
 
 <?php include( ABSPATH . 'wp-admin/admin-footer.php' ); ?>
+ng in place in the site dashboard on the other side. For instance, when the single
+			 * default option, 'plugins' is enabled, site administrators are granted access to the Plugins
+			 * screen in their individual sites' dashboards.
+			 *
+			 * @since MU
+			 *
+			 * @param array $admin_menus The menu items available.
+			 */
+			$menu_items = apply_filters( 'mu_menu_items', array( 'plugins' => __( 'Plugins' ) ) );
+			$fieldset_end = '';
+			if ( count( (array) $menu_items ) > 1 ) {
+				echo '<fieldset><legend class="screen-reader-text">' . __( 'Enable menus' ) . '</legend>';
+				$fieldset_end = '</fieldset>';
+			}
+			foreach ( (array) $menu_items as $key => $val ) {
+				echo "<label><input type='checkbox' name='menu_items[" . $key . "]' value='1'" . ( isset( $menu_perms[$key] ) ? checked( $menu_perms[$key], '1', false ) : '' ) . " /> " . esc_html( $val ) . "</label><br/>";
+			}
+			echo $fieldset_end;
+			?>
+				</td>
+			</tr>
+		</table>
+
+		<?php
+		/**
+		 * Fires at the end of the Network Settings form, before the submit button.
+		 *
+		 * @since MU
+		 */
+		do_action( 'wpmu_options' ); ?>
+		<?php submit_button(); ?>
+	</form>
+</div>
+
+<?php include( ABSPATH . 'wp-admin/admin-footer.php' ); ?>

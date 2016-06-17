@@ -61,3 +61,18 @@
         })
     });
 </script>
+edit&gid={gid}'; ?>
+                    var message = '<?php echo sprintf(__('Done! Successfully imported {count} images. <a href="%s" target="_blank">Manage gallery</a>', 'nggallery'), $url); ?>';
+                    message = message.replace('{count}', response.image_ids.length);
+                    message = message.replace('{gid}', response.gallery_id);
+                    progress_bar.close(100);
+                    $.gritter.add({
+                        title: '<?php _e("Upload complete", 'nggallery'); ?>',
+                        text: message,
+                        sticky: true
+                    });
+                }
+            });
+        })
+    });
+</script>

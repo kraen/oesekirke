@@ -920,3 +920,45 @@ li#wp-admin-bar-menu-toggle {
 	}
 }
 
+#wp-admin-bar-menu-toggle .ab-icon:before {
+		content: "\f228";
+		display: inline-block;
+		float: right;
+		font: normal 40px/45px dashicons;
+		vertical-align: middle;
+		outline: none;
+		margin: 0;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		height: 44px;
+		width: 50px;
+		padding: 0;
+		border: none;
+		text-align: center;
+		text-decoration: none;
+		-webkit-box-sizing: border-box;
+		-moz-box-sizing: border-box;
+		box-sizing: border-box;
+	}
+
+	.wp-responsive-open #wpadminbar #wp-admin-bar-menu-toggle .ab-icon:before {
+		color: #00b9eb;
+	}
+}
+
+/* Smartphone */
+@media screen and (max-width: 600px) {
+	#adminmenuwrap,
+	#adminmenuback {
+		display: none;
+	}
+
+	.wp-responsive-open #adminmenuwrap,
+	.wp-responsive-open #adminmenuback {
+		display: block;
+	}
+
+	.auto-fold #adminmenu {
+		top: 46px;
+	}
+}

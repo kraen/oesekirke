@@ -347,3 +347,13 @@ div#wp-responsive-toggle a:before {
 /* Override the theme filter highlight color for this scheme */
 .theme-section.current, .theme-filter.current {
   border-bottom-color: #04a4cc; }
+inbar.nojs .ab-top-menu > li.menupop:hover > .ab-item,
+#wpadminbar .ab-top-menu > li.menupop.hover > .ab-item {
+  color: #333;
+}
+
+/* Override the theme filter highlight color for this scheme */
+.theme-section.current,
+.theme-filter.current {
+  border-bottom-color: #04a4cc;
+}

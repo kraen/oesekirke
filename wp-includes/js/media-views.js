@@ -7793,3 +7793,616 @@
 		}
 	});
 }(jQuery, _));
+t ) {
+		if ( this.draggingFile !== null ) {
+			return this.draggingFile;
+		}
+
+		if ( _.isUndefined( event.originalEvent ) || _.isUndefined( event.originalEvent.dataTransfer ) ) {
+			return false;
+		}
+
+		this.draggingFile = _.indexOf( event.originalEvent.dataTransfer.types, 'Files' ) > -1 &&
+			_.indexOf( event.originalEvent.dataTransfer.types, 'text/plain' ) === -1;
+
+		return this.draggingFile;
+	},
+
+	refresh: function( e ) {
+		var dropzone_id;
+		for ( dropzone_id in this.dropzones ) {
+			// Hide the dropzones only if dragging has left the screen.
+			this.dropzones[ dropzone_id ].toggle( this.overContainer || this.overDropzone );
+		}
+
+		if ( ! _.isUndefined( e ) ) {
+			$( e.target ).closest( '.uploader-editor' ).toggleClass( 'droppable', this.overDropzone );
+		}
+
+		if ( ! this.overContainer && ! this.overDropzone ) {
+			this.draggingFile = null;
+		}
+
+		return this;
+	},
+
+	render: function() {
+		if ( ! this.initialized ) {
+			return this;
+		}
+
+		View.prototype.render.apply( this, arguments );
+		$( '.wp-editor-wrap' ).each( _.bind( this.attach, this ) );
+		return this;
+	},
+
+	attach: function( index, editor ) {
+		// Attach a dropzone to an editor.
+		var dropzone = this.$el.clone();
+		this.dropzones.push( dropzone );
+		$( editor ).append( dropzone );
+		return this;
+	},
+
+	/**
+	 * When a file is dropped on the editor uploader, open up an editor media workflow
+	 * and upload the file immediately.
+	 *
+	 * @param  {jQuery.Event} event The 'drop' event.
+	 */
+	drop: function( event ) {
+		var $wrap, uploadView;
+
+		this.containerDragleave( event );
+		this.dropzoneDragleave( event );
+
+		this.files = event.originalEvent.dataTransfer.files;
+		if ( this.files.length < 1 ) {
+			return;
+		}
+
+		// Set the active editor to the drop target.
+		$wrap = $( event.target ).parents( '.wp-editor-wrap' );
+		if ( $wrap.length > 0 && $wrap[0].id ) {
+			window.wpActiveEditor = $wrap[0].id.slice( 3, -5 );
+		}
+
+		if ( ! this.workflow ) {
+			this.workflow = wp.media.editor.open( window.wpActiveEditor, {
+				frame:    'post',
+				state:    'insert',
+				title:    l10n.addMedia,
+				multiple: true
+			});
+
+			uploadView = this.workflow.uploader;
+
+			if ( uploadView.uploader && uploadView.uploader.ready ) {
+				this.addFiles.apply( this );
+			} else {
+				this.workflow.on( 'uploader:ready', this.addFiles, this );
+			}
+		} else {
+			this.workflow.state().reset();
+			this.addFiles.apply( this );
+			this.workflow.open();
+		}
+
+		return false;
+	},
+
+	/**
+	 * Add the files to the uploader.
+	 */
+	addFiles: function() {
+		if ( this.files.length ) {
+			this.workflow.uploader.uploader.uploader.addFile( _.toArray( this.files ) );
+			this.files = [];
+		}
+		return this;
+	},
+
+	containerDragover: function( event ) {
+		if ( this.localDrag || ! this.isDraggingFile( event ) ) {
+			return;
+		}
+
+		this.overContainer = true;
+		this.refresh();
+	},
+
+	containerDragleave: function() {
+		this.overContainer = false;
+
+		// Throttle dragleave because it's called when bouncing from some elements to others.
+		_.delay( _.bind( this.refresh, this ), 50 );
+	},
+
+	dropzoneDragover: function( event ) {
+		if ( this.localDrag || ! this.isDraggingFile( event ) ) {
+			return;
+		}
+
+		this.overDropzone = true;
+		this.refresh( event );
+		return false;
+	},
+
+	dropzoneDragleave: function( e ) {
+		this.overDropzone = false;
+		_.delay( _.bind( this.refresh, this, e ), 50 );
+	},
+
+	click: function( e ) {
+		// In the rare case where the dropzone gets stuck, hide it on click.
+		this.containerDragleave( e );
+		this.dropzoneDragleave( e );
+		this.localDrag = false;
+	}
+});
+
+module.exports = EditorUploader;
+
+},{}],71:[function(require,module,exports){
+/**
+ * wp.media.view.UploaderInline
+ *
+ * The inline uploader that shows up in the 'Upload Files' tab.
+ *
+ * @class
+ * @augments wp.media.View
+ * @augments wp.Backbone.View
+ * @augments Backbone.View
+ */
+var View = wp.media.View,
+	UploaderInline;
+
+UploaderInline = View.extend({
+	tagName:   'div',
+	className: 'uploader-inline',
+	template:  wp.template('uploader-inline'),
+
+	events: {
+		'click .close': 'hide'
+	},
+
+	initialize: function() {
+		_.defaults( this.options, {
+			message: '',
+			status:  true,
+			canClose: false
+		});
+
+		if ( ! this.options.$browser && this.controller.uploader ) {
+			this.options.$browser = this.controller.uploader.$browser;
+		}
+
+		if ( _.isUndefined( this.options.postId ) ) {
+			this.options.postId = wp.media.view.settings.post.id;
+		}
+
+		if ( this.options.status ) {
+			this.views.set( '.upload-inline-status', new wp.media.view.UploaderStatus({
+				controller: this.controller
+			}) );
+		}
+	},
+
+	prepare: function() {
+		var suggestedWidth = this.controller.state().get('suggestedWidth'),
+			suggestedHeight = this.controller.state().get('suggestedHeight'),
+			data = {};
+
+		data.message = this.options.message;
+		data.canClose = this.options.canClose;
+
+		if ( suggestedWidth && suggestedHeight ) {
+			data.suggestedWidth = suggestedWidth;
+			data.suggestedHeight = suggestedHeight;
+		}
+
+		return data;
+	},
+	/**
+	 * @returns {wp.media.view.UploaderInline} Returns itself to allow chaining
+	 */
+	dispose: function() {
+		if ( this.disposing ) {
+			/**
+			 * call 'dispose' directly on the parent class
+			 */
+			return View.prototype.dispose.apply( this, arguments );
+		}
+
+		// Run remove on `dispose`, so we can be sure to refresh the
+		// uploader with a view-less DOM. Track whether we're disposing
+		// so we don't trigger an infinite loop.
+		this.disposing = true;
+		return this.remove();
+	},
+	/**
+	 * @returns {wp.media.view.UploaderInline} Returns itself to allow chaining
+	 */
+	remove: function() {
+		/**
+		 * call 'remove' directly on the parent class
+		 */
+		var result = View.prototype.remove.apply( this, arguments );
+
+		_.defer( _.bind( this.refresh, this ) );
+		return result;
+	},
+
+	refresh: function() {
+		var uploader = this.controller.uploader;
+
+		if ( uploader ) {
+			uploader.refresh();
+		}
+	},
+	/**
+	 * @returns {wp.media.view.UploaderInline}
+	 */
+	ready: function() {
+		var $browser = this.options.$browser,
+			$placeholder;
+
+		if ( this.controller.uploader ) {
+			$placeholder = this.$('.browser');
+
+			// Check if we've already replaced the placeholder.
+			if ( $placeholder[0] === $browser[0] ) {
+				return;
+			}
+
+			$browser.detach().text( $placeholder.text() );
+			$browser[0].className = $placeholder[0].className;
+			$placeholder.replaceWith( $browser.show() );
+		}
+
+		this.refresh();
+		return this;
+	},
+	show: function() {
+		this.$el.removeClass( 'hidden' );
+	},
+	hide: function() {
+		this.$el.addClass( 'hidden' );
+	}
+
+});
+
+module.exports = UploaderInline;
+
+},{}],72:[function(require,module,exports){
+/**
+ * wp.media.view.UploaderStatusError
+ *
+ * @class
+ * @augments wp.media.View
+ * @augments wp.Backbone.View
+ * @augments Backbone.View
+ */
+var UploaderStatusError = wp.media.View.extend({
+	className: 'upload-error',
+	template:  wp.template('uploader-status-error')
+});
+
+module.exports = UploaderStatusError;
+
+},{}],73:[function(require,module,exports){
+/**
+ * wp.media.view.UploaderStatus
+ *
+ * An uploader status for on-going uploads.
+ *
+ * @class
+ * @augments wp.media.View
+ * @augments wp.Backbone.View
+ * @augments Backbone.View
+ */
+var View = wp.media.View,
+	UploaderStatus;
+
+UploaderStatus = View.extend({
+	className: 'media-uploader-status',
+	template:  wp.template('uploader-status'),
+
+	events: {
+		'click .upload-dismiss-errors': 'dismiss'
+	},
+
+	initialize: function() {
+		this.queue = wp.Uploader.queue;
+		this.queue.on( 'add remove reset', this.visibility, this );
+		this.queue.on( 'add remove reset change:percent', this.progress, this );
+		this.queue.on( 'add remove reset change:uploading', this.info, this );
+
+		this.errors = wp.Uploader.errors;
+		this.errors.reset();
+		this.errors.on( 'add remove reset', this.visibility, this );
+		this.errors.on( 'add', this.error, this );
+	},
+	/**
+	 * @global wp.Uploader
+	 * @returns {wp.media.view.UploaderStatus}
+	 */
+	dispose: function() {
+		wp.Uploader.queue.off( null, null, this );
+		/**
+		 * call 'dispose' directly on the parent class
+		 */
+		View.prototype.dispose.apply( this, arguments );
+		return this;
+	},
+
+	visibility: function() {
+		this.$el.toggleClass( 'uploading', !! this.queue.length );
+		this.$el.toggleClass( 'errors', !! this.errors.length );
+		this.$el.toggle( !! this.queue.length || !! this.errors.length );
+	},
+
+	ready: function() {
+		_.each({
+			'$bar':      '.media-progress-bar div',
+			'$index':    '.upload-index',
+			'$total':    '.upload-total',
+			'$filename': '.upload-filename'
+		}, function( selector, key ) {
+			this[ key ] = this.$( selector );
+		}, this );
+
+		this.visibility();
+		this.progress();
+		this.info();
+	},
+
+	progress: function() {
+		var queue = this.queue,
+			$bar = this.$bar;
+
+		if ( ! $bar || ! queue.length ) {
+			return;
+		}
+
+		$bar.width( ( queue.reduce( function( memo, attachment ) {
+			if ( ! attachment.get('uploading') ) {
+				return memo + 100;
+			}
+
+			var percent = attachment.get('percent');
+			return memo + ( _.isNumber( percent ) ? percent : 100 );
+		}, 0 ) / queue.length ) + '%' );
+	},
+
+	info: function() {
+		var queue = this.queue,
+			index = 0, active;
+
+		if ( ! queue.length ) {
+			return;
+		}
+
+		active = this.queue.find( function( attachment, i ) {
+			index = i;
+			return attachment.get('uploading');
+		});
+
+		this.$index.text( index + 1 );
+		this.$total.text( queue.length );
+		this.$filename.html( active ? this.filename( active.get('filename') ) : '' );
+	},
+	/**
+	 * @param {string} filename
+	 * @returns {string}
+	 */
+	filename: function( filename ) {
+		return _.escape( filename );
+	},
+	/**
+	 * @param {Backbone.Model} error
+	 */
+	error: function( error ) {
+		this.views.add( '.upload-errors', new wp.media.view.UploaderStatusError({
+			filename: this.filename( error.get('file').name ),
+			message:  error.get('message')
+		}), { at: 0 });
+	},
+
+	/**
+	 * @global wp.Uploader
+	 *
+	 * @param {Object} event
+	 */
+	dismiss: function( event ) {
+		var errors = this.views.get('.upload-errors');
+
+		event.preventDefault();
+
+		if ( errors ) {
+			_.invoke( errors, 'remove' );
+		}
+		wp.Uploader.errors.reset();
+	}
+});
+
+module.exports = UploaderStatus;
+
+},{}],74:[function(require,module,exports){
+/**
+ * wp.media.view.UploaderWindow
+ *
+ * An uploader window that allows for dragging and dropping media.
+ *
+ * @class
+ * @augments wp.media.View
+ * @augments wp.Backbone.View
+ * @augments Backbone.View
+ *
+ * @param {object} [options]                   Options hash passed to the view.
+ * @param {object} [options.uploader]          Uploader properties.
+ * @param {jQuery} [options.uploader.browser]
+ * @param {jQuery} [options.uploader.dropzone] jQuery collection of the dropzone.
+ * @param {object} [options.uploader.params]
+ */
+var $ = jQuery,
+	UploaderWindow;
+
+UploaderWindow = wp.media.View.extend({
+	tagName:   'div',
+	className: 'uploader-window',
+	template:  wp.template('uploader-window'),
+
+	initialize: function() {
+		var uploader;
+
+		this.$browser = $('<a href="#" class="browser" />').hide().appendTo('body');
+
+		uploader = this.options.uploader = _.defaults( this.options.uploader || {}, {
+			dropzone:  this.$el,
+			browser:   this.$browser,
+			params:    {}
+		});
+
+		// Ensure the dropzone is a jQuery collection.
+		if ( uploader.dropzone && ! (uploader.dropzone instanceof $) ) {
+			uploader.dropzone = $( uploader.dropzone );
+		}
+
+		this.controller.on( 'activate', this.refresh, this );
+
+		this.controller.on( 'detach', function() {
+			this.$browser.remove();
+		}, this );
+	},
+
+	refresh: function() {
+		if ( this.uploader ) {
+			this.uploader.refresh();
+		}
+	},
+
+	ready: function() {
+		var postId = wp.media.view.settings.post.id,
+			dropzone;
+
+		// If the uploader already exists, bail.
+		if ( this.uploader ) {
+			return;
+		}
+
+		if ( postId ) {
+			this.options.uploader.params.post_id = postId;
+		}
+		this.uploader = new wp.Uploader( this.options.uploader );
+
+		dropzone = this.uploader.dropzone;
+		dropzone.on( 'dropzone:enter', _.bind( this.show, this ) );
+		dropzone.on( 'dropzone:leave', _.bind( this.hide, this ) );
+
+		$( this.uploader ).on( 'uploader:ready', _.bind( this._ready, this ) );
+	},
+
+	_ready: function() {
+		this.controller.trigger( 'uploader:ready' );
+	},
+
+	show: function() {
+		var $el = this.$el.show();
+
+		// Ensure that the animation is triggered by waiting until
+		// the transparent element is painted into the DOM.
+		_.defer( function() {
+			$el.css({ opacity: 1 });
+		});
+	},
+
+	hide: function() {
+		var $el = this.$el.css({ opacity: 0 });
+
+		wp.media.transition( $el ).done( function() {
+			// Transition end events are subject to race conditions.
+			// Make sure that the value is set as intended.
+			if ( '0' === $el.css('opacity') ) {
+				$el.hide();
+			}
+		});
+
+		// https://core.trac.wordpress.org/ticket/27341
+		_.delay( function() {
+			if ( '0' === $el.css('opacity') && $el.is(':visible') ) {
+				$el.hide();
+			}
+		}, 500 );
+	}
+});
+
+module.exports = UploaderWindow;
+
+},{}],75:[function(require,module,exports){
+/**
+ * wp.media.View
+ *
+ * The base view class for media.
+ *
+ * Undelegating events, removing events from the model, and
+ * removing events from the controller mirror the code for
+ * `Backbone.View.dispose` in Backbone 0.9.8 development.
+ *
+ * This behavior has since been removed, and should not be used
+ * outside of the media manager.
+ *
+ * @class
+ * @augments wp.Backbone.View
+ * @augments Backbone.View
+ */
+var View = wp.Backbone.View.extend({
+	constructor: function( options ) {
+		if ( options && options.controller ) {
+			this.controller = options.controller;
+		}
+		wp.Backbone.View.apply( this, arguments );
+	},
+	/**
+	 * @todo The internal comment mentions this might have been a stop-gap
+	 *       before Backbone 0.9.8 came out. Figure out if Backbone core takes
+	 *       care of this in Backbone.View now.
+	 *
+	 * @returns {wp.media.View} Returns itself to allow chaining
+	 */
+	dispose: function() {
+		// Undelegating events, removing events from the model, and
+		// removing events from the controller mirror the code for
+		// `Backbone.View.dispose` in Backbone 0.9.8 development.
+		this.undelegateEvents();
+
+		if ( this.model && this.model.off ) {
+			this.model.off( null, null, this );
+		}
+
+		if ( this.collection && this.collection.off ) {
+			this.collection.off( null, null, this );
+		}
+
+		// Unbind controller events.
+		if ( this.controller && this.controller.off ) {
+			this.controller.off( null, null, this );
+		}
+
+		return this;
+	},
+	/**
+	 * @returns {wp.media.View} Returns itself to allow chaining
+	 */
+	remove: function() {
+		this.dispose();
+		/**
+		 * call 'remove' directly on the parent class
+		 */
+		return wp.Backbone.View.prototype.remove.apply( this, arguments );
+	}
+});
+
+module.exports = View;
+
+},{}]},{},[19]);

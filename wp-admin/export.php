@@ -242,3 +242,64 @@ do_action( 'export_filters' );
 </div>
 
 <?php include( ABSPATH . 'wp-admin/admin-footer.php' ); ?>
+ _e( 'Start date:' ); ?></label>
+		<select name="page_start_date" id="page-start-date">
+			<option value="0"><?php _e( '&mdash; Select &mdash;' ); ?></option>
+			<?php export_date_options( 'page' ); ?>
+		</select>
+		<label for="page-end-date" class="label-responsive"><?php _e( 'End date:' ); ?></label>
+		<select name="page_end_date" id="page-end-date">
+			<option value="0"><?php _e( '&mdash; Select &mdash;' ); ?></option>
+			<?php export_date_options( 'page' ); ?>
+		</select>
+		</fieldset>
+	</li>
+	<li>
+		<label for="page-status" class="label-responsive"><?php _e( 'Status:' ); ?></label>
+		<select name="page_status" id="page-status">
+			<option value="0"><?php _e( 'All' ); ?></option>
+			<?php foreach ( $post_stati as $status ) : ?>
+			<option value="<?php echo esc_attr( $status->name ); ?>"><?php echo esc_html( $status->label ); ?></option>
+			<?php endforeach; ?>
+		</select>
+	</li>
+</ul>
+
+<?php foreach ( get_post_types( array( '_builtin' => false, 'can_export' => true ), 'objects' ) as $post_type ) : ?>
+<p><label><input type="radio" name="content" value="<?php echo esc_attr( $post_type->name ); ?>" /> <?php echo esc_html( $post_type->label ); ?></label></p>
+<?php endforeach; ?>
+
+<p><label><input type="radio" name="content" value="attachment" /> <?php _e( 'Media' ); ?></label></p>
+<ul id="attachment-filters" class="export-filters">
+	<li>
+		<fieldset>
+		<legend class="screen-reader-text"><?php _e( 'Date range:' ); ?></legend>
+		<label for="attachment-start-date" class="label-responsive"><?php _e( 'Start date:' ); ?></label>
+		<select name="attachment_start_date" id="attachment-start-date">
+			<option value="0"><?php _e( '&mdash; Select &mdash;' ); ?></option>
+			<?php export_date_options( 'attachment' ); ?>
+		</select>
+		<label for="attachment-end-date" class="label-responsive"><?php _e( 'End date:' ); ?></label>
+		<select name="attachment_end_date" id="attachment-end-date">
+			<option value="0"><?php _e( '&mdash; Select &mdash;' ); ?></option>
+			<?php export_date_options( 'attachment' ); ?>
+		</select>
+		</fieldset>
+	</li>
+</ul>
+
+</fieldset>
+<?php
+/**
+ * Fires at the end of the export filters form.
+ *
+ * @since 3.5.0
+ */
+do_action( 'export_filters' );
+?>
+
+<?php submit_button( __('Download Export File') ); ?>
+</form>
+</div>
+
+<?php include( ABSPATH . 'wp-admin/admin-footer.php' ); ?>

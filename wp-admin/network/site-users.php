@@ -317,3 +317,29 @@ if ( current_user_can( 'create_users' ) && apply_filters( 'show_network_site_use
 </div>
 <?php
 require( ABSPATH . 'wp-admin/admin-footer.php' );
+ble">
+		<tr>
+			<th scope="row"><label for="user_username"><?php _e( 'Username' ) ?></label></th>
+			<td><input type="text" class="regular-text" name="user[username]" id="user_username" /></td>
+		</tr>
+		<tr>
+			<th scope="row"><label for="user_email"><?php _e( 'Email' ) ?></label></th>
+			<td><input type="text" class="regular-text" name="user[email]" id="user_email" /></td>
+		</tr>
+		<tr>
+			<th scope="row"><label for="new_role_newuser"><?php _e( 'Role' ); ?></label></th>
+			<td><select name="new_role" id="new_role_newuser">
+			<?php wp_dropdown_roles( get_option( 'default_role' ) ); ?>
+			</select></td>
+		</tr>
+		<tr class="form-field">
+			<td colspan="2"><?php _e( 'A password reset link will be sent to the user via email.' ) ?></td>
+		</tr>
+	</table>
+	<?php wp_nonce_field( 'add-user', '_wpnonce_add-new-user' ) ?>
+	<?php submit_button( __( 'Add New User' ), 'primary', 'add-user', true, array( 'id' => 'submit-add-user' ) ); ?>
+</form>
+<?php endif; ?>
+</div>
+<?php
+require( ABSPATH . 'wp-admin/admin-footer.php' );

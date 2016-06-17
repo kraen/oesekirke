@@ -3322,3 +3322,639 @@ function the_shortlink( $text = '', $title = '', $before = '', $after = '' ) {
 		echo $before, $link, $after;
 	}
 }
+d.
+ */
+function network_admin_url( $path = '', $scheme = 'admin' ) {
+	if ( ! is_multisite() )
+		return admin_url( $path, $scheme );
+
+	$url = network_site_url('wp-admin/network/', $scheme);
+
+	if ( $path && is_string( $path ) )
+		$url .= ltrim($path, '/');
+
+	/**
+	 * Filter the network admin URL.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param string $url  The complete network admin URL including scheme and path.
+	 * @param string $path Path relative to the network admin URL. Blank string if
+	 *                     no path is specified.
+	 */
+	return apply_filters( 'network_admin_url', $url, $path );
+}
+
+/**
+ * Retrieve the url to the admin area for the current user.
+ *
+ * @since 3.0.0
+ *
+ * @param string $path   Optional path relative to the admin url.
+ * @param string $scheme The scheme to use. Default is 'admin', which obeys force_ssl_admin() and is_ssl(). 'http' or 'https' can be passed to force those schemes.
+ * @return string Admin url link with optional path appended.
+ */
+function user_admin_url( $path = '', $scheme = 'admin' ) {
+	$url = network_site_url('wp-admin/user/', $scheme);
+
+	if ( $path && is_string( $path ) )
+		$url .= ltrim($path, '/');
+
+	/**
+	 * Filter the user admin URL for the current user.
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param string $url  The complete URL including scheme and path.
+	 * @param string $path Path relative to the URL. Blank string if
+	 *                     no path is specified.
+	 */
+	return apply_filters( 'user_admin_url', $url, $path );
+}
+
+/**
+ * Retrieve the url to the admin area for either the current site or the network depending on context.
+ *
+ * @since 3.1.0
+ *
+ * @param string $path   Optional path relative to the admin url.
+ * @param string $scheme The scheme to use. Default is 'admin', which obeys force_ssl_admin() and is_ssl(). 'http' or 'https' can be passed to force those schemes.
+ * @return string Admin url link with optional path appended.
+ */
+function self_admin_url($path = '', $scheme = 'admin') {
+	if ( is_network_admin() )
+		return network_admin_url($path, $scheme);
+	elseif ( is_user_admin() )
+		return user_admin_url($path, $scheme);
+	else
+		return admin_url($path, $scheme);
+}
+
+/**
+ * Sets the scheme for a URL.
+ *
+ * @since 3.4.0
+ * @since 4.4.0 The 'rest' scheme was added.
+ *
+ * @param string      $url    Absolute url that includes a scheme
+ * @param string|null $scheme Optional. Scheme to give $url. Currently 'http', 'https', 'login',
+ *                            'login_post', 'admin', 'relative', 'rest', 'rpc', or null. Default null.
+ * @return string $url URL with chosen scheme.
+ */
+function set_url_scheme( $url, $scheme = null ) {
+	$orig_scheme = $scheme;
+
+	if ( ! $scheme ) {
+		$scheme = is_ssl() ? 'https' : 'http';
+	} elseif ( $scheme === 'admin' || $scheme === 'login' || $scheme === 'login_post' || $scheme === 'rpc' ) {
+		$scheme = is_ssl() || force_ssl_admin() ? 'https' : 'http';
+	} elseif ( $scheme !== 'http' && $scheme !== 'https' && $scheme !== 'relative' ) {
+		$scheme = is_ssl() ? 'https' : 'http';
+	}
+
+	$url = trim( $url );
+	if ( substr( $url, 0, 2 ) === '//' )
+		$url = 'http:' . $url;
+
+	if ( 'relative' == $scheme ) {
+		$url = ltrim( preg_replace( '#^\w+://[^/]*#', '', $url ) );
+		if ( $url !== '' && $url[0] === '/' )
+			$url = '/' . ltrim($url , "/ \t\n\r\0\x0B" );
+	} else {
+		$url = preg_replace( '#^\w+://#', $scheme . '://', $url );
+	}
+
+	/**
+	 * Filter the resulting URL after setting the scheme.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @param string      $url         The complete URL including scheme and path.
+	 * @param string      $scheme      Scheme applied to the URL. One of 'http', 'https', or 'relative'.
+	 * @param string|null $orig_scheme Scheme requested for the URL. One of 'http', 'https', 'login',
+	 *                                 'login_post', 'admin', 'relative', 'rest', 'rpc', or null.
+	 */
+	return apply_filters( 'set_url_scheme', $url, $scheme, $orig_scheme );
+}
+
+/**
+ * Get the URL to the user's dashboard.
+ *
+ * If a user does not belong to any site, the global user dashboard is used. If the user belongs to the current site,
+ * the dashboard for the current site is returned. If the user cannot edit the current site, the dashboard to the user's
+ * primary site is returned.
+ *
+ * @since 3.1.0
+ *
+ * @param int    $user_id Optional. User ID. Defaults to current user.
+ * @param string $path    Optional path relative to the dashboard. Use only paths known to both site and user admins.
+ * @param string $scheme  The scheme to use. Default is 'admin', which obeys force_ssl_admin() and is_ssl(). 'http' or 'https' can be passed to force those schemes.
+ * @return string Dashboard url link with optional path appended.
+ */
+function get_dashboard_url( $user_id = 0, $path = '', $scheme = 'admin' ) {
+	$user_id = $user_id ? (int) $user_id : get_current_user_id();
+
+	$blogs = get_blogs_of_user( $user_id );
+	if ( ! is_super_admin() && empty($blogs) ) {
+		$url = user_admin_url( $path, $scheme );
+	} elseif ( ! is_multisite() ) {
+		$url = admin_url( $path, $scheme );
+	} else {
+		$current_blog = get_current_blog_id();
+		if ( $current_blog  && ( is_super_admin( $user_id ) || in_array( $current_blog, array_keys( $blogs ) ) ) ) {
+			$url = admin_url( $path, $scheme );
+		} else {
+			$active = get_active_blog_for_user( $user_id );
+			if ( $active )
+				$url = get_admin_url( $active->blog_id, $path, $scheme );
+			else
+				$url = user_admin_url( $path, $scheme );
+		}
+	}
+
+	/**
+	 * Filter the dashboard URL for a user.
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param string $url     The complete URL including scheme and path.
+	 * @param int    $user_id The user ID.
+	 * @param string $path    Path relative to the URL. Blank string if no path is specified.
+	 * @param string $scheme  Scheme to give the URL context. Accepts 'http', 'https', 'login',
+	 *                        'login_post', 'admin', 'relative' or null.
+	 */
+	return apply_filters( 'user_dashboard_url', $url, $user_id, $path, $scheme);
+}
+
+/**
+ * Get the URL to the user's profile editor.
+ *
+ * @since 3.1.0
+ *
+ * @param int    $user_id Optional. User ID. Defaults to current user.
+ * @param string $scheme  The scheme to use. Default is 'admin', which obeys force_ssl_admin() and is_ssl().
+ *                        'http' or 'https' can be passed to force those schemes.
+ * @return string Dashboard url link with optional path appended.
+ */
+function get_edit_profile_url( $user_id = 0, $scheme = 'admin' ) {
+	$user_id = $user_id ? (int) $user_id : get_current_user_id();
+
+	if ( is_user_admin() )
+		$url = user_admin_url( 'profile.php', $scheme );
+	elseif ( is_network_admin() )
+		$url = network_admin_url( 'profile.php', $scheme );
+	else
+		$url = get_dashboard_url( $user_id, 'profile.php', $scheme );
+
+	/**
+	 * Filter the URL for a user's profile editor.
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param string $url     The complete URL including scheme and path.
+	 * @param int    $user_id The user ID.
+	 * @param string $scheme  Scheme to give the URL context. Accepts 'http', 'https', 'login',
+	 *                        'login_post', 'admin', 'relative' or null.
+	 */
+	return apply_filters( 'edit_profile_url', $url, $user_id, $scheme);
+}
+
+/**
+ * Output rel=canonical for singular queries.
+ *
+ * @since 2.9.0
+ */
+function rel_canonical() {
+	if ( ! is_singular() ) {
+		return;
+	}
+
+	if ( ! $id = get_queried_object_id() ) {
+		return;
+	}
+
+	$url = get_permalink( $id );
+
+	$page = get_query_var( 'page' );
+	if ( $page >= 2 ) {
+		if ( '' == get_option( 'permalink_structure' ) ) {
+			$url = add_query_arg( 'page', $page, $url );
+		} else {
+			$url = trailingslashit( $url ) . user_trailingslashit( $page, 'single_paged' );
+		}
+	}
+
+	$cpage = get_query_var( 'cpage' );
+	if ( $cpage ) {
+		$url = get_comments_pagenum_link( $cpage );
+	}
+	echo '<link rel="canonical" href="' . esc_url( $url ) . "\" />\n";
+}
+
+/**
+ * Return a shortlink for a post, page, attachment, or a site.
+ *
+ * This function exists to provide a shortlink tag that all themes and plugins can target. A plugin must hook in to
+ * provide the actual shortlinks. Default shortlink support is limited to providing ?p= style links for posts.
+ * Plugins can short-circuit this function via the pre_get_shortlink filter or filter the output
+ * via the get_shortlink filter.
+ *
+ * @since 3.0.0.
+ *
+ * @param int    $id          A post or site id. Default is 0, which means the current post or site.
+ * @param string $context     Whether the id is a 'site' id, 'post' id, or 'media' id.
+ *                            If 'post', the post_type of the post is consulted.
+ *                            If 'query', the current query is consulted to determine the id and context.
+ *                            Default is 'post'.
+ * @param bool   $allow_slugs Whether to allow post slugs in the shortlink. It is up to the plugin how and whether to honor this.
+ * @return string A shortlink or an empty string if no shortlink exists for the requested resource or if shortlinks are not enabled.
+ */
+function wp_get_shortlink($id = 0, $context = 'post', $allow_slugs = true) {
+	/**
+	 * Filter whether to preempt generating a shortlink for the given post.
+	 *
+	 * Passing a truthy value to the filter will effectively short-circuit the
+	 * shortlink-generation process, returning that value instead.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param bool|string $return      Short-circuit return value. Either false or a URL string.
+	 * @param int         $id          Post ID, or 0 for the current post.
+	 * @param string      $context     The context for the link. One of 'post' or 'query',
+	 * @param bool        $allow_slugs Whether to allow post slugs in the shortlink.
+	 */
+	$shortlink = apply_filters( 'pre_get_shortlink', false, $id, $context, $allow_slugs );
+
+	if ( false !== $shortlink ) {
+		return $shortlink;
+	}
+
+	$post_id = 0;
+	if ( 'query' == $context && is_singular() ) {
+		$post_id = get_queried_object_id();
+		$post = get_post( $post_id );
+	} elseif ( 'post' == $context ) {
+		$post = get_post( $id );
+		if ( ! empty( $post->ID ) )
+			$post_id = $post->ID;
+	}
+
+	$shortlink = '';
+
+	// Return p= link for all public post types.
+	if ( ! empty( $post_id ) ) {
+		$post_type = get_post_type_object( $post->post_type );
+
+		if ( 'page' === $post->post_type && $post->ID == get_option( 'page_on_front' ) && 'page' == get_option( 'show_on_front' ) ) {
+			$shortlink = home_url( '/' );
+		} elseif ( $post_type->public ) {
+			$shortlink = home_url( '?p=' . $post_id );
+		}
+	}
+
+	/**
+	 * Filter the shortlink for a post.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param string $shortlink   Shortlink URL.
+	 * @param int    $id          Post ID, or 0 for the current post.
+	 * @param string $context     The context for the link. One of 'post' or 'query',
+	 * @param bool   $allow_slugs Whether to allow post slugs in the shortlink. Not used by default.
+	 */
+	return apply_filters( 'get_shortlink', $shortlink, $id, $context, $allow_slugs );
+}
+
+/**
+ *  Inject rel=shortlink into head if a shortlink is defined for the current page.
+ *
+ *  Attached to the wp_head action.
+ *
+ * @since 3.0.0
+ */
+function wp_shortlink_wp_head() {
+	$shortlink = wp_get_shortlink( 0, 'query' );
+
+	if ( empty( $shortlink ) )
+		return;
+
+	echo "<link rel='shortlink' href='" . esc_url( $shortlink ) . "' />\n";
+}
+
+/**
+ * Send a Link: rel=shortlink header if a shortlink is defined for the current page.
+ *
+ * Attached to the wp action.
+ *
+ * @since 3.0.0
+ */
+function wp_shortlink_header() {
+	if ( headers_sent() )
+		return;
+
+	$shortlink = wp_get_shortlink(0, 'query');
+
+	if ( empty($shortlink) )
+		return;
+
+	header('Link: <' . $shortlink . '>; rel=shortlink', false);
+}
+
+/**
+ * Display the Short Link for a Post
+ *
+ * Must be called from inside "The Loop"
+ *
+ * Call like the_shortlink(__('Shortlinkage FTW'))
+ *
+ * @since 3.0.0
+ *
+ * @param string $text   Optional The link text or HTML to be displayed. Defaults to 'This is the short link.'
+ * @param string $title  Optional The tooltip for the link. Must be sanitized. Defaults to the sanitized post title.
+ * @param string $before Optional HTML to display before the link.
+ * @param string $after  Optional HTML to display after the link.
+ */
+function the_shortlink( $text = '', $title = '', $before = '', $after = '' ) {
+	$post = get_post();
+
+	if ( empty( $text ) )
+		$text = __('This is the short link.');
+
+	if ( empty( $title ) )
+		$title = the_title_attribute( array( 'echo' => false ) );
+
+	$shortlink = wp_get_shortlink( $post->ID );
+
+	if ( !empty( $shortlink ) ) {
+		$link = '<a rel="shortlink" href="' . esc_url( $shortlink ) . '" title="' . $title . '">' . $text . '</a>';
+
+		/**
+		 * Filter the shortlink anchor tag for a post.
+		 *
+		 * @since 3.0.0
+		 *
+		 * @param string $link      Shortlink anchor tag.
+		 * @param string $shortlink Shortlink URL.
+		 * @param string $text      Shortlink's text.
+		 * @param string $title     Shortlink's title attribute.
+		 */
+		$link = apply_filters( 'the_shortlink', $link, $shortlink, $text, $title );
+		echo $before, $link, $after;
+	}
+}
+
+
+/**
+ * Retrieve the avatar URL.
+ *
+ * @since 4.2.0
+ *
+ * @param mixed $id_or_email The Gravatar to retrieve a URL for. Accepts a user_id, gravatar md5 hash,
+ *                           user email, WP_User object, WP_Post object, or WP_Comment object.
+ * @param array $args {
+ *     Optional. Arguments to return instead of the default arguments.
+ *
+ *     @type int    $size           Height and width of the avatar in pixels. Default 96.
+ *     @type string $default        URL for the default image or a default type. Accepts '404' (return
+ *                                  a 404 instead of a default image), 'retro' (8bit), 'monsterid' (monster),
+ *                                  'wavatar' (cartoon face), 'indenticon' (the "quilt"), 'mystery', 'mm',
+ *                                  or 'mysteryman' (The Oyster Man), 'blank' (transparent GIF), or
+ *                                  'gravatar_default' (the Gravatar logo). Default is the value of the
+ *                                  'avatar_default' option, with a fallback of 'mystery'.
+ *     @type bool   $force_default  Whether to always show the default image, never the Gravatar. Default false.
+ *     @type string $rating         What rating to display avatars up to. Accepts 'G', 'PG', 'R', 'X', and are
+ *                                  judged in that order. Default is the value of the 'avatar_rating' option.
+ *     @type string $scheme         URL scheme to use. See set_url_scheme() for accepted values.
+ *                                  Default null.
+ *     @type array  $processed_args When the function returns, the value will be the processed/sanitized $args
+ *                                  plus a "found_avatar" guess. Pass as a reference. Default null.
+ * }
+ * @return false|string The URL of the avatar we found, or false if we couldn't find an avatar.
+ */
+function get_avatar_url( $id_or_email, $args = null ) {
+	$args = get_avatar_data( $id_or_email, $args );
+	return $args['url'];
+}
+
+/**
+ * Retrieve default data about the avatar.
+ *
+ * @since 4.2.0
+ *
+ * @param mixed $id_or_email The Gravatar to retrieve. Accepts a user_id, gravatar md5 hash,
+ *                            user email, WP_User object, WP_Post object, or WP_Comment object.
+ * @param array $args {
+ *     Optional. Arguments to return instead of the default arguments.
+ *
+ *     @type int    $size           Height and width of the avatar image file in pixels. Default 96.
+ *     @type int    $height         Display height of the avatar in pixels. Defaults to $size.
+ *     @type int    $width          Display width of the avatar in pixels. Defaults to $size.
+ *     @type string $default        URL for the default image or a default type. Accepts '404' (return
+ *                                  a 404 instead of a default image), 'retro' (8bit), 'monsterid' (monster),
+ *                                  'wavatar' (cartoon face), 'indenticon' (the "quilt"), 'mystery', 'mm',
+ *                                  or 'mysteryman' (The Oyster Man), 'blank' (transparent GIF), or
+ *                                  'gravatar_default' (the Gravatar logo). Default is the value of the
+ *                                  'avatar_default' option, with a fallback of 'mystery'.
+ *     @type bool   $force_default  Whether to always show the default image, never the Gravatar. Default false.
+ *     @type string $rating         What rating to display avatars up to. Accepts 'G', 'PG', 'R', 'X', and are
+ *                                  judged in that order. Default is the value of the 'avatar_rating' option.
+ *     @type string $scheme         URL scheme to use. See set_url_scheme() for accepted values.
+ *                                  Default null.
+ *     @type array  $processed_args When the function returns, the value will be the processed/sanitized $args
+ *                                  plus a "found_avatar" guess. Pass as a reference. Default null.
+ *     @type string $extra_attr     HTML attributes to insert in the IMG element. Is not sanitized. Default empty.
+ * }
+ * @return array $processed_args {
+ *     Along with the arguments passed in `$args`, this will contain a couple of extra arguments.
+ *
+ *     @type bool   $found_avatar True if we were able to find an avatar for this user,
+ *                                false or not set if we couldn't.
+ *     @type string $url          The URL of the avatar we found.
+ * }
+ */
+function get_avatar_data( $id_or_email, $args = null ) {
+	$args = wp_parse_args( $args, array(
+		'size'           => 96,
+		'height'         => null,
+		'width'          => null,
+		'default'        => get_option( 'avatar_default', 'mystery' ),
+		'force_default'  => false,
+		'rating'         => get_option( 'avatar_rating' ),
+		'scheme'         => null,
+		'processed_args' => null, // if used, should be a reference
+		'extra_attr'     => '',
+	) );
+
+	if ( is_numeric( $args['size'] ) ) {
+		$args['size'] = absint( $args['size'] );
+		if ( ! $args['size'] ) {
+			$args['size'] = 96;
+		}
+	} else {
+		$args['size'] = 96;
+	}
+
+	if ( is_numeric( $args['height'] ) ) {
+		$args['height'] = absint( $args['height'] );
+		if ( ! $args['height'] ) {
+			$args['height'] = $args['size'];
+		}
+	} else {
+		$args['height'] = $args['size'];
+	}
+
+	if ( is_numeric( $args['width'] ) ) {
+		$args['width'] = absint( $args['width'] );
+		if ( ! $args['width'] ) {
+			$args['width'] = $args['size'];
+		}
+	} else {
+		$args['width'] = $args['size'];
+	}
+
+	if ( empty( $args['default'] ) ) {
+		$args['default'] = get_option( 'avatar_default', 'mystery' );
+	}
+
+	switch ( $args['default'] ) {
+		case 'mm' :
+		case 'mystery' :
+		case 'mysteryman' :
+			$args['default'] = 'mm';
+			break;
+		case 'gravatar_default' :
+			$args['default'] = false;
+			break;
+	}
+
+	$args['force_default'] = (bool) $args['force_default'];
+
+	$args['rating'] = strtolower( $args['rating'] );
+
+	$args['found_avatar'] = false;
+
+	/**
+	 * Filter whether to retrieve the avatar URL early.
+	 *
+	 * Passing a non-null value in the 'url' member of the return array will
+	 * effectively short circuit get_avatar_data(), passing the value through
+	 * the {@see 'get_avatar_data'} filter and returning early.
+	 *
+	 * @since 4.2.0
+	 *
+	 * @param array  $args        Arguments passed to get_avatar_data(), after processing.
+	 * @param mixed  $id_or_email The Gravatar to retrieve. Accepts a user_id, gravatar md5 hash,
+	 *                            user email, WP_User object, WP_Post object, or WP_Comment object.
+	 */
+	$args = apply_filters( 'pre_get_avatar_data', $args, $id_or_email );
+
+	if ( isset( $args['url'] ) && ! is_null( $args['url'] ) ) {
+		/** This filter is documented in wp-includes/link-template.php */
+		return apply_filters( 'get_avatar_data', $args, $id_or_email );
+	}
+
+	$email_hash = '';
+	$user = $email = false;
+
+	if ( is_object( $id_or_email ) && isset( $id_or_email->comment_ID ) ) {
+		$id_or_email = get_comment( $id_or_email );
+	}
+
+	// Process the user identifier.
+	if ( is_numeric( $id_or_email ) ) {
+		$user = get_user_by( 'id', absint( $id_or_email ) );
+	} elseif ( is_string( $id_or_email ) ) {
+		if ( strpos( $id_or_email, '@md5.gravatar.com' ) ) {
+			// md5 hash
+			list( $email_hash ) = explode( '@', $id_or_email );
+		} else {
+			// email address
+			$email = $id_or_email;
+		}
+	} elseif ( $id_or_email instanceof WP_User ) {
+		// User Object
+		$user = $id_or_email;
+	} elseif ( $id_or_email instanceof WP_Post ) {
+		// Post Object
+		$user = get_user_by( 'id', (int) $id_or_email->post_author );
+	} elseif ( $id_or_email instanceof WP_Comment ) {
+		/**
+		 * Filter the list of allowed comment types for retrieving avatars.
+		 *
+		 * @since 3.0.0
+		 *
+		 * @param array $types An array of content types. Default only contains 'comment'.
+		 */
+		$allowed_comment_types = apply_filters( 'get_avatar_comment_types', array( 'comment' ) );
+		if ( ! empty( $id_or_email->comment_type ) && ! in_array( $id_or_email->comment_type, (array) $allowed_comment_types ) ) {
+			$args['url'] = false;
+			/** This filter is documented in wp-includes/link-template.php */
+			return apply_filters( 'get_avatar_data', $args, $id_or_email );
+		}
+
+		if ( ! empty( $id_or_email->user_id ) ) {
+			$user = get_user_by( 'id', (int) $id_or_email->user_id );
+		}
+		if ( ( ! $user || is_wp_error( $user ) ) && ! empty( $id_or_email->comment_author_email ) ) {
+			$email = $id_or_email->comment_author_email;
+		}
+	}
+
+	if ( ! $email_hash ) {
+		if ( $user ) {
+			$email = $user->user_email;
+		}
+
+		if ( $email ) {
+			$email_hash = md5( strtolower( trim( $email ) ) );
+		}
+	}
+
+	if ( $email_hash ) {
+		$args['found_avatar'] = true;
+		$gravatar_server = hexdec( $email_hash[0] ) % 3;
+	} else {
+		$gravatar_server = rand( 0, 2 );
+	}
+
+	$url_args = array(
+		's' => $args['size'],
+		'd' => $args['default'],
+		'f' => $args['force_default'] ? 'y' : false,
+		'r' => $args['rating'],
+	);
+
+	if ( is_ssl() ) {
+		$url = 'https://secure.gravatar.com/avatar/' . $email_hash;
+	} else {
+		$url = sprintf( 'http://%d.gravatar.com/avatar/%s', $gravatar_server, $email_hash );
+	}
+
+	$url = add_query_arg(
+		rawurlencode_deep( array_filter( $url_args ) ),
+		set_url_scheme( $url, $args['scheme'] )
+	);
+
+	/**
+	 * Filter the avatar URL.
+	 *
+	 * @since 4.2.0
+	 *
+	 * @param string $url         The URL of the avatar.
+	 * @param mixed  $id_or_email The Gravatar to retrieve. Accepts a user_id, gravatar md5 hash,
+	 *                            user email, WP_User object, WP_Post object, or WP_Comment object.
+	 * @param array  $args        Arguments passed to get_avatar_data(), after processing.
+	 */
+	$args['url'] = apply_filters( 'get_avatar_url', $url, $id_or_email, $args );
+
+	/**
+	 * Filter the avatar data.
+	 *
+	 * @since 4.2.0
+	 *
+	 * @param array  $args        Arguments passed to get_avatar_data(), after processing.
+	 * @param mixed  $id_or_email The Gravatar to retrieve. Accepts a user_id, gravatar md5 hash,
+	 *                            user email, WP_User object, WP_Post object, or WP_Comment object.
+	 */
+	return apply_filters( 'get_avatar_data', $args, $id_or_email );
+}

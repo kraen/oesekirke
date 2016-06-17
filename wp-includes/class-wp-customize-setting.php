@@ -563,3 +563,364 @@ final class WP_Customize_Background_Image_Setting extends WP_Customize_Setting {
 		remove_theme_mod( 'background_image_thumb' );
 	}
 }
+Setting::save() method is called.
+		 *
+		 * The dynamic portion of the hook name, `$this->id_data['base']` refers to
+		 * the base slug of the setting name.
+		 *
+		 * @since 3.4.0
+		 *
+		 * @param WP_Customize_Setting $this {@see WP_Customize_Setting} instance.
+		 */
+		do_action( 'customize_save_' . $this->id_data[ 'base' ], $this );
+
+		$this->update( $value );
+	}
+
+	/**
+	 * Fetch and sanitize the $_POST value for the setting.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @param mixed $default A default value which is used as a fallback. Default is null.
+	 * @return mixed The default value on failure, otherwise the sanitized value.
+	 */
+	final public function post_value( $default = null ) {
+		return $this->manager->post_value( $this, $default );
+	}
+
+	/**
+	 * Sanitize an input.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @param string|array $value The value to sanitize.
+	 * @return string|array|null Null if an input isn't valid, otherwise the sanitized value.
+	 */
+	public function sanitize( $value ) {
+
+		/**
+		 * Filter a Customize setting value in un-slashed form.
+		 *
+		 * @since 3.4.0
+		 *
+		 * @param mixed                $value Value of the setting.
+		 * @param WP_Customize_Setting $this  WP_Customize_Setting instance.
+		 */
+		return apply_filters( "customize_sanitize_{$this->id}", $value, $this );
+	}
+
+	/**
+	 * Get the root value for a setting, especially for multidimensional ones.
+	 *
+	 * @since 4.4.0
+	 * @access protected
+	 *
+	 * @param mixed $default Value to return if root does not exist.
+	 * @return mixed
+	 */
+	protected function get_root_value( $default = null ) {
+		$id_base = $this->id_data['base'];
+		if ( 'option' === $this->type ) {
+			return get_option( $id_base, $default );
+		} else if ( 'theme_mod' ) {
+			return get_theme_mod( $id_base, $default );
+		} else {
+			/*
+			 * Any WP_Customize_Setting subclass implementing aggregate multidimensional
+			 * will need to override this method to obtain the data from the appropriate
+			 * location.
+			 */
+			return $default;
+		}
+	}
+
+	/**
+	 * Set the root value for a setting, especially for multidimensional ones.
+	 *
+	 * @since 4.4.0
+	 * @access protected
+	 *
+	 * @param mixed $value Value to set as root of multidimensional setting.
+	 * @return bool Whether the multidimensional root was updated successfully.
+	 */
+	protected function set_root_value( $value ) {
+		$id_base = $this->id_data['base'];
+		if ( 'option' === $this->type ) {
+			$autoload = true;
+			if ( isset( self::$aggregated_multidimensionals[ $this->type ][ $this->id_data['base'] ]['autoload'] ) ) {
+				$autoload = self::$aggregated_multidimensionals[ $this->type ][ $this->id_data['base'] ]['autoload'];
+			}
+			return update_option( $id_base, $value, $autoload );
+		} else if ( 'theme_mod' ) {
+			set_theme_mod( $id_base, $value );
+			return true;
+		} else {
+			/*
+			 * Any WP_Customize_Setting subclass implementing aggregate multidimensional
+			 * will need to override this method to obtain the data from the appropriate
+			 * location.
+			 */
+			return false;
+		}
+	}
+
+	/**
+	 * Save the value of the setting, using the related API.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @param mixed $value The value to update.
+	 * @return bool The result of saving the value.
+	 */
+	protected function update( $value ) {
+		$id_base = $this->id_data['base'];
+		if ( 'option' === $this->type || 'theme_mod' === $this->type ) {
+			if ( ! $this->is_multidimensional_aggregated ) {
+				return $this->set_root_value( $value );
+			} else {
+				$root = self::$aggregated_multidimensionals[ $this->type ][ $id_base ]['root_value'];
+				$root = $this->multidimensional_replace( $root, $this->id_data['keys'], $value );
+				self::$aggregated_multidimensionals[ $this->type ][ $id_base ]['root_value'] = $root;
+				return $this->set_root_value( $root );
+			}
+		} else {
+			/**
+			 * Fires when the {@see WP_Customize_Setting::update()} method is called for settings
+			 * not handled as theme_mods or options.
+			 *
+			 * The dynamic portion of the hook name, `$this->type`, refers to the type of setting.
+			 *
+			 * @since 3.4.0
+			 *
+			 * @param mixed                $value Value of the setting.
+			 * @param WP_Customize_Setting $this  WP_Customize_Setting instance.
+			 */
+			do_action( "customize_update_{$this->type}", $value, $this );
+
+			return has_action( "customize_update_{$this->type}" );
+		}
+	}
+
+	/**
+	 * Deprecated method.
+	 *
+	 * @since 3.4.0
+	 * @deprecated 4.4.0 Deprecated in favor of update() method.
+	 */
+	protected function _update_theme_mod() {
+		_deprecated_function( __METHOD__, '4.4.0', __CLASS__ . '::update()' );
+	}
+
+	/**
+	 * Deprecated method.
+	 *
+	 * @since 3.4.0
+	 * @deprecated 4.4.0 Deprecated in favor of update() method.
+	 */
+	protected function _update_option() {
+		_deprecated_function( __METHOD__, '4.4.0', __CLASS__ . '::update()' );
+	}
+
+	/**
+	 * Fetch the value of the setting.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @return mixed The value.
+	 */
+	public function value() {
+		$id_base = $this->id_data['base'];
+		$is_core_type = ( 'option' === $this->type || 'theme_mod' === $this->type );
+
+		if ( ! $is_core_type && ! $this->is_multidimensional_aggregated ) {
+			$value = $this->get_root_value( $this->default );
+
+			/**
+			 * Filter a Customize setting value not handled as a theme_mod or option.
+			 *
+			 * The dynamic portion of the hook name, `$this->id_date['base']`, refers to
+			 * the base slug of the setting name.
+			 *
+			 * For settings handled as theme_mods or options, see those corresponding
+			 * functions for available hooks.
+			 *
+			 * @since 3.4.0
+			 *
+			 * @param mixed $default The setting default value. Default empty.
+			 */
+			$value = apply_filters( "customize_value_{$id_base}", $value );
+		} else if ( $this->is_multidimensional_aggregated ) {
+			$root_value = self::$aggregated_multidimensionals[ $this->type ][ $id_base ]['root_value'];
+			$value = $this->multidimensional_get( $root_value, $this->id_data['keys'], $this->default );
+		} else {
+			$value = $this->get_root_value( $this->default );
+		}
+		return $value;
+	}
+
+	/**
+	 * Sanitize the setting's value for use in JavaScript.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @return mixed The requested escaped value.
+	 */
+	public function js_value() {
+
+		/**
+		 * Filter a Customize setting value for use in JavaScript.
+		 *
+		 * The dynamic portion of the hook name, `$this->id`, refers to the setting ID.
+		 *
+		 * @since 3.4.0
+		 *
+		 * @param mixed                $value The setting value.
+		 * @param WP_Customize_Setting $this  {@see WP_Customize_Setting} instance.
+		 */
+		$value = apply_filters( "customize_sanitize_js_{$this->id}", $this->value(), $this );
+
+		if ( is_string( $value ) )
+			return html_entity_decode( $value, ENT_QUOTES, 'UTF-8');
+
+		return $value;
+	}
+
+	/**
+	 * Validate user capabilities whether the theme supports the setting.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @return bool False if theme doesn't support the setting or user can't change setting, otherwise true.
+	 */
+	final public function check_capabilities() {
+		if ( $this->capability && ! call_user_func_array( 'current_user_can', (array) $this->capability ) )
+			return false;
+
+		if ( $this->theme_supports && ! call_user_func_array( 'current_theme_supports', (array) $this->theme_supports ) )
+			return false;
+
+		return true;
+	}
+
+	/**
+	 * Multidimensional helper function.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @param $root
+	 * @param $keys
+	 * @param bool $create Default is false.
+	 * @return array|void Keys are 'root', 'node', and 'key'.
+	 */
+	final protected function multidimensional( &$root, $keys, $create = false ) {
+		if ( $create && empty( $root ) )
+			$root = array();
+
+		if ( ! isset( $root ) || empty( $keys ) )
+			return;
+
+		$last = array_pop( $keys );
+		$node = &$root;
+
+		foreach ( $keys as $key ) {
+			if ( $create && ! isset( $node[ $key ] ) )
+				$node[ $key ] = array();
+
+			if ( ! is_array( $node ) || ! isset( $node[ $key ] ) )
+				return;
+
+			$node = &$node[ $key ];
+		}
+
+		if ( $create ) {
+			if ( ! is_array( $node ) ) {
+				// account for an array overriding a string or object value
+				$node = array();
+			}
+			if ( ! isset( $node[ $last ] ) ) {
+				$node[ $last ] = array();
+			}
+		}
+
+		if ( ! isset( $node[ $last ] ) )
+			return;
+
+		return array(
+			'root' => &$root,
+			'node' => &$node,
+			'key'  => $last,
+		);
+	}
+
+	/**
+	 * Will attempt to replace a specific value in a multidimensional array.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @param $root
+	 * @param $keys
+	 * @param mixed $value The value to update.
+	 * @return mixed
+	 */
+	final protected function multidimensional_replace( $root, $keys, $value ) {
+		if ( ! isset( $value ) )
+			return $root;
+		elseif ( empty( $keys ) ) // If there are no keys, we're replacing the root.
+			return $value;
+
+		$result = $this->multidimensional( $root, $keys, true );
+
+		if ( isset( $result ) )
+			$result['node'][ $result['key'] ] = $value;
+
+		return $root;
+	}
+
+	/**
+	 * Will attempt to fetch a specific value from a multidimensional array.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @param $root
+	 * @param $keys
+	 * @param mixed $default A default value which is used as a fallback. Default is null.
+	 * @return mixed The requested value or the default value.
+	 */
+	final protected function multidimensional_get( $root, $keys, $default = null ) {
+		if ( empty( $keys ) ) // If there are no keys, test the root.
+			return isset( $root ) ? $root : $default;
+
+		$result = $this->multidimensional( $root, $keys );
+		return isset( $result ) ? $result['node'][ $result['key'] ] : $default;
+	}
+
+	/**
+	 * Will attempt to check if a specific value in a multidimensional array is set.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @param $root
+	 * @param $keys
+	 * @return bool True if value is set, false if not.
+	 */
+	final protected function multidimensional_isset( $root, $keys ) {
+		$result = $this->multidimensional_get( $root, $keys );
+		return isset( $result );
+	}
+}
+
+/** WP_Customize_Filter_Setting class */
+require_once( ABSPATH . WPINC . '/customize/class-wp-customize-filter-setting.php' );
+
+/** WP_Customize_Header_Image_Setting class */
+require_once( ABSPATH . WPINC . '/customize/class-wp-customize-header-image-setting.php' );
+
+/** WP_Customize_Background_Image_Setting class */
+require_once( ABSPATH . WPINC . '/customize/class-wp-customize-background-image-setting.php' );
+
+/** WP_Customize_Nav_Menu_Item_Setting class */
+require_once( ABSPATH . WPINC . '/customize/class-wp-customize-nav-menu-item-setting.php' );
+
+/** WP_Customize_Nav_Menu_Setting class */
+require_once( ABSPATH . WPINC . '/customize/class-wp-customize-nav-menu-setting.php' );

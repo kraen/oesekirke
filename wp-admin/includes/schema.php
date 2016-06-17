@@ -1037,3 +1037,71 @@ We hope you enjoy your new site. Thanks!
 
 	return true;
 }
+ork_id, $meta_key, $meta_value );
+	}
+	$wpdb->query( "INSERT INTO $wpdb->sitemeta ( site_id, meta_key, meta_value ) VALUES " . $insert );
+
+	/*
+	 * When upgrading from single to multisite, assume the current site will
+	 * become the main site of the network. When using populate_network()
+	 * to create another network in an existing multisite environment, skip
+	 * these steps since the main site of the new network has not yet been
+	 * created.
+	 */
+	if ( ! is_multisite() ) {
+		$current_site = new stdClass;
+		$current_site->domain = $domain;
+		$current_site->path = $path;
+		$current_site->site_name = ucfirst( $domain );
+		$wpdb->insert( $wpdb->blogs, array( 'site_id' => $network_id, 'blog_id' => 1, 'domain' => $domain, 'path' => $path, 'registered' => current_time( 'mysql' ) ) );
+		$current_site->blog_id = $blog_id = $wpdb->insert_id;
+		update_user_meta( $site_user->ID, 'source_domain', $domain );
+		update_user_meta( $site_user->ID, 'primary_blog', $blog_id );
+
+		if ( $subdomain_install )
+			$wp_rewrite->set_permalink_structure( '/%year%/%monthnum%/%day%/%postname%/' );
+		else
+			$wp_rewrite->set_permalink_structure( '/blog/%year%/%monthnum%/%day%/%postname%/' );
+
+		flush_rewrite_rules();
+
+		if ( ! $subdomain_install )
+			return true;
+
+		$vhost_ok = false;
+		$errstr = '';
+		$hostname = substr( md5( time() ), 0, 6 ) . '.' . $domain; // Very random hostname!
+		$page = wp_remote_get( 'http://' . $hostname, array( 'timeout' => 5, 'httpversion' => '1.1' ) );
+		if ( is_wp_error( $page ) )
+			$errstr = $page->get_error_message();
+		elseif ( 200 == wp_remote_retrieve_response_code( $page ) )
+				$vhost_ok = true;
+
+		if ( ! $vhost_ok ) {
+			$msg = '<p><strong>' . __( 'Warning! Wildcard DNS may not be configured correctly!' ) . '</strong></p>';
+
+			$msg .= '<p>' . sprintf(
+				/* translators: %s: host name */
+				__( 'The installer attempted to contact a random hostname (%s) on your domain.' ),
+				'<code>' . $hostname . '</code>'
+			);
+			if ( ! empty ( $errstr ) ) {
+				/* translators: %s: error message */
+				$msg .= ' ' . sprintf( __( 'This resulted in an error message: %s' ), '<code>' . $errstr . '</code>' );
+			}
+			$msg .= '</p>';
+
+			$msg .= '<p>' . sprintf(
+				/* translators: %s: asterisk symbol (*) */
+				__( 'To use a subdomain configuration, you must have a wildcard entry in your DNS. This usually means adding a %s hostname record pointing at your web server in your DNS configuration tool.' ),
+				'<code>*</code>'
+			) . '</p>';
+
+			$msg .= '<p>' . __( 'You can still use your site but any subdomain you create may not be accessible. If you know your DNS is correct, ignore this message.' ) . '</p>';
+
+			return new WP_Error( 'no_wildcard_dns', $msg );
+		}
+	}
+
+	return true;
+}

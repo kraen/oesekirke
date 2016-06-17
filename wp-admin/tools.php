@@ -73,3 +73,50 @@ do_action( 'tool_box' );
 </div>
 <?php
 include( ABSPATH . 'wp-admin/admin-footer.php' );
+		<script>
+			jQuery( document ).ready( function( $ ) {
+				var $showPressThisWrap = $( '.js-show-pressthis-code-wrap' );
+				var $pressthisCode = $( '.js-pressthis-code' );
+
+				$showPressThisWrap.on( 'click', function( event ) {
+					var $this = $( this );
+
+					$this.parent().next( '.js-pressthis-code-wrap' ).slideToggle( 200 );
+					$this.attr( 'aria-expanded', $this.attr( 'aria-expanded' ) === 'false' ? 'true' : 'false' );
+				});
+
+				// Select Press This code when focusing (tabbing) or clicking the textarea.
+				$pressthisCode.on( 'click focus', function() {
+					var self = this;
+					setTimeout( function() { self.select(); }, 50 );
+				});
+
+			});
+		</script>
+	</form>
+</div>
+<?php
+endif;
+
+if ( current_user_can( 'import' ) ) :
+$cats = get_taxonomy('category');
+$tags = get_taxonomy('post_tag');
+if ( current_user_can($cats->cap->manage_terms) || current_user_can($tags->cap->manage_terms) ) : ?>
+<div class="card">
+	<h2 class="title"><?php _e( 'Categories and Tags Converter' ) ?></h2>
+	<p><?php printf( __('If you want to convert your categories to tags (or vice versa), use the <a href="%s">Categories and Tags Converter</a> available from the Import screen.'), 'import.php' ); ?></p>
+</div>
+<?php
+endif;
+endif;
+
+/**
+ * Fires at the end of the Tools Administration screen.
+ *
+ * @since 2.8.0
+ */
+do_action( 'tool_box' );
+?>
+</div>
+<?php
+include( ABSPATH . 'wp-admin/admin-footer.php' );

@@ -1193,3 +1193,102 @@ submit_button( __( 'Proceed' ), 'button', 'upgrade' );
 <?php
 	return false;
 }
+server.');
+	echo ' ';
+	if ( ( isset( $types['ftp'] ) || isset( $types['ftps'] ) ) ) {
+		if ( isset( $types['ssh'] ) ) {
+			_e('Please enter your FTP or SSH credentials to proceed.');
+			$label_user = __('FTP/SSH Username');
+			$label_pass = __('FTP/SSH Password');
+		} else {
+			_e('Please enter your FTP credentials to proceed.');
+			$label_user = __('FTP Username');
+			$label_pass = __('FTP Password');
+		}
+		echo ' ';
+	}
+	_e('If you do not remember your credentials, you should contact your web host.');
+?></p>
+<label for="hostname">
+	<span class="field-title"><?php _e( 'Hostname' ) ?></span>
+	<input name="hostname" type="text" id="hostname" aria-describedby="request-filesystem-credentials-desc" class="code" placeholder="<?php esc_attr_e( 'example: www.wordpress.org' ) ?>" value="<?php echo esc_attr($hostname); if ( !empty($port) ) echo ":$port"; ?>"<?php disabled( defined('FTP_HOST') ); ?> />
+</label>
+<div class="ftp-username">
+	<label for="username">
+		<span class="field-title"><?php echo $label_user; ?></span>
+		<input name="username" type="text" id="username" value="<?php echo esc_attr($username) ?>"<?php disabled( defined('FTP_USER') ); ?> />
+	</label>
+</div>
+<div class="ftp-password">
+	<label for="password">
+		<span class="field-title"><?php echo $label_pass; ?></span>
+		<input name="password" type="password" id="password" value="<?php if ( defined('FTP_PASS') ) echo '*****'; ?>"<?php disabled( defined('FTP_PASS') ); ?> />
+		<em><?php if ( ! defined('FTP_PASS') ) _e( 'This password will not be stored on the server.' ); ?></em>
+	</label>
+</div>
+<?php if ( isset($types['ssh']) ) : ?>
+<fieldset>
+<legend><?php _e( 'Authentication Keys' ); ?></legend>
+<label for="public_key">
+	<span class="field-title"><?php _e('Public Key:') ?></span>
+	<input name="public_key" type="text" id="public_key" aria-describedby="auth-keys-desc" value="<?php echo esc_attr($public_key) ?>"<?php disabled( defined('FTP_PUBKEY') ); ?> />
+</label>
+<label for="private_key">
+	<span class="field-title"><?php _e('Private Key:') ?></span>
+	<input name="private_key" type="text" id="private_key" value="<?php echo esc_attr($private_key) ?>"<?php disabled( defined('FTP_PRIKEY') ); ?> />
+</label>
+</fieldset>
+<span id="auth-keys-desc"><?php _e('Enter the location on the server where the public and private keys are located. If a passphrase is needed, enter that in the password field above.') ?></span>
+<?php endif; ?>
+<fieldset>
+<legend><?php _e( 'Connection Type' ); ?></legend>
+<?php
+	$disabled = disabled( (defined('FTP_SSL') && FTP_SSL) || (defined('FTP_SSH') && FTP_SSH), true, false );
+	foreach ( $types as $name => $text ) : ?>
+	<label for="<?php echo esc_attr($name) ?>">
+		<input type="radio" name="connection_type" id="<?php echo esc_attr($name) ?>" value="<?php echo esc_attr($name) ?>"<?php checked($name, $connection_type); echo $disabled; ?> />
+		<?php echo $text ?>
+	</label>
+	<?php endforeach; ?>
+</fieldset>
+<?php
+foreach ( (array) $extra_fields as $field ) {
+	if ( isset( $_POST[ $field ] ) )
+		echo '<input type="hidden" name="' . esc_attr( $field ) . '" value="' . esc_attr( wp_unslash( $_POST[ $field ] ) ) . '" />';
+}
+?>
+	<p class="request-filesystem-credentials-action-buttons">
+		<button class="button cancel-button" data-js-action="close" type="button"><?php _e( 'Cancel' ); ?></button>
+		<?php submit_button( __( 'Proceed' ), 'button', 'upgrade', false ); ?>
+	</p>
+</div>
+</form>
+<?php
+	return false;
+}
+
+/**
+ * Print the filesystem credentials modal when needed.
+ *
+ * @since 4.2.0
+ */
+function wp_print_request_filesystem_credentials_modal() {
+	$filesystem_method = get_filesystem_method();
+	ob_start();
+	$filesystem_credentials_are_stored = request_filesystem_credentials( self_admin_url() );
+	ob_end_clean();
+	$request_filesystem_credentials = ( $filesystem_method != 'direct' && ! $filesystem_credentials_are_stored );
+	if ( ! $request_filesystem_credentials ) {
+		return;
+	}
+	?>
+	<div id="request-filesystem-credentials-dialog" class="notification-dialog-wrap request-filesystem-credentials-dialog">
+		<div class="notification-dialog-background"></div>
+		<div class="notification-dialog" role="dialog" aria-labelledby="request-filesystem-credentials-title" tabindex="0">
+			<div class="request-filesystem-credentials-dialog-content">
+				<?php request_filesystem_credentials( site_url() ); ?>
+			</div>
+		</div>
+	</div>
+	<?php
+}

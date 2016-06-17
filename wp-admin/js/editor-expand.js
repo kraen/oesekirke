@@ -1226,3 +1226,24 @@
 		};
 	} );
 } )( window, window.jQuery );
+r-expand-off.focus', deactivate );
+
+		if ( _isOn ) {
+			$content.on( 'keydown.focus', fadeOut );
+
+			$title.add( $content ).on( 'blur.focus', maybeFadeIn );
+		}
+
+		window.wp = window.wp || {};
+		window.wp.editor = window.wp.editor || {};
+		window.wp.editor.dfw = {
+			activate: activate,
+			deactivate: deactivate,
+			isActive: isActive,
+			on: on,
+			off: off,
+			toggle: toggle,
+			isOn: isOn
+		};
+	} );
+} )( window, window.jQuery );

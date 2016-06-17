@@ -1203,3 +1203,76 @@ var wpNavMenu;
 	$(document).ready(function(){ wpNavMenu.init(); });
 
 })(jQuery);
+@param jQuery panel The tabs panel we're searching in.
+		 */
+		processQuickSearchQueryResponse : function(resp, req, panel) {
+			var matched, newID,
+			takenIDs = {},
+			form = document.getElementById('nav-menu-meta'),
+			pattern = /menu-item[(\[^]\]*/,
+			$items = $('<div>').html(resp).find('li'),
+			$item;
+
+			if( ! $items.length ) {
+				$('.categorychecklist', panel).html( '<li><p>' + navMenuL10n.noResultsFound + '</p></li>' );
+				$( '.spinner', panel ).removeClass( 'is-active' );
+				return;
+			}
+
+			$items.each(function(){
+				$item = $(this);
+
+				// make a unique DB ID number
+				matched = pattern.exec($item.html());
+
+				if ( matched && matched[1] ) {
+					newID = matched[1];
+					while( form.elements['menu-item[' + newID + '][menu-item-type]'] || takenIDs[ newID ] ) {
+						newID--;
+					}
+
+					takenIDs[newID] = true;
+					if ( newID != matched[1] ) {
+						$item.html( $item.html().replace(new RegExp(
+							'menu-item\\[' + matched[1] + '\\]', 'g'),
+							'menu-item[' + newID + ']'
+						) );
+					}
+				}
+			});
+
+			$('.categorychecklist', panel).html( $items );
+			$( '.spinner', panel ).removeClass( 'is-active' );
+		},
+
+		removeMenuItem : function(el) {
+			var children = el.childMenuItems();
+
+			el.addClass('deleting').animate({
+					opacity : 0,
+					height: 0
+				}, 350, function() {
+					var ins = $('#menu-instructions');
+					el.remove();
+					children.shiftDepthClass( -1 ).updateParentMenuItemDBId();
+					if ( 0 === $( '#menu-to-edit li' ).length ) {
+						$( '.drag-instructions' ).hide();
+						ins.removeClass( 'menu-instructions-inactive' );
+					}
+					api.refreshAdvancedAccessibility();
+				});
+		},
+
+		depthToPx : function(depth) {
+			return depth * api.options.menuItemDepthPerLevel;
+		},
+
+		pxToDepth : function(px) {
+			return Math.floor(px / api.options.menuItemDepthPerLevel);
+		}
+
+	};
+
+	$(document).ready(function(){ wpNavMenu.init(); });
+
+})(jQuery);

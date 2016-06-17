@@ -303,3 +303,10 @@ function wp_link_manager_disabled_message() {
 	wp_die( __( 'You do not have sufficient permissions to edit the links for this site.' ) );
 }
 add_action( 'admin_page_access_denied', 'wp_link_manager_disabled_message' );
+_manage_links && current_user_can( 'install_plugins' ) ) {
+		$link = network_admin_url( 'plugin-install.php?tab=search&amp;s=Link+Manager' );
+		wp_die( sprintf( __( 'If you are looking to use the link manager, please install the <a href="%s">Link Manager</a> plugin.' ), $link ) );
+	}
+
+	wp_die( __( 'You do not have sufficient permissions to edit the links for this site.' ) );
+}

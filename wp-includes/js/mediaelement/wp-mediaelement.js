@@ -32,3 +32,32 @@
 	});
 
 }(jQuery));
+EventListener( 'canplay', function () {
+						mejs.play();
+					}, false );
+
+					loop && mejs.addEventListener( 'ended', function () {
+						mejs.play();
+					}, false );
+				}
+			};
+
+			// Only initialize new media elements.
+			$( '.wp-audio-shortcode, .wp-video-shortcode' )
+				.not( '.mejs-container' )
+				.filter(function () {
+					return ! $( this ).parent().hasClass( '.mejs-mediaelement' );
+				})
+				.mediaelementplayer( settings );
+		}
+
+		return {
+			initialize: initialize
+		};
+	}
+
+	window.wp.mediaelement = new wpMediaElement();
+
+	$( window.wp.mediaelement.initialize );
+
+})( window, jQuery );

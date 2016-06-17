@@ -25,3 +25,5 @@
 		<label for='<?php echo esc_attr($display_type_name); ?>_show_altview_link_no'>No</label>
     </td>
 </tr>
+>
+</tr>

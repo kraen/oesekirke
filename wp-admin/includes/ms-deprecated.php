@@ -75,4 +75,30 @@ function wpmu_get_blog_allowedthemes( $blog_id = 0 ) {
 	return array_map( 'intval', WP_Theme::get_allowed_on_site( $blog_id ) );
 }
 
+function ms_deprecated_blogs_file() {}network-enabled themes.
+ *
+ * @deprecated 3.4.0 Use WP_Theme::get_allowed_on_network()
+ * @see WP_Theme::get_allowed_on_network()
+ */
+function get_site_allowed_themes() {
+	_deprecated_function( __FUNCTION__, '3.4', 'WP_Theme::get_allowed_on_network()' );
+	return array_map( 'intval', WP_Theme::get_allowed_on_network() );
+}
+
+/**
+ * Deprecated functionality for getting themes allowed on a specific site.
+ *
+ * @deprecated 3.4.0 Use WP_Theme::get_allowed_on_site()
+ * @see WP_Theme::get_allowed_on_site()
+ */
+function wpmu_get_blog_allowedthemes( $blog_id = 0 ) {
+	_deprecated_function( __FUNCTION__, '3.4', 'WP_Theme::get_allowed_on_site()' );
+	return array_map( 'intval', WP_Theme::get_allowed_on_site( $blog_id ) );
+}
+
+/**
+ * Deprecated functionality for determining whether a file is deprecated.
+ *
+ * @deprecated 3.5.0
+ */
 function ms_deprecated_blogs_file() {}

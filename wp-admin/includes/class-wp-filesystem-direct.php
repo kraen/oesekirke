@@ -461,3 +461,24 @@ class WP_Filesystem_Direct extends WP_Filesystem_Base {
 		return $ret;
 	}
 }
+->group($path.'/'.$entry);
+			$struc['size']    	= $this->size($path.'/'.$entry);
+			$struc['lastmodunix']= $this->mtime($path.'/'.$entry);
+			$struc['lastmod']   = date('M j',$struc['lastmodunix']);
+			$struc['time']    	= date('h:i:s',$struc['lastmodunix']);
+			$struc['type']		= $this->is_dir($path.'/'.$entry) ? 'd' : 'f';
+
+			if ( 'd' == $struc['type'] ) {
+				if ( $recursive )
+					$struc['files'] = $this->dirlist($path . '/' . $struc['name'], $include_hidden, $recursive);
+				else
+					$struc['files'] = array();
+			}
+
+			$ret[ $struc['name'] ] = $struc;
+		}
+		$dir->close();
+		unset($dir);
+		return $ret;
+	}
+}

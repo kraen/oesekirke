@@ -472,3 +472,35 @@ do_action( 'pre_current_active_plugins', $plugins['all'] );
 
 <?php
 include(ABSPATH . 'wp-admin/admin-footer.php');
+in.
+ *
+ * Please note: The 'active' portion of the hook name does not refer to whether the current
+ * view is for active plugins, but rather all plugins actively-installed.
+ *
+ * @since 3.0.0
+ *
+ * @param array $plugins_all An array containing all installed plugins.
+ */
+do_action( 'pre_current_active_plugins', $plugins['all'] );
+?>
+
+<?php $wp_list_table->views(); ?>
+
+<form method="get">
+<?php $wp_list_table->search_box( __( 'Search Installed Plugins' ), 'plugin' ); ?>
+</form>
+
+<form method="post" id="bulk-action-form">
+
+<input type="hidden" name="plugin_status" value="<?php echo esc_attr($status) ?>" />
+<input type="hidden" name="paged" value="<?php echo esc_attr($page) ?>" />
+
+<?php $wp_list_table->display(); ?>
+</form>
+
+</div>
+
+<?php
+wp_print_request_filesystem_credentials_modal();
+
+include(ABSPATH . 'wp-admin/admin-footer.php');

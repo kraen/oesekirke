@@ -113,3 +113,5 @@ if ( $_REQUEST['short'] ) {
 	 */
 	echo apply_filters( "async_upload_{$type}", $id );
 }
+upload_{$type}", $id );
+}

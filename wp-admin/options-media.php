@@ -134,3 +134,10 @@ if ( get_option('upload_url_path') || ( get_option('upload_path') != 'wp-content
 </div>
 
 <?php include( ABSPATH . 'wp-admin/admin-footer.php' ); ?>
+php submit_button(); ?>
+
+</form>
+
+</div>
+
+<?php include( ABSPATH . 'wp-admin/admin-footer.php' ); ?>

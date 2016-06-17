@@ -422,3 +422,8 @@ used as it is.
 		}
 	};
 })(jQuery, mOxie);
+ader instance for specified element
+			return uploaders[$(this[0]).attr('id')];
+		}
+	};
+})(jQuery, mOxie);

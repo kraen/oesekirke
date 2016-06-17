@@ -296,3 +296,16 @@ function wp_list_bookmarks( $args = '' ) {
 	}
 	echo $html;
 }
+ed.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param string $html The HTML list of bookmarks.
+	 */
+	$html = apply_filters( 'wp_list_bookmarks', $output );
+
+	if ( ! $r['echo'] ) {
+		return $html;
+	}
+	echo $html;
+}

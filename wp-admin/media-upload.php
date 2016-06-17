@@ -98,3 +98,10 @@ if ( isset($action) && $action == 'edit' && !$ID )
 		 */
 		do_action( "media_upload_$tab" );
 	}
+y custom tab registered via the {@see 'media_upload_tabs'} filter.
+	 *
+	 * @since 2.5.0
+	 */
+	do_action( "media_upload_$tab" );
+}
+

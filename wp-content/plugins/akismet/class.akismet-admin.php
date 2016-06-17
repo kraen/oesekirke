@@ -882,4 +882,111 @@ class Akismet_Admin {
 		
 		return $exclude;
 	}
+}			$time_saved = $cleaning_up . ' ' . sprintf( _n( 'Akismet has saved you %d minute!', 'Akismet has saved you %d minutes!', $total_in_minutes, 'akismet' ), $total_in_minutes );
+				}
+
+				Akismet::view( 'notice', array( 'type' => 'active-notice', 'time_saved' => $time_saved ) );
+			}
+			
+			if ( !empty( $akismet_user->limit_reached ) && in_array( $akismet_user->limit_reached, array( 'yellow', 'red' ) ) ) {
+				Akismet::view( 'notice', array( 'type' => 'limit-reached', 'level' => $akismet_user->limit_reached ) );
+			}
+		}
+		
+		if ( !isset( self::$notices['status'] ) && in_array( $akismet_user->status, array( 'cancelled', 'suspended', 'missing', 'no-sub' ) ) )	
+			Akismet::view( 'notice', array( 'type' => $akismet_user->status ) );
+
+		Akismet::log( compact( 'stat_totals', 'akismet_user' ) );
+		Akismet::view( 'config', compact( 'api_key', 'akismet_user', 'stat_totals' ) );
+	}
+
+	public static function display_notice() {
+		global $hook_suffix;
+
+		if ( in_array( $hook_suffix, array( 'jetpack_page_akismet-key-config', 'settings_page_akismet-key-config', 'edit-comments.php' ) ) && (int) get_option( 'akismet_alert_code' ) > 0 ) {
+			Akismet::verify_key( Akismet::get_api_key() ); //verify that the key is still in alert state
+			
+			if ( get_option( 'akismet_alert_code' ) > 0 )
+				self::display_alert();
+		}
+		elseif ( $hook_suffix == 'plugins.php' && !Akismet::get_api_key() ) {
+			self::display_api_key_warning();
+		}
+		elseif ( $hook_suffix == 'edit-comments.php' && wp_next_scheduled( 'akismet_schedule_cron_recheck' ) ) {
+			self::display_spam_check_warning();
+		}
+		elseif ( in_array( $hook_suffix, array( 'jetpack_page_akismet-key-config', 'settings_page_akismet-key-config' ) ) && Akismet::get_api_key() ) {
+			self::display_status();
+		}
+	}
+
+	public static function display_status() {
+		$type = '';
+
+		if ( !self::get_server_connectivity() )
+			$type = 'servers-be-down';
+
+		if ( !empty( $type ) )
+			Akismet::view( 'notice', compact( 'type' ) );
+		elseif ( !empty( self::$notices ) ) {
+			foreach ( self::$notices as $type ) {
+				if ( is_object( $type ) ) {
+					$notice_header = $notice_text = '';
+					
+					if ( property_exists( $type, 'notice_header' ) )
+						$notice_header = wp_kses( $type->notice_header, self::$allowed );
+				
+					if ( property_exists( $type, 'notice_text' ) )
+						$notice_text = wp_kses( $type->notice_text, self::$allowed );
+					
+					if ( property_exists( $type, 'status' ) ) {
+						$type = wp_kses( $type->status, self::$allowed );
+						Akismet::view( 'notice', compact( 'type', 'notice_header', 'notice_text' ) );
+					}
+				}
+				else
+					Akismet::view( 'notice', compact( 'type' ) );
+			}				
+		}
+	}
+
+	private static function get_jetpack_user() {
+		if ( !class_exists('Jetpack') )
+			return false;
+
+		Jetpack::load_xml_rpc_client();
+		$xml = new Jetpack_IXR_ClientMulticall( array( 'user_id' => get_current_user_id() ) );
+
+		$xml->addCall( 'wpcom.getUserID' );
+		$xml->addCall( 'akismet.getAPIKey' );
+		$xml->query();
+
+		Akismet::log( compact( 'xml' ) );
+
+		if ( !$xml->isError() ) {
+			$responses = $xml->getResponse();
+			if ( count( $responses ) > 1 ) {
+				$api_key = array_shift( $responses[0] );
+				$user_id = (int) array_shift( $responses[1] );
+				return compact( 'api_key', 'user_id' );
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Some commentmeta isn't useful in an export file. Suppress it (when supported).
+	 *
+	 * @param bool $exclude
+	 * @param string $key The meta key
+	 * @param object $meta The meta object
+	 * @return bool Whether to exclude this meta entry from the export.
+	 */
+	public static function exclude_commentmeta_from_export( $exclude, $key, $meta ) {
+		if ( in_array( $key, array( 'akismet_as_submitted', 'akismet_rechecking', 'akismet_delayed_moderation_email' ) ) ) {
+			return true;
+		}
+		
+		return $exclude;
+	}
 }

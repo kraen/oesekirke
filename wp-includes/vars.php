@@ -142,3 +142,8 @@ function wp_is_mobile() {
 
 	return $is_mobile;
 }
+false;
+	}
+
+	return $is_mobile;
+}

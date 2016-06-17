@@ -27,3 +27,6 @@ jQuery(function($) {
         };
     }
 });
+tor = nextgen_lightbox_filter_selector($, $([]));
+    selector.addClass('thickbox');
+});

@@ -468,3 +468,43 @@ function _upgrade_cron_array($cron) {
 	update_option( 'cron', $new_cron );
 	return $new_cron;
 }
+ates the CRON option with the new CRON array.
+ *
+ * @since 2.1.0
+ * @access private
+ *
+ * @param array $cron Cron info array from {@link _get_cron_array()}.
+ */
+function _set_cron_array($cron) {
+	$cron['version'] = 2;
+	update_option( 'cron', $cron );
+}
+
+/**
+ * Upgrade a Cron info array.
+ *
+ * This function upgrades the Cron info array to version 2.
+ *
+ * @since 2.1.0
+ * @access private
+ *
+ * @param array $cron Cron info array from {@link _get_cron_array()}.
+ * @return array An upgraded Cron info array.
+ */
+function _upgrade_cron_array($cron) {
+	if ( isset($cron['version']) && 2 == $cron['version'])
+		return $cron;
+
+	$new_cron = array();
+
+	foreach ( (array) $cron as $timestamp => $hooks) {
+		foreach ( (array) $hooks as $hook => $args ) {
+			$key = md5(serialize($args['args']));
+			$new_cron[$timestamp][$hook][$key] = $args;
+		}
+	}
+
+	$new_cron['version'] = 2;
+	update_option( 'cron', $new_cron );
+	return $new_cron;
+}

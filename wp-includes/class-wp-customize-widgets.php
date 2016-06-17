@@ -1558,3 +1558,529 @@ final class WP_Customize_Widgets {
 		$this->_is_capturing_option_updates = false;
 	}
 }
+$widget_id );
+		$id_base = $parsed_id['id_base'];
+
+		$is_updating_widget_template = (
+			isset( $_POST[ 'widget-' . $id_base ] )
+			&&
+			is_array( $_POST[ 'widget-' . $id_base ] )
+			&&
+			preg_match( '/__i__|%i%/', key( $_POST[ 'widget-' . $id_base ] ) )
+		);
+		if ( $is_updating_widget_template ) {
+			wp_send_json_error( 'template_widget_not_updatable' );
+		}
+
+		$updated_widget = $this->call_widget_update( $widget_id ); // => {instance,form}
+		if ( is_wp_error( $updated_widget ) ) {
+			wp_send_json_error( $updated_widget->get_error_code() );
+		}
+
+		$form = $updated_widget['form'];
+		$instance = $this->sanitize_widget_js_instance( $updated_widget['instance'] );
+
+		wp_send_json_success( compact( 'form', 'instance' ) );
+	}
+
+	/*
+	 * Selective Refresh Methods
+	 */
+
+	/**
+	 * Filters arguments for dynamic widget partials.
+	 *
+	 * @since 4.5.0
+	 * @access public
+	 *
+	 * @param array|false $partial_args Partial arguments.
+	 * @param string      $partial_id   Partial ID.
+	 * @return array (Maybe) modified partial arguments.
+	 */
+	public function customize_dynamic_partial_args( $partial_args, $partial_id ) {
+		if ( ! current_theme_supports( 'customize-selective-refresh-widgets' ) ) {
+			return $partial_args;
+		}
+
+		if ( preg_match( '/^widget\[(?P<widget_id>.+)\]$/', $partial_id, $matches ) ) {
+			if ( false === $partial_args ) {
+				$partial_args = array();
+			}
+			$partial_args = array_merge(
+				$partial_args,
+				array(
+					'type'                => 'widget',
+					'render_callback'     => array( $this, 'render_widget_partial' ),
+					'container_inclusive' => true,
+					'settings'            => array( $this->get_setting_id( $matches['widget_id'] ) ),
+					'capability'          => 'edit_theme_options',
+				)
+			);
+		}
+
+		return $partial_args;
+	}
+
+	/**
+	 * Adds hooks for selective refresh.
+	 *
+	 * @since 4.5.0
+	 * @access public
+	 */
+	public function selective_refresh_init() {
+		if ( ! current_theme_supports( 'customize-selective-refresh-widgets' ) ) {
+			return;
+		}
+		add_filter( 'dynamic_sidebar_params', array( $this, 'filter_dynamic_sidebar_params' ) );
+		add_filter( 'wp_kses_allowed_html', array( $this, 'filter_wp_kses_allowed_data_attributes' ) );
+		add_action( 'dynamic_sidebar_before', array( $this, 'start_dynamic_sidebar' ) );
+		add_action( 'dynamic_sidebar_after', array( $this, 'end_dynamic_sidebar' ) );
+	}
+
+	/**
+	 * Inject selective refresh data attributes into widget container elements.
+	 *
+	 * @param array $params {
+	 *     Dynamic sidebar params.
+	 *
+	 *     @type array $args        Sidebar args.
+	 *     @type array $widget_args Widget args.
+	 * }
+	 * @see WP_Customize_Nav_Menus_Partial_Refresh::filter_wp_nav_menu_args()
+	 *
+	 * @return array Params.
+	 */
+	public function filter_dynamic_sidebar_params( $params ) {
+		$sidebar_args = array_merge(
+			array(
+				'before_widget' => '',
+				'after_widget' => '',
+			),
+			$params[0]
+		);
+
+		// Skip widgets not in a registered sidebar or ones which lack a proper wrapper element to attach the data-* attributes to.
+		$matches = array();
+		$is_valid = (
+			isset( $sidebar_args['id'] )
+			&&
+			is_registered_sidebar( $sidebar_args['id'] )
+			&&
+			( isset( $this->current_dynamic_sidebar_id_stack[0] ) && $this->current_dynamic_sidebar_id_stack[0] === $sidebar_args['id'] )
+			&&
+			preg_match( '#^<(?P<tag_name>\w+)#', $sidebar_args['before_widget'], $matches )
+		);
+		if ( ! $is_valid ) {
+			return $params;
+		}
+		$this->before_widget_tags_seen[ $matches['tag_name'] ] = true;
+
+		$context = array(
+			'sidebar_id' => $sidebar_args['id'],
+		);
+		if ( isset( $this->context_sidebar_instance_number ) ) {
+			$context['sidebar_instance_number'] = $this->context_sidebar_instance_number;
+		} else if ( isset( $sidebar_args['id'] ) && isset( $this->sidebar_instance_count[ $sidebar_args['id'] ] ) ) {
+			$context['sidebar_instance_number'] = $this->sidebar_instance_count[ $sidebar_args['id'] ];
+		}
+
+		$attributes = sprintf( ' data-customize-partial-id="%s"', esc_attr( 'widget[' . $sidebar_args['widget_id'] . ']' ) );
+		$attributes .= ' data-customize-partial-type="widget"';
+		$attributes .= sprintf( ' data-customize-partial-placement-context="%s"', esc_attr( wp_json_encode( $context ) ) );
+		$attributes .= sprintf( ' data-customize-widget-id="%s"', esc_attr( $sidebar_args['widget_id'] ) );
+		$sidebar_args['before_widget'] = preg_replace( '#^(<\w+)#', '$1 ' . $attributes, $sidebar_args['before_widget'] );
+
+		$params[0] = $sidebar_args;
+		return $params;
+	}
+
+	/**
+	 * List of the tag names seen for before_widget strings.
+	 *
+	 * This is used in the {@see 'filter_wp_kses_allowed_html'} filter to ensure that the
+	 * data-* attributes can be whitelisted.
+	 *
+	 * @since 4.5.0
+	 * @access protected
+	 * @var array
+	 */
+	protected $before_widget_tags_seen = array();
+
+	/**
+	 * Ensures the HTML data-* attributes for selective refresh are allowed by kses.
+	 *
+	 * This is needed in case the `$before_widget` is run through wp_kses() when printed.
+	 *
+	 * @since 4.5.0
+	 * @access public
+	 *
+	 * @param array $allowed_html Allowed HTML.
+	 * @return array (Maybe) modified allowed HTML.
+	 */
+	public function filter_wp_kses_allowed_data_attributes( $allowed_html ) {
+		foreach ( array_keys( $this->before_widget_tags_seen ) as $tag_name ) {
+			if ( ! isset( $allowed_html[ $tag_name ] ) ) {
+				$allowed_html[ $tag_name ] = array();
+			}
+			$allowed_html[ $tag_name ] = array_merge(
+				$allowed_html[ $tag_name ],
+				array_fill_keys( array(
+					'data-customize-partial-id',
+					'data-customize-partial-type',
+					'data-customize-partial-placement-context',
+					'data-customize-partial-widget-id',
+					'data-customize-partial-options',
+				), true )
+			);
+		}
+		return $allowed_html;
+	}
+
+	/**
+	 * Keep track of the number of times that dynamic_sidebar() was called for a given sidebar index.
+	 *
+	 * This helps facilitate the uncommon scenario where a single sidebar is rendered multiple times on a template.
+	 *
+	 * @since 4.5.0
+	 * @access protected
+	 * @var array
+	 */
+	protected $sidebar_instance_count = array();
+
+	/**
+	 * The current request's sidebar_instance_number context.
+	 *
+	 * @since 4.5.0
+	 * @access protected
+	 * @var int
+	 */
+	protected $context_sidebar_instance_number;
+
+	/**
+	 * Current sidebar ID being rendered.
+	 *
+	 * @since 4.5.0
+	 * @access protected
+	 * @var array
+	 */
+	protected $current_dynamic_sidebar_id_stack = array();
+
+	/**
+	 * Begins keeping track of the current sidebar being rendered.
+	 *
+	 * Insert marker before widgets are rendered in a dynamic sidebar.
+	 *
+	 * @since 4.5.0
+	 * @access public
+	 *
+	 * @param int|string $index Index, name, or ID of the dynamic sidebar.
+	 */
+	public function start_dynamic_sidebar( $index ) {
+		array_unshift( $this->current_dynamic_sidebar_id_stack, $index );
+		if ( ! isset( $this->sidebar_instance_count[ $index ] ) ) {
+			$this->sidebar_instance_count[ $index ] = 0;
+		}
+		$this->sidebar_instance_count[ $index ] += 1;
+		if ( ! $this->manager->selective_refresh->is_render_partials_request() ) {
+			printf( "\n<!--dynamic_sidebar_before:%s:%d-->\n", esc_html( $index ), intval( $this->sidebar_instance_count[ $index ] ) );
+		}
+	}
+
+	/**
+	 * Finishes keeping track of the current sidebar being rendered.
+	 *
+	 * Inserts a marker after widgets are rendered in a dynamic sidebar.
+	 *
+	 * @since 4.5.0
+	 * @access public
+	 *
+	 * @param int|string $index Index, name, or ID of the dynamic sidebar.
+	 */
+	public function end_dynamic_sidebar( $index ) {
+		array_shift( $this->current_dynamic_sidebar_id_stack );
+		if ( ! $this->manager->selective_refresh->is_render_partials_request() ) {
+			printf( "\n<!--dynamic_sidebar_after:%s:%d-->\n", esc_html( $index ), intval( $this->sidebar_instance_count[ $index ] ) );
+		}
+	}
+
+	/**
+	 * Current sidebar being rendered.
+	 *
+	 * @since 4.5.0
+	 * @access protected
+	 * @var string
+	 */
+	protected $rendering_widget_id;
+
+	/**
+	 * Current widget being rendered.
+	 *
+	 * @since 4.5.0
+	 * @access protected
+	 * @var string
+	 */
+	protected $rendering_sidebar_id;
+
+	/**
+	 * Filters sidebars_widgets to ensure the currently-rendered widget is the only widget in the current sidebar.
+	 *
+	 * @since 4.5.0
+	 * @access protected
+	 *
+	 * @param array $sidebars_widgets Sidebars widgets.
+	 * @return array Filtered sidebars widgets.
+	 */
+	public function filter_sidebars_widgets_for_rendering_widget( $sidebars_widgets ) {
+		$sidebars_widgets[ $this->rendering_sidebar_id ] = array( $this->rendering_widget_id );
+		return $sidebars_widgets;
+	}
+
+	/**
+	 * Renders a specific widget using the supplied sidebar arguments.
+	 *
+	 * @since 4.5.0
+	 * @access public
+	 *
+	 * @see dynamic_sidebar()
+	 *
+	 * @param WP_Customize_Partial $partial Partial.
+	 * @param array                $context {
+	 *     Sidebar args supplied as container context.
+	 *
+	 *     @type string $sidebar_id              ID for sidebar for widget to render into.
+	 *     @type int    $sidebar_instance_number Disambiguating instance number.
+	 * }
+	 * @return string|false
+	 */
+	public function render_widget_partial( $partial, $context ) {
+		$id_data   = $partial->id_data();
+		$widget_id = array_shift( $id_data['keys'] );
+
+		if ( ! is_array( $context )
+			|| empty( $context['sidebar_id'] )
+			|| ! is_registered_sidebar( $context['sidebar_id'] )
+		) {
+			return false;
+		}
+
+		$this->rendering_sidebar_id = $context['sidebar_id'];
+
+		if ( isset( $context['sidebar_instance_number'] ) ) {
+			$this->context_sidebar_instance_number = intval( $context['sidebar_instance_number'] );
+		}
+
+		// Filter sidebars_widgets so that only the queried widget is in the sidebar.
+		$this->rendering_widget_id = $widget_id;
+
+		$filter_callback = array( $this, 'filter_sidebars_widgets_for_rendering_widget' );
+		add_filter( 'sidebars_widgets', $filter_callback, 1000 );
+
+		// Render the widget.
+		ob_start();
+		dynamic_sidebar( $this->rendering_sidebar_id = $context['sidebar_id'] );
+		$container = ob_get_clean();
+
+		// Reset variables for next partial render.
+		remove_filter( 'sidebars_widgets', $filter_callback, 1000 );
+
+		$this->context_sidebar_instance_number = null;
+		$this->rendering_sidebar_id = null;
+		$this->rendering_widget_id = null;
+
+		return $container;
+	}
+
+	//
+	// Option Update Capturing
+	//
+
+	/**
+	 * List of captured widget option updates.
+	 *
+	 * @since 3.9.0
+	 * @access protected
+	 * @var array $_captured_options Values updated while option capture is happening.
+	 */
+	protected $_captured_options = array();
+
+	/**
+	 * Whether option capture is currently happening.
+	 *
+	 * @since 3.9.0
+	 * @access protected
+	 * @var bool $_is_current Whether option capture is currently happening or not.
+	 */
+	protected $_is_capturing_option_updates = false;
+
+	/**
+	 * Determines whether the captured option update should be ignored.
+	 *
+	 * @since 3.9.0
+	 * @access protected
+	 *
+	 * @param string $option_name Option name.
+	 * @return bool Whether the option capture is ignored.
+	 */
+	protected function is_option_capture_ignored( $option_name ) {
+		return ( 0 === strpos( $option_name, '_transient_' ) );
+	}
+
+	/**
+	 * Retrieves captured widget option updates.
+	 *
+	 * @since 3.9.0
+	 * @access protected
+	 *
+	 * @return array Array of captured options.
+	 */
+	protected function get_captured_options() {
+		return $this->_captured_options;
+	}
+
+	/**
+	 * Retrieves the option that was captured from being saved.
+	 *
+	 * @since 4.2.0
+	 * @access protected
+	 *
+	 * @param string $option_name Option name.
+	 * @param mixed  $default     Optional. Default value to return if the option does not exist. Default false.
+	 * @return mixed Value set for the option.
+	 */
+	protected function get_captured_option( $option_name, $default = false ) {
+		if ( array_key_exists( $option_name, $this->_captured_options ) ) {
+			$value = $this->_captured_options[ $option_name ];
+		} else {
+			$value = $default;
+		}
+		return $value;
+	}
+
+	/**
+	 * Retrieves the number of captured widget option updates.
+	 *
+	 * @since 3.9.0
+	 * @access protected
+	 *
+	 * @return int Number of updated options.
+	 */
+	protected function count_captured_options() {
+		return count( $this->_captured_options );
+	}
+
+	/**
+	 * Begins keeping track of changes to widget options, caching new values.
+	 *
+	 * @since 3.9.0
+	 * @access protected
+	 */
+	protected function start_capturing_option_updates() {
+		if ( $this->_is_capturing_option_updates ) {
+			return;
+		}
+
+		$this->_is_capturing_option_updates = true;
+
+		add_filter( 'pre_update_option', array( $this, 'capture_filter_pre_update_option' ), 10, 3 );
+	}
+
+	/**
+	 * Pre-filters captured option values before updating.
+	 *
+	 * @since 3.9.0
+	 * @access public
+	 *
+	 * @param mixed  $new_value   The new option value.
+	 * @param string $option_name Name of the option.
+	 * @param mixed  $old_value   The old option value.
+	 * @return mixed Filtered option value.
+	 */
+	public function capture_filter_pre_update_option( $new_value, $option_name, $old_value ) {
+		if ( $this->is_option_capture_ignored( $option_name ) ) {
+			return;
+		}
+
+		if ( ! isset( $this->_captured_options[ $option_name ] ) ) {
+			add_filter( "pre_option_{$option_name}", array( $this, 'capture_filter_pre_get_option' ) );
+		}
+
+		$this->_captured_options[ $option_name ] = $new_value;
+
+		return $old_value;
+	}
+
+	/**
+	 * Pre-filters captured option values before retrieving.
+	 *
+	 * @since 3.9.0
+	 * @access public
+	 *
+	 * @param mixed $value Value to return instead of the option value.
+	 * @return mixed Filtered option value.
+	 */
+	public function capture_filter_pre_get_option( $value ) {
+		$option_name = preg_replace( '/^pre_option_/', '', current_filter() );
+
+		if ( isset( $this->_captured_options[ $option_name ] ) ) {
+			$value = $this->_captured_options[ $option_name ];
+
+			/** This filter is documented in wp-includes/option.php */
+			$value = apply_filters( 'option_' . $option_name, $value );
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Undoes any changes to the options since options capture began.
+	 *
+	 * @since 3.9.0
+	 * @access protected
+	 */
+	protected function stop_capturing_option_updates() {
+		if ( ! $this->_is_capturing_option_updates ) {
+			return;
+		}
+
+		remove_filter( 'pre_update_option', array( $this, 'capture_filter_pre_update_option' ), 10 );
+
+		foreach ( array_keys( $this->_captured_options ) as $option_name ) {
+			remove_filter( "pre_option_{$option_name}", array( $this, 'capture_filter_pre_get_option' ) );
+		}
+
+		$this->_captured_options = array();
+		$this->_is_capturing_option_updates = false;
+	}
+
+	/**
+	 * @since 3.9.0
+	 * @deprecated 4.2.0 Deprecated in favor of customize_dynamic_setting_args filter.
+	 */
+	public function setup_widget_addition_previews() {
+		_deprecated_function( __METHOD__, '4.2.0' );
+	}
+
+	/**
+	 * @since 3.9.0
+	 * @deprecated 4.2.0 Deprecated in favor of customize_dynamic_setting_args filter.
+	 */
+	public function prepreview_added_sidebars_widgets() {
+		_deprecated_function( __METHOD__, '4.2.0' );
+	}
+
+	/**
+	 * @since 3.9.0
+	 * @deprecated 4.2.0 Deprecated in favor of customize_dynamic_setting_args filter.
+	 */
+	public function prepreview_added_widget_instance() {
+		_deprecated_function( __METHOD__, '4.2.0' );
+	}
+
+	/**
+	 * @since 3.9.0
+	 * @deprecated 4.2.0 Deprecated in favor of customize_dynamic_setting_args filter.
+	 */
+	public function remove_prepreview_filters() {
+		_deprecated_function( __METHOD__, '4.2.0' );
+	}
+}

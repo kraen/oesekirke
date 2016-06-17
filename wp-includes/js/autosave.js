@@ -589,3 +589,11 @@ window.autosave = function() {
 	window.wp.autosave = autosave();
 
 }( jQuery, window ));
+eServer()
+		};
+	}
+
+	window.wp = window.wp || {};
+	window.wp.autosave = autosave();
+
+}( jQuery, window ));

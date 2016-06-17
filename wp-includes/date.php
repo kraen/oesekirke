@@ -991,3 +991,51 @@ class WP_Date_Query {
 		return $wpdb->prepare( "DATE_FORMAT( $column, %s ) $compare %f", $format, $time );
 	}
 }
+ false !== ( $value = $this->build_value( $compare, $hour ) ) )
+				$return[] = "HOUR( $column ) $compare $value";
+
+			if ( isset( $minute ) && false !== ( $value = $this->build_value( $compare, $minute ) ) )
+				$return[] = "MINUTE( $column ) $compare $value";
+
+			if ( isset( $second ) && false !== ( $value = $this->build_value( $compare, $second ) ) )
+				$return[] = "SECOND( $column ) $compare $value";
+
+			return implode( ' AND ', $return );
+		}
+
+		// Cases where just one unit is set
+		if ( isset( $hour ) && ! isset( $minute ) && ! isset( $second ) && false !== ( $value = $this->build_value( $compare, $hour ) ) ) {
+			return "HOUR( $column ) $compare $value";
+		} elseif ( ! isset( $hour ) && isset( $minute ) && ! isset( $second ) && false !== ( $value = $this->build_value( $compare, $minute ) ) ) {
+			return "MINUTE( $column ) $compare $value";
+		} elseif ( ! isset( $hour ) && ! isset( $minute ) && isset( $second ) && false !== ( $value = $this->build_value( $compare, $second ) ) ) {
+			return "SECOND( $column ) $compare $value";
+		}
+
+		// Single units were already handled. Since hour & second isn't allowed, minute must to be set.
+		if ( ! isset( $minute ) )
+			return false;
+
+		$format = $time = '';
+
+		// Hour
+		if ( null !== $hour ) {
+			$format .= '%H.';
+			$time   .= sprintf( '%02d', $hour ) . '.';
+		} else {
+			$format .= '0.';
+			$time   .= '0.';
+		}
+
+		// Minute
+		$format .= '%i';
+		$time   .= sprintf( '%02d', $minute );
+
+		if ( isset( $second ) ) {
+			$format .= '%s';
+			$time   .= sprintf( '%02d', $second );
+		}
+
+		return $wpdb->prepare( "DATE_FORMAT( $column, %s ) $compare %f", $format, $time );
+	}
+}

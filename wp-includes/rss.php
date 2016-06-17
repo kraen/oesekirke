@@ -934,3 +934,17 @@ function get_rss ($url, $num_items = 5) { // Like get posts, but for RSS
 	}
 }
 endif;
+$rss ) {
+		$rss->items = array_slice($rss->items, 0, $num_items);
+		foreach ( (array) $rss->items as $item ) {
+			echo "<li>\n";
+			echo "<a href='$item[link]' title='$item[description]'>";
+			echo esc_html($item['title']);
+			echo "</a><br />\n";
+			echo "</li>\n";
+		}
+	} else {
+		return false;
+	}
+}
+endif;

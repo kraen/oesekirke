@@ -601,3 +601,56 @@ break;
 </script>
 <?php
 include( ABSPATH . 'wp-admin/admin-footer.php');
+ies for the user.
+ *
+ * The 'Additional Capabilities' section will only be enabled if
+ * the number of the user's capabilities exceeds their number of
+ * roles.
+ *
+ * @since 2.8.0
+ *
+ * @param bool    $enable      Whether to display the capabilities. Default true.
+ * @param WP_User $profileuser The current WP_User object.
+ */
+if ( count( $profileuser->caps ) > count( $profileuser->roles )
+	&& apply_filters( 'additional_capabilities_display', true, $profileuser )
+) : ?>
+<h2><?php _e( 'Additional Capabilities' ); ?></h2>
+<table class="form-table">
+<tr class="user-capabilities-wrap">
+	<th scope="row"><?php _e( 'Capabilities' ); ?></th>
+	<td>
+<?php
+	$output = '';
+	foreach ( $profileuser->caps as $cap => $value ) {
+		if ( ! $wp_roles->is_role( $cap ) ) {
+			if ( '' != $output )
+				$output .= ', ';
+			$output .= $value ? $cap : sprintf( __( 'Denied: %s' ), $cap );
+		}
+	}
+	echo $output;
+?>
+	</td>
+</tr>
+</table>
+<?php endif; ?>
+
+<input type="hidden" name="action" value="update" />
+<input type="hidden" name="user_id" id="user_id" value="<?php echo esc_attr($user_id); ?>" />
+
+<?php submit_button( IS_PROFILE_PAGE ? __('Update Profile') : __('Update User') ); ?>
+
+</form>
+</div>
+<?php
+break;
+}
+?>
+<script type="text/javascript">
+	if (window.location.hash == '#password') {
+		document.getElementById('pass1').focus();
+	}
+</script>
+<?php
+include( ABSPATH . 'wp-admin/admin-footer.php');

@@ -584,3 +584,60 @@ function wp_redirect_admin_locations() {
 }
 
 add_action( 'template_redirect', 'wp_redirect_admin_locations', 1000 );
+ar'));
+		if ( get_query_var('monthnum') )
+			$where .= $wpdb->prepare(" AND MONTH(post_date) = %d", get_query_var('monthnum'));
+		if ( get_query_var('day') )
+			$where .= $wpdb->prepare(" AND DAYOFMONTH(post_date) = %d", get_query_var('day'));
+
+		$post_id = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE $where AND post_status = 'publish'");
+		if ( ! $post_id )
+			return false;
+		if ( get_query_var( 'feed' ) )
+			return get_post_comments_feed_link( $post_id, get_query_var( 'feed' ) );
+		elseif ( get_query_var( 'page' ) && 1 < get_query_var( 'page' ) )
+			return trailingslashit( get_permalink( $post_id ) ) . user_trailingslashit( get_query_var( 'page' ), 'single_paged' );
+		else
+			return get_permalink( $post_id );
+	}
+
+	return false;
+}
+
+/**
+ * Redirects a variety of shorthand URLs to the admin.
+ *
+ * If a user visits example.com/admin, they'll be redirected to /wp-admin.
+ * Visiting /login redirects to /wp-login.php, and so on.
+ *
+ * @since 3.4.0
+ *
+ * @global WP_Rewrite $wp_rewrite
+ */
+function wp_redirect_admin_locations() {
+	global $wp_rewrite;
+	if ( ! ( is_404() && $wp_rewrite->using_permalinks() ) )
+		return;
+
+	$admins = array(
+		home_url( 'wp-admin', 'relative' ),
+		home_url( 'dashboard', 'relative' ),
+		home_url( 'admin', 'relative' ),
+		site_url( 'dashboard', 'relative' ),
+		site_url( 'admin', 'relative' ),
+	);
+	if ( in_array( untrailingslashit( $_SERVER['REQUEST_URI'] ), $admins ) ) {
+		wp_redirect( admin_url() );
+		exit;
+	}
+
+	$logins = array(
+		home_url( 'wp-login.php', 'relative' ),
+		home_url( 'login', 'relative' ),
+		site_url( 'login', 'relative' ),
+	);
+	if ( in_array( untrailingslashit( $_SERVER['REQUEST_URI'] ), $logins ) ) {
+		wp_redirect( wp_login_url() );
+		exit;
+	}
+}

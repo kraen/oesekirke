@@ -5844,3 +5844,589 @@ function _prime_post_caches( $ids, $update_term_cache = true, $update_meta_cache
 		update_post_caches( $fresh_posts, 'any', $update_term_cache, $update_meta_cache );
 	}
 }
+wpdb WordPress database abstraction object.
+ *
+ * @param string $timezone  The timezone for the timestamp. See get_lastpostdate().
+ *                          for information on accepted values.
+ * @param string $field     Post field to check. Accepts 'date' or 'modified'.
+ * @param string $post_type Optional. The post type to check. Default 'any'.
+ * @return string|false The timestamp.
+ */
+function _get_last_post_time( $timezone, $field, $post_type = 'any' ) {
+	global $wpdb;
+
+	if ( ! in_array( $field, array( 'date', 'modified' ) ) ) {
+		return false;
+	}
+
+	$timezone = strtolower( $timezone );
+
+	$key = "lastpost{$field}:$timezone";
+	if ( 'any' !== $post_type ) {
+		$key .= ':' . sanitize_key( $post_type );
+	}
+
+	$date = wp_cache_get( $key, 'timeinfo' );
+
+	if ( ! $date ) {
+		if ( 'any' === $post_type ) {
+			$post_types = get_post_types( array( 'public' => true ) );
+			array_walk( $post_types, array( $wpdb, 'escape_by_ref' ) );
+			$post_types = "'" . implode( "', '", $post_types ) . "'";
+		} else {
+			$post_types = "'" . sanitize_key( $post_type ) . "'";
+		}
+
+		switch ( $timezone ) {
+			case 'gmt':
+				$date = $wpdb->get_var("SELECT post_{$field}_gmt FROM $wpdb->posts WHERE post_status = 'publish' AND post_type IN ({$post_types}) ORDER BY post_{$field}_gmt DESC LIMIT 1");
+				break;
+			case 'blog':
+				$date = $wpdb->get_var("SELECT post_{$field} FROM $wpdb->posts WHERE post_status = 'publish' AND post_type IN ({$post_types}) ORDER BY post_{$field}_gmt DESC LIMIT 1");
+				break;
+			case 'server':
+				$add_seconds_server = date( 'Z' );
+				$date = $wpdb->get_var("SELECT DATE_ADD(post_{$field}_gmt, INTERVAL '$add_seconds_server' SECOND) FROM $wpdb->posts WHERE post_status = 'publish' AND post_type IN ({$post_types}) ORDER BY post_{$field}_gmt DESC LIMIT 1");
+				break;
+		}
+
+		if ( $date ) {
+			wp_cache_set( $key, $date, 'timeinfo' );
+		}
+	}
+
+	return $date;
+}
+
+/**
+ * Updates posts in cache.
+ *
+ * @since 1.5.1
+ *
+ * @param array $posts Array of post objects, passed by reference.
+ */
+function update_post_cache( &$posts ) {
+	if ( ! $posts )
+		return;
+
+	foreach ( $posts as $post )
+		wp_cache_add( $post->ID, $post, 'posts' );
+}
+
+/**
+ * Will clean the post in the cache.
+ *
+ * Cleaning means delete from the cache of the post. Will call to clean the term
+ * object cache associated with the post ID.
+ *
+ * This function not run if $_wp_suspend_cache_invalidation is not empty. See
+ * wp_suspend_cache_invalidation().
+ *
+ * @since 2.0.0
+ *
+ * @global bool $_wp_suspend_cache_invalidation
+ *
+ * @param int|WP_Post $post Post ID or post object to remove from the cache.
+ */
+function clean_post_cache( $post ) {
+	global $_wp_suspend_cache_invalidation;
+
+	if ( ! empty( $_wp_suspend_cache_invalidation ) )
+		return;
+
+	$post = get_post( $post );
+	if ( empty( $post ) )
+		return;
+
+	wp_cache_delete( $post->ID, 'posts' );
+	wp_cache_delete( $post->ID, 'post_meta' );
+
+	clean_object_term_cache( $post->ID, $post->post_type );
+
+	wp_cache_delete( 'wp_get_archives', 'general' );
+
+	/**
+	 * Fires immediately after the given post's cache is cleaned.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param int     $post_id Post ID.
+	 * @param WP_Post $post    Post object.
+	 */
+	do_action( 'clean_post_cache', $post->ID, $post );
+
+	if ( 'page' == $post->post_type ) {
+		wp_cache_delete( 'all_page_ids', 'posts' );
+
+		/**
+		 * Fires immediately after the given page's cache is cleaned.
+		 *
+		 * @since 2.5.0
+		 *
+		 * @param int $post_id Post ID.
+		 */
+		do_action( 'clean_page_cache', $post->ID );
+	}
+
+	wp_cache_set( 'last_changed', microtime(), 'posts' );
+}
+
+/**
+ * Call major cache updating functions for list of Post objects.
+ *
+ * @since 1.5.0
+ *
+ * @param array  $posts             Array of Post objects
+ * @param string $post_type         Optional. Post type. Default 'post'.
+ * @param bool   $update_term_cache Optional. Whether to update the term cache. Default true.
+ * @param bool   $update_meta_cache Optional. Whether to update the meta cache. Default true.
+ */
+function update_post_caches( &$posts, $post_type = 'post', $update_term_cache = true, $update_meta_cache = true ) {
+	// No point in doing all this work if we didn't match any posts.
+	if ( !$posts )
+		return;
+
+	update_post_cache($posts);
+
+	$post_ids = array();
+	foreach ( $posts as $post )
+		$post_ids[] = $post->ID;
+
+	if ( ! $post_type )
+		$post_type = 'any';
+
+	if ( $update_term_cache ) {
+		if ( is_array($post_type) ) {
+			$ptypes = $post_type;
+		} elseif ( 'any' == $post_type ) {
+			$ptypes = array();
+			// Just use the post_types in the supplied posts.
+			foreach ( $posts as $post ) {
+				$ptypes[] = $post->post_type;
+			}
+			$ptypes = array_unique($ptypes);
+		} else {
+			$ptypes = array($post_type);
+		}
+
+		if ( ! empty($ptypes) )
+			update_object_term_cache($post_ids, $ptypes);
+	}
+
+	if ( $update_meta_cache )
+		update_postmeta_cache($post_ids);
+}
+
+/**
+ * Updates metadata cache for list of post IDs.
+ *
+ * Performs SQL query to retrieve the metadata for the post IDs and updates the
+ * metadata cache for the posts. Therefore, the functions, which call this
+ * function, do not need to perform SQL queries on their own.
+ *
+ * @since 2.1.0
+ *
+ * @param array $post_ids List of post IDs.
+ * @return array|false Returns false if there is nothing to update or an array
+ *                     of metadata.
+ */
+function update_postmeta_cache( $post_ids ) {
+	return update_meta_cache('post', $post_ids);
+}
+
+/**
+ * Will clean the attachment in the cache.
+ *
+ * Cleaning means delete from the cache. Optionally will clean the term
+ * object cache associated with the attachment ID.
+ *
+ * This function will not run if $_wp_suspend_cache_invalidation is not empty.
+ *
+ * @since 3.0.0
+ *
+ * @global bool $_wp_suspend_cache_invalidation
+ *
+ * @param int  $id          The attachment ID in the cache to clean.
+ * @param bool $clean_terms Optional. Whether to clean terms cache. Default false.
+ */
+function clean_attachment_cache( $id, $clean_terms = false ) {
+	global $_wp_suspend_cache_invalidation;
+
+	if ( !empty($_wp_suspend_cache_invalidation) )
+		return;
+
+	$id = (int) $id;
+
+	wp_cache_delete($id, 'posts');
+	wp_cache_delete($id, 'post_meta');
+
+	if ( $clean_terms )
+		clean_object_term_cache($id, 'attachment');
+
+	/**
+	 * Fires after the given attachment's cache is cleaned.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param int $id Attachment ID.
+	 */
+	do_action( 'clean_attachment_cache', $id );
+}
+
+//
+// Hooks
+//
+
+/**
+ * Hook for managing future post transitions to published.
+ *
+ * @since 2.3.0
+ * @access private
+ *
+ * @see wp_clear_scheduled_hook()
+ * @global wpdb $wpdb WordPress database abstraction object.
+ *
+ * @param string  $new_status New post status.
+ * @param string  $old_status Previous post status.
+ * @param WP_Post $post       Post object.
+ */
+function _transition_post_status( $new_status, $old_status, $post ) {
+	global $wpdb;
+
+	if ( $old_status != 'publish' && $new_status == 'publish' ) {
+		// Reset GUID if transitioning to publish and it is empty.
+		if ( '' == get_the_guid($post->ID) )
+			$wpdb->update( $wpdb->posts, array( 'guid' => get_permalink( $post->ID ) ), array( 'ID' => $post->ID ) );
+
+		/**
+		 * Fires when a post's status is transitioned from private to published.
+		 *
+		 * @since 1.5.0
+		 * @deprecated 2.3.0 Use 'private_to_publish' instead.
+		 *
+		 * @param int $post_id Post ID.
+		 */
+		do_action('private_to_published', $post->ID);
+	}
+
+	// If published posts changed clear the lastpostmodified cache.
+	if ( 'publish' == $new_status || 'publish' == $old_status) {
+		foreach ( array( 'server', 'gmt', 'blog' ) as $timezone ) {
+			wp_cache_delete( "lastpostmodified:$timezone", 'timeinfo' );
+			wp_cache_delete( "lastpostdate:$timezone", 'timeinfo' );
+			wp_cache_delete( "lastpostdate:$timezone:{$post->post_type}", 'timeinfo' );
+		}
+	}
+
+	if ( $new_status !== $old_status ) {
+		wp_cache_delete( _count_posts_cache_key( $post->post_type ), 'counts' );
+		wp_cache_delete( _count_posts_cache_key( $post->post_type, 'readable' ), 'counts' );
+	}
+
+	// Always clears the hook in case the post status bounced from future to draft.
+	wp_clear_scheduled_hook('publish_future_post', array( $post->ID ) );
+}
+
+/**
+ * Hook used to schedule publication for a post marked for the future.
+ *
+ * The $post properties used and must exist are 'ID' and 'post_date_gmt'.
+ *
+ * @since 2.3.0
+ * @access private
+ *
+ * @param int     $deprecated Not used. Can be set to null. Never implemented. Not marked
+ *                            as deprecated with _deprecated_argument() as it conflicts with
+ *                            wp_transition_post_status() and the default filter for
+ *                            {@see _future_post_hook()}.
+ * @param WP_Post $post       Post object.
+ */
+function _future_post_hook( $deprecated, $post ) {
+	wp_clear_scheduled_hook( 'publish_future_post', array( $post->ID ) );
+	wp_schedule_single_event( strtotime( get_gmt_from_date( $post->post_date ) . ' GMT') , 'publish_future_post', array( $post->ID ) );
+}
+
+/**
+ * Hook to schedule pings and enclosures when a post is published.
+ *
+ * Uses XMLRPC_REQUEST and WP_IMPORTING constants.
+ *
+ * @since 2.3.0
+ * @access private
+ *
+ * @param int $post_id The ID in the database table of the post being published.
+ */
+function _publish_post_hook( $post_id ) {
+	if ( defined( 'XMLRPC_REQUEST' ) ) {
+		/**
+		 * Fires when _publish_post_hook() is called during an XML-RPC request.
+		 *
+		 * @since 2.1.0
+		 *
+		 * @param int $post_id Post ID.
+		 */
+		do_action( 'xmlrpc_publish_post', $post_id );
+	}
+
+	if ( defined('WP_IMPORTING') )
+		return;
+
+	if ( get_option('default_pingback_flag') )
+		add_post_meta( $post_id, '_pingme', '1' );
+	add_post_meta( $post_id, '_encloseme', '1' );
+
+	wp_schedule_single_event(time(), 'do_pings');
+}
+
+/**
+ * Return the post's parent's post_ID
+ *
+ * @since 3.1.0
+ *
+ * @param int $post_ID
+ *
+ * @return int|false Post parent ID, otherwise false.
+ */
+function wp_get_post_parent_id( $post_ID ) {
+	$post = get_post( $post_ID );
+	if ( !$post || is_wp_error( $post ) )
+		return false;
+	return (int) $post->post_parent;
+}
+
+/**
+ * Check the given subset of the post hierarchy for hierarchy loops.
+ *
+ * Prevents loops from forming and breaks those that it finds. Attached
+ * to the 'wp_insert_post_parent' filter.
+ *
+ * @since 3.1.0
+ *
+ * @see wp_find_hierarchy_loop()
+ *
+ * @param int $post_parent ID of the parent for the post we're checking.
+ * @param int $post_ID     ID of the post we're checking.
+ * @return int The new post_parent for the post, 0 otherwise.
+ */
+function wp_check_post_hierarchy_for_loops( $post_parent, $post_ID ) {
+	// Nothing fancy here - bail.
+	if ( !$post_parent )
+		return 0;
+
+	// New post can't cause a loop.
+	if ( empty( $post_ID ) )
+		return $post_parent;
+
+	// Can't be its own parent.
+	if ( $post_parent == $post_ID )
+		return 0;
+
+	// Now look for larger loops.
+	if ( !$loop = wp_find_hierarchy_loop( 'wp_get_post_parent_id', $post_ID, $post_parent ) )
+		return $post_parent; // No loop
+
+	// Setting $post_parent to the given value causes a loop.
+	if ( isset( $loop[$post_ID] ) )
+		return 0;
+
+	// There's a loop, but it doesn't contain $post_ID. Break the loop.
+	foreach ( array_keys( $loop ) as $loop_member )
+		wp_update_post( array( 'ID' => $loop_member, 'post_parent' => 0 ) );
+
+	return $post_parent;
+}
+
+/**
+ * Set a post thumbnail.
+ *
+ * @since 3.1.0
+ *
+ * @param int|WP_Post $post         Post ID or post object where thumbnail should be attached.
+ * @param int         $thumbnail_id Thumbnail to attach.
+ * @return int|bool True on success, false on failure.
+ */
+function set_post_thumbnail( $post, $thumbnail_id ) {
+	$post = get_post( $post );
+	$thumbnail_id = absint( $thumbnail_id );
+	if ( $post && $thumbnail_id && get_post( $thumbnail_id ) ) {
+		if ( wp_get_attachment_image( $thumbnail_id, 'thumbnail' ) )
+			return update_post_meta( $post->ID, '_thumbnail_id', $thumbnail_id );
+		else
+			return delete_post_meta( $post->ID, '_thumbnail_id' );
+	}
+	return false;
+}
+
+/**
+ * Remove a post thumbnail.
+ *
+ * @since 3.3.0
+ *
+ * @param int|WP_Post $post Post ID or post object where thumbnail should be removed from.
+ * @return bool True on success, false on failure.
+ */
+function delete_post_thumbnail( $post ) {
+	$post = get_post( $post );
+	if ( $post )
+		return delete_post_meta( $post->ID, '_thumbnail_id' );
+	return false;
+}
+
+/**
+ * Delete auto-drafts for new posts that are > 7 days old.
+ *
+ * @since 3.4.0
+ *
+ * @global wpdb $wpdb WordPress database abstraction object.
+ */
+function wp_delete_auto_drafts() {
+	global $wpdb;
+
+	// Cleanup old auto-drafts more than 7 days old.
+	$old_posts = $wpdb->get_col( "SELECT ID FROM $wpdb->posts WHERE post_status = 'auto-draft' AND DATE_SUB( NOW(), INTERVAL 7 DAY ) > post_date" );
+	foreach ( (array) $old_posts as $delete ) {
+		// Force delete.
+		wp_delete_post( $delete, true );
+	}
+}
+
+/**
+ * Queues posts for lazy-loading of term meta.
+ *
+ * @since 4.5.0
+ *
+ * @param array $posts Array of WP_Post objects.
+ */
+function wp_queue_posts_for_term_meta_lazyload( $posts ) {
+	$post_type_taxonomies = $term_ids = array();
+	foreach ( $posts as $post ) {
+		if ( ! ( $post instanceof WP_Post ) ) {
+			continue;
+		}
+
+		if ( ! isset( $post_type_taxonomies[ $post->post_type ] ) ) {
+			$post_type_taxonomies[ $post->post_type ] = get_object_taxonomies( $post->post_type );
+		}
+
+		foreach ( $post_type_taxonomies[ $post->post_type ] as $taxonomy ) {
+			// Term cache should already be primed by `update_post_term_cache()`.
+			$terms = get_object_term_cache( $post->ID, $taxonomy );
+			if ( false !== $terms ) {
+				foreach ( $terms as $term ) {
+					if ( ! isset( $term_ids[ $term->term_id ] ) ) {
+						$term_ids[] = $term->term_id;
+					}
+				}
+			}
+		}
+	}
+
+	if ( $term_ids ) {
+		$lazyloader = wp_metadata_lazyloader();
+		$lazyloader->queue_objects( 'term', $term_ids );
+	}
+}
+
+/**
+ * Update the custom taxonomies' term counts when a post's status is changed.
+ *
+ * For example, default posts term counts (for custom taxonomies) don't include
+ * private / draft posts.
+ *
+ * @since 3.3.0
+ * @access private
+ *
+ * @param string  $new_status New post status.
+ * @param string  $old_status Old post status.
+ * @param WP_Post $post       Post object.
+ */
+function _update_term_count_on_transition_post_status( $new_status, $old_status, $post ) {
+	// Update counts for the post's terms.
+	foreach ( (array) get_object_taxonomies( $post->post_type ) as $taxonomy ) {
+		$tt_ids = wp_get_object_terms( $post->ID, $taxonomy, array( 'fields' => 'tt_ids' ) );
+		wp_update_term_count( $tt_ids, $taxonomy );
+	}
+}
+
+/**
+ * Adds any posts from the given ids to the cache that do not already exist in cache
+ *
+ * @since 3.4.0
+ * @access private
+ *
+ * @see update_post_caches()
+ *
+ * @global wpdb $wpdb WordPress database abstraction object.
+ *
+ * @param array $ids               ID list.
+ * @param bool  $update_term_cache Optional. Whether to update the term cache. Default true.
+ * @param bool  $update_meta_cache Optional. Whether to update the meta cache. Default true.
+ */
+function _prime_post_caches( $ids, $update_term_cache = true, $update_meta_cache = true ) {
+	global $wpdb;
+
+	$non_cached_ids = _get_non_cached_ids( $ids, 'posts' );
+	if ( !empty( $non_cached_ids ) ) {
+		$fresh_posts = $wpdb->get_results( sprintf( "SELECT $wpdb->posts.* FROM $wpdb->posts WHERE ID IN (%s)", join( ",", $non_cached_ids ) ) );
+
+		update_post_caches( $fresh_posts, 'any', $update_term_cache, $update_meta_cache );
+	}
+}
+
+/**
+ * Adds a suffix if any trashed posts have a given slug.
+ *
+ * Store its desired (i.e. current) slug so it can try to reclaim it
+ * if the post is untrashed.
+ *
+ * For internal use.
+ *
+ * @since 4.5.0
+ * @access private
+ *
+ * @param string $post_name Slug.
+ * @param string $post_ID   Optional. Post ID that should be ignored. Default 0.
+ */
+function wp_add_trashed_suffix_to_post_name_for_trashed_posts( $post_name, $post_ID = 0 ) {
+	$trashed_posts_with_desired_slug = get_posts( array(
+		'name' => $post_name,
+		'post_status' => 'trash',
+		'post_type' => 'any',
+		'nopaging' => true,
+		'post__not_in' => array( $post_ID )
+	) );
+
+	if ( ! empty( $trashed_posts_with_desired_slug ) ) {
+		foreach ( $trashed_posts_with_desired_slug as $_post ) {
+			wp_add_trashed_suffix_to_post_name_for_post( $_post );
+		}
+	}
+}
+
+/**
+ * Adds a trashed suffix For a given post.
+ *
+ * Store its desired (i.e. current) slug so it can try to reclaim it
+ * if the post is untrashed.
+ *
+ * For internal use.
+ *
+ * @since 4.5.0
+ * @access private
+ *
+ * @param WP_Post $post The post.
+ */
+function wp_add_trashed_suffix_to_post_name_for_post( $post ) {
+	global $wpdb;
+
+	$post = get_post( $post );
+
+	if ( '__trashed' === substr( $post->post_name, -9 ) ) {
+		return $post->post_name;
+	}
+	add_post_meta( $post->ID, '_wp_desired_post_slug', $post->post_name );
+	$post_name = _truncate_post_slug( $post->post_name, 191 ) . '__trashed';
+	$wpdb->update( $wpdb->posts, array( 'post_name' => $post_name ), array( 'ID' => $post->ID ) );
+	clean_post_cache( $post->ID );
+	return $post_name;
+}

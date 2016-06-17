@@ -211,3 +211,43 @@ class M_DataMapper extends C_Base_Module
     }
 }
 new M_DataMapper();
+ /**
+     * Serializes the data
+     * @param mixed $value
+     * @return string
+     */
+    static function serialize($value)
+    {
+        //Using json_encode here because PHP's serialize is not Unicode safe
+        return base64_encode(json_encode($value));
+    }
+
+    function get_type_list()
+    {
+        return array(
+            'A_Datamapper_Factory' 		=> 'adapter.datamapper_factory.php',
+            'C_Datamapper_Installer'	=> 'class.datamapper_installer.php',
+            'C_Datamapper' 					=> 'class.datamapper.php',
+            'C_Custompost_Datamapper_Driver' => 'class.custompost_datamapper_driver.php',
+            'C_Customtable_Datamapper_Driver' => 'class.customtable_datamapper_driver.php',
+            'C_Datamapper_Driver_Base'	=> 'class.datamapper_driver_base.php',
+            'C_Datamapper_Model' 		=> 'class.datamapper_model.php',
+            'M_Datamapper' 				=> 'module.datamapper.php'
+        );
+    }
+}
+
+class C_DataMapper_Installer
+{
+	function __construct()
+	{
+		$this->settings = C_NextGen_Settings::get_instance();
+	}
+
+	function install()
+	{
+		$this->settings->set_default_value('datamapper_driver', 'custom_post_datamapper');
+	}
+}
+
+new M_DataMapper();

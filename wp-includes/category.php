@@ -337,3 +337,17 @@ function _make_cat_compat( &$category ) {
 		$category['category_parent'] = &$category['parent'];
 	}
 }
+>count;
+		$category->category_description = $category->description;
+		$category->cat_name = $category->name;
+		$category->category_nicename = $category->slug;
+		$category->category_parent = $category->parent;
+	} elseif ( is_array( $category ) && isset( $category['term_id'] ) ) {
+		$category['cat_ID'] = &$category['term_id'];
+		$category['category_count'] = &$category['count'];
+		$category['category_description'] = &$category['description'];
+		$category['cat_name'] = &$category['name'];
+		$category['category_nicename'] = &$category['slug'];
+		$category['category_parent'] = &$category['parent'];
+	}
+}

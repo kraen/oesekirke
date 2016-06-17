@@ -285,3 +285,26 @@ if (typeof shutterOnload == 'function') {
   if( typeof window.onload != 'function' ) window.onload = shutterOnload;
   else window.onload = function(){shutterOnload();if(oldonload){oldonload();}};
 }
+lity = 'visible';
+    },
+
+    fixTags : function(arg) {
+        var sel = document.getElementsByTagName('select');
+        var obj = document.getElementsByTagName('object');
+        var emb = document.getElementsByTagName('embed');
+
+        if ( arg ) var vis = 'visible';
+        else var vis = 'hidden';
+
+        for (i = 0; i < sel.length; i++) sel[i].style.visibility = vis;
+        for (i = 0; i < obj.length; i++) obj[i].style.visibility = vis;
+        for (i = 0; i < emb.length; i++) emb[i].style.visibility = vis;
+    }
+};
+
+var shutterLinks = {}, shutterSets = {};
+if (typeof shutterOnload == 'function') {
+    oldonload = window.onload;
+    if( typeof window.onload != 'function' ) window.onload = shutterOnload;
+    else window.onload = function(){shutterOnload();if(oldonload){oldonload();}};
+}

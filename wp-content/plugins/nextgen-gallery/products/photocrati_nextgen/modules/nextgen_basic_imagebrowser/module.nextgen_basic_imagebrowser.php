@@ -126,3 +126,57 @@ class M_NextGen_Basic_ImageBrowser extends C_Base_Module
 }
 
 new M_NextGen_Basic_ImageBrowser();
+    }
+}
+
+/**
+ * Show an image browser. Ngglegacy function
+ * @param $galleryID
+ * @param string $template
+ */
+function nggShowImageBrowser($galleryID, $template = '')
+{
+	$renderer = C_Displayed_Gallery_Renderer::get_instance();
+	$retval = $renderer->display_images(array(
+		'gallery_ids'   =>  array($galleryID),
+		'display_type'  =>  'photocrati-nextgen_basic_imagebrowser',
+		'template'      =>  $template
+	));
+
+	return apply_filters('ngg_show_imagebrowser_content', $retval, $galleryID);
+}
+
+/**
+ * Create an image browser from a list of image objects. Ngglegacy function
+ * @param $picturelist
+ * @param string $template
+ */
+function nggCreateImageBrowser($picturelist, $template = '')
+{
+	$renderer = C_Displayed_Gallery_Renderer::get_instance();
+	$image_ids = array();
+	foreach ($picturelist as $image) $image_ids[] = $image->pid;
+	return $renderer->display_images(array(
+		'image_ids'     =>  $image_ids,
+		'display_type'  =>  'photocrati-nextgen_basic_imagebrowser',
+		'template'      =>  $template
+	));
+}
+
+class C_NextGen_Basic_ImageBrowser_Installer extends C_Gallery_Display_Installer
+{
+	function install()
+	{
+		$this->install_display_type(
+			NGG_BASIC_IMAGEBROWSER, array(
+				'title'					=>	__('NextGEN Basic ImageBrowser', 'nggallery'),
+				'entity_types'			=>	array('image'),
+				'preview_image_relpath'	=>	'photocrati-nextgen_basic_imagebrowser#preview.jpg',
+				'default_source'		=>	'galleries',
+				'view_order' => NGG_DISPLAY_PRIORITY_BASE + 20
+			)
+		);
+	}
+}
+
+new M_NextGen_Basic_ImageBrowser();

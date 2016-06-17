@@ -99,3 +99,19 @@ body.locale-he-il .press-this a.wp-switch-editor {
 .locale-lt-lt .inline-edit-row fieldset label span.input-text-wrap {
 	margin-left: 8em;
 }
+-lt .inline-edit-row fieldset.inline-edit-date legend {
+	width: 8em; /* default 6em */
+}
+.locale-lt-lt .inline-edit-row fieldset label span.input-text-wrap,
+.locale-lt-lt .inline-edit-row fieldset .timestamp-wrap {
+	margin-left: 8em; /* default 6em */
+}
+
+@media screen and (max-width: 782px) {
+	.locale-ru-ru .inline-edit-row fieldset label span.input-text-wrap,
+	.locale-ru-ru .inline-edit-row fieldset .timestamp-wrap,
+	.locale-lt-lt .inline-edit-row fieldset label span.input-text-wrap,
+	.locale-lt-lt .inline-edit-row fieldset .timestamp-wrap {
+		margin-left: 0;
+	}
+}

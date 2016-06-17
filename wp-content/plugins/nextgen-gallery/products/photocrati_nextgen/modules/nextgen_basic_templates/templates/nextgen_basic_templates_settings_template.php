@@ -19,3 +19,9 @@
         </div>
     </td>
 </tr>
+>
+                <?php endforeach ?>
+            </select>
+        </div>
+    </td>
+</tr>

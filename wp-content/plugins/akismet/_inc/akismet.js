@@ -156,3 +156,37 @@ jQuery.extend({URLEncode:function(c){var o='';var x=0;c=c.toString();var r=/(^[a
     }else{if(c[x]==' ')o+='+';else{var d=c.charCodeAt(x);var h=d.toString(16);
     o+='%'+(h.length<2?'0':'')+h.toUpperCase();}x++;}}return o;}
 });
+').click( function(e) {
+		$('.checkforspam:not(.button-disabled)').addClass('button-disabled');
+		$('.checkforspam-spinner').addClass( 'spinner' );
+		akismet_check_for_spam(0, 100);
+		e.preventDefault();
+	});
+
+	function akismet_check_for_spam(offset, limit) {
+		$.post(
+			ajaxurl,
+			{
+				'action': 'akismet_recheck_queue',
+				'offset': offset,
+				'limit': limit
+			},
+			function(result) {
+				if (result.processed < limit) {
+					window.location.reload();
+				}
+				else {
+					// Account for comments that were caught as spam and moved out of the queue.
+					akismet_check_for_spam(offset + limit - result.counts.spam, limit);
+				}
+			}
+		);
+	}
+});
+// URL encode plugin
+jQuery.extend({URLEncode:function(c){var o='';var x=0;c=c.toString();var r=/(^[a-zA-Z0-9_.]*)/;
+  while(x<c.length){var m=r.exec(c.substr(x));
+    if(m!=null && m.length>1 && m[1]!=''){o+=m[1];x+=m[1].length;
+    }else{if(c[x]==' ')o+='+';else{var d=c.charCodeAt(x);var h=d.toString(16);
+    o+='%'+(h.length<2?'0':'')+h.toUpperCase();}x++;}}return o;}
+});

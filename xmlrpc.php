@@ -98,4 +98,5 @@ function logIO( $io, $msg ) {
 	_deprecated_function( __FUNCTION__, '3.4', 'error_log()' );
 	if ( ! empty( $GLOBALS['xmlrpc_logging'] ) )
 		error_log( $io . ' - ' . $msg );
+}_log( $io . ' - ' . $msg );
 }

@@ -7,4 +7,4 @@
 			<?php endforeach ?>
 		<?php endforeach ?>
 	</ul>
-</div>
+</div>div>

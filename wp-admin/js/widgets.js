@@ -492,3 +492,105 @@ wpWidgets = {
 $(document).ready( function(){ wpWidgets.init(); } );
 
 })(jQuery);
+
+			widget.attr( 'style', '' );
+		});
+	},
+
+	addWidget: function( chooser ) {
+		var widget, widgetId, add, n, viewportTop, viewportBottom, sidebarBounds,
+			sidebarId = chooser.find( '.widgets-chooser-selected' ).data('sidebarId'),
+			sidebar = $( '#' + sidebarId );
+
+		widget = $('#available-widgets').find('.widget-in-question').clone();
+		widgetId = widget.attr('id');
+		add = widget.find( 'input.add_new' ).val();
+		n = widget.find( 'input.multi_number' ).val();
+
+		// Remove the cloned chooser from the widget
+		widget.find('.widgets-chooser').remove();
+
+		if ( 'multi' === add ) {
+			widget.html(
+				widget.html().replace( /<[^<>]+>/g, function(m) {
+					return m.replace( /__i__|%i%/g, n );
+				})
+			);
+
+			widget.attr( 'id', widgetId.replace( '__i__', n ) );
+			n++;
+			$( '#' + widgetId ).find('input.multi_number').val(n);
+		} else if ( 'single' === add ) {
+			widget.attr( 'id', 'new-' + widgetId );
+			$( '#' + widgetId ).hide();
+		}
+
+		// Open the widgets container
+		sidebar.closest( '.widgets-holder-wrap' ).removeClass('closed');
+
+		sidebar.append( widget );
+		sidebar.sortable('refresh');
+
+		wpWidgets.save( widget, 0, 0, 1 );
+		// No longer "new" widget
+		widget.find( 'input.add_new' ).val('');
+
+		$document.trigger( 'widget-added', [ widget ] );
+
+		/*
+		 * Check if any part of the sidebar is visible in the viewport. If it is, don't scroll.
+		 * Otherwise, scroll up to so the sidebar is in view.
+		 *
+		 * We do this by comparing the top and bottom, of the sidebar so see if they are within
+		 * the bounds of the viewport.
+		 */
+		viewportTop = $(window).scrollTop();
+		viewportBottom = viewportTop + $(window).height();
+		sidebarBounds = sidebar.offset();
+
+		sidebarBounds.bottom = sidebarBounds.top + sidebar.outerHeight();
+
+		if ( viewportTop > sidebarBounds.bottom || viewportBottom < sidebarBounds.top ) {
+			$( 'html, body' ).animate({
+				scrollTop: sidebarBounds.top - 130
+			}, 200 );
+		}
+
+		window.setTimeout( function() {
+			// Cannot use a callback in the animation above as it fires twice,
+			// have to queue this "by hand".
+			widget.find( '.widget-title' ).trigger('click');
+		}, 250 );
+	},
+
+	closeChooser: function() {
+		var self = this;
+
+		$( '.widgets-chooser' ).slideUp( 200, function() {
+			$( '#wpbody-content' ).append( this );
+			self.clearWidgetSelection();
+		});
+	},
+
+	clearWidgetSelection: function() {
+		$( '#widgets-left' ).removeClass( 'chooser' );
+		$( '.widget-in-question' ).removeClass( 'widget-in-question' );
+	},
+
+	/**
+	 * Closes a Sidebar that was previously closed, but opened by dragging a Widget over it.
+	 *
+	 * Used when a Widget gets dragged in/out of the Sidebar and never dropped.
+	 *
+	 * @param sidebar
+	 */
+	closeSidebar: function( sidebar ) {
+		this.hoveredSidebar.addClass( 'closed' );
+		$( sidebar.target ).css( 'min-height', '' );
+		this.hoveredSidebar = null;
+	}
+};
+
+$document.ready( function(){ wpWidgets.init(); } );
+
+})(jQuery);

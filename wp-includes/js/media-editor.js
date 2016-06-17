@@ -1112,3 +1112,6 @@
 	_.bindAll( wp.media.editor, 'open' );
 	$( wp.media.editor.init );
 }(jQuery, _));
+bindAll( wp.media.editor, 'open' );
+	$( wp.media.editor.init );
+}(jQuery, _));

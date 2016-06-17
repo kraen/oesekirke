@@ -131,3 +131,19 @@ do_action( "install_plugins_$tab", $paged ); ?>
  * WordPress Administration Template Footer.
  */
 include(ABSPATH . 'wp-admin/admin-footer.php');
+.
+ *
+ * @since 2.7.0
+ *
+ * @param int $paged The current page number of the plugins list table.
+ */
+do_action( "install_plugins_$tab", $paged ); ?>
+</div>
+
+<?php
+wp_print_request_filesystem_credentials_modal();
+
+/**
+ * WordPress Administration Template Footer.
+ */
+include(ABSPATH . 'wp-admin/admin-footer.php');

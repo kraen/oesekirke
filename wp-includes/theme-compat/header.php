@@ -47,3 +47,8 @@ if ( empty($withcomments) && !is_single() ) {
 	</div>
 </div>
 <hr />
+hp echo home_url(); ?>/"><?php bloginfo('name'); ?></a></h1>
+		<div class="description"><?php bloginfo('description'); ?></div>
+	</div>
+</div>
+<hr />

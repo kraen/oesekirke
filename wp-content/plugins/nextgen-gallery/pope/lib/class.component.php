@@ -111,3 +111,29 @@ class C_Component extends ExtensibleObject
 		return C_Component_Registry::get_instance();
 	}
 }
+e or more contexts to the component
+	 * @param type $context
+	 */
+	function unassign_context($context)
+	{
+		$this->remove_context($context);
+	}
+
+	/**
+	 * Gets the component registry
+	 * @return 	C_Component_Registry
+	 */
+	function get_registry()
+	{
+		return C_Component_Registry::get_instance();
+	}
+
+	/**
+	 * Gets the component registry -- backward compatibility
+	 * @return 	C_Component_Registry
+	 */
+	function _get_registry()
+	{
+		return C_Component_Registry::get_instance();
+	}
+}

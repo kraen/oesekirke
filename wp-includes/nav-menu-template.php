@@ -674,3 +674,57 @@ function _nav_menu_item_id_use_once( $id, $item ) {
 	return $id;
 }
 add_filter( 'nav_menu_item_id', '_nav_menu_item_id_use_once', 10, 2 );
+		$menu_items[$key]->current_item_parent = true;
+		}
+		if ( in_array( $parent_item->object_id, $active_parent_object_ids ) )
+			$classes[] = 'current-' . $active_object . '-parent';
+
+		if ( 'post_type' == $parent_item->type && 'page' == $parent_item->object ) {
+			// Back compat classes for pages to match wp_page_menu()
+			if ( in_array('current-menu-parent', $classes) )
+				$classes[] = 'current_page_parent';
+			if ( in_array('current-menu-ancestor', $classes) )
+				$classes[] = 'current_page_ancestor';
+		}
+
+		$menu_items[$key]->classes = array_unique( $classes );
+	}
+}
+
+/**
+ * Retrieve the HTML list content for nav menu items.
+ *
+ * @uses Walker_Nav_Menu to create HTML list content.
+ * @since 3.0.0
+ *
+ * @param array  $items
+ * @param int    $depth
+ * @param object $r
+ * @return string
+ */
+function walk_nav_menu_tree( $items, $depth, $r ) {
+	$walker = ( empty($r->walker) ) ? new Walker_Nav_Menu : $r->walker;
+	$args = array( $items, $depth, $r );
+
+	return call_user_func_array( array( $walker, 'walk' ), $args );
+}
+
+/**
+ * Prevents a menu item ID from being used more than once.
+ *
+ * @since 3.0.1
+ * @access private
+ *
+ * @staticvar array $used_ids
+ * @param string $id
+ * @param object $item
+ * @return string
+ */
+function _nav_menu_item_id_use_once( $id, $item ) {
+	static $_used_ids = array();
+	if ( in_array( $item->ID, $_used_ids ) ) {
+		return '';
+	}
+	$_used_ids[] = $item->ID;
+	return $id;
+}

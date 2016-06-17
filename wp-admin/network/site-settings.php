@@ -171,3 +171,25 @@ if ( ! empty( $messages ) ) {
 </div>
 <?php
 require( ABSPATH . 'wp-admin/admin-footer.php' );
+p disabled( $disabled ) ?> /></td>
+					<?php } ?>
+				</tr>
+			<?php
+			}
+		} // End foreach
+		/**
+		 * Fires at the end of the Edit Site form, before the submit button.
+		 *
+		 * @since 3.0.0
+		 *
+		 * @param int $id Site ID.
+		 */
+		do_action( 'wpmueditblogaction', $id );
+		?>
+	</table>
+	<?php submit_button(); ?>
+</form>
+
+</div>
+<?php
+require( ABSPATH . 'wp-admin/admin-footer.php' );

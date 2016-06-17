@@ -102,3 +102,9 @@ See [Plugin Homepage](http://weber-nrw.de/wordpress/cryptx/ "Plugin Homepage") f
 4. Look at your Blog and be happy.
 
 [Plugin Homepage](http://weber-nrw.de/wordpress/cryptx/ "Plugin Homepage")
+o the `/wp-content/plugins/` directory
+2. Activate the plugin through the 'Plugins' menu in WordPress
+3. Edit the Options under the Options Page.
+4. Look at your Blog and be happy.
+
+[Plugin Homepage](http://weber-nrw.de/wordpress/cryptx/ "Plugin Homepage")

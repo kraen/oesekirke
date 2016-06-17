@@ -322,3 +322,30 @@ class NOOP_Translations {
 	}
 }
 endif;
+? 0 : 1;
+	}
+
+	/**
+	 * @return int
+	 */
+	function get_plural_forms_count() {
+		return 2;
+	}
+
+	/**
+	 * @param string $singular
+	 * @param string $plural
+	 * @param int    $count
+	 * @param string $context
+	 */
+	function translate_plural($singular, $plural, $count, $context = null) {
+			return 1 == $count? $singular : $plural;
+	}
+
+	/**
+	 * @param object $other
+	 */
+	function merge_with(&$other) {
+	}
+}
+endif;

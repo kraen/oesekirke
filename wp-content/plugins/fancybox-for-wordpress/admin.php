@@ -129,3 +129,15 @@ function mfbfw_options_page() {
 }
 
 ?>
+g" />
+		</div>
+
+	</div>
+
+</div>
+
+<?php
+
+}
+
+?>

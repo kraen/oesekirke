@@ -6,4 +6,4 @@
 <p>
 	If you're seeing this, it's because the gallery type you selected has not
 	provided a template of it's own.
-</p>
+</p></p>

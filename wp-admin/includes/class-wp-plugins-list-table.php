@@ -632,3 +632,173 @@ class WP_Plugins_List_Table extends WP_List_Table {
 		do_action( "after_plugin_row_$plugin_file", $plugin_file, $plugin_data, $status );
 	}
 }
+in_file}`
+			 * @since 4.4.0
+			 *
+			 * @param array  $actions     An array of plugin action links.
+			 * @param string $plugin_file Path to the plugin file relative to the plugins directory.
+			 * @param array  $plugin_data An array of plugin data.
+			 * @param string $context     The plugin context. Defaults are 'All', 'Active',
+			 *                            'Inactive', 'Recently Activated', 'Upgrade',
+			 *                            'Must-Use', 'Drop-ins', 'Search'.
+			 */
+			$actions = apply_filters( "plugin_action_links_{$plugin_file}", $actions, $plugin_file, $plugin_data, $context );
+
+		}
+
+		$class = $is_active ? 'active' : 'inactive';
+		$checkbox_id =  "checkbox_" . md5($plugin_data['Name']);
+		if ( $restrict_network_active || $restrict_network_only || in_array( $status, array( 'mustuse', 'dropins' ) ) ) {
+			$checkbox = '';
+		} else {
+			$checkbox = "<label class='screen-reader-text' for='" . $checkbox_id . "' >" . sprintf( __( 'Select %s' ), $plugin_data['Name'] ) . "</label>"
+				. "<input type='checkbox' name='checked[]' value='" . esc_attr( $plugin_file ) . "' id='" . $checkbox_id . "' />";
+		}
+		if ( 'dropins' != $context ) {
+			$description = '<p>' . ( $plugin_data['Description'] ? $plugin_data['Description'] : '&nbsp;' ) . '</p>';
+			$plugin_name = $plugin_data['Name'];
+		}
+
+		if ( ! empty( $totals['upgrade'] ) && ! empty( $plugin_data['update'] ) )
+			$class .= ' update';
+
+		$plugin_slug = isset( $plugin_data['slug'] ) ? $plugin_data['slug'] : sanitize_title( $plugin_name );
+		printf( '<tr class="%s" data-slug="%s" data-plugin="%s">',
+			esc_attr( $class ),
+			esc_attr( $plugin_slug ),
+			esc_attr( $plugin_file )
+		);
+
+		list( $columns, $hidden, $sortable, $primary ) = $this->get_column_info();
+
+		foreach ( $columns as $column_name => $column_display_name ) {
+			$extra_classes = '';
+			if ( in_array( $column_name, $hidden ) ) {
+				$extra_classes = ' hidden';
+			}
+
+			switch ( $column_name ) {
+				case 'cb':
+					echo "<th scope='row' class='check-column'>$checkbox</th>";
+					break;
+				case 'name':
+					echo "<td class='plugin-title column-primary'><strong>$plugin_name</strong>";
+					echo $this->row_actions( $actions, true );
+					echo "</td>";
+					break;
+				case 'description':
+					$classes = 'column-description desc';
+
+					echo "<td class='$classes{$extra_classes}'>
+						<div class='plugin-description'>$description</div>
+						<div class='$class second plugin-version-author-uri'>";
+
+					$plugin_meta = array();
+					if ( !empty( $plugin_data['Version'] ) )
+						$plugin_meta[] = sprintf( __( 'Version %s' ), $plugin_data['Version'] );
+					if ( !empty( $plugin_data['Author'] ) ) {
+						$author = $plugin_data['Author'];
+						if ( !empty( $plugin_data['AuthorURI'] ) )
+							$author = '<a href="' . $plugin_data['AuthorURI'] . '">' . $plugin_data['Author'] . '</a>';
+						$plugin_meta[] = sprintf( __( 'By %s' ), $author );
+					}
+
+					// Details link using API info, if available
+					if ( isset( $plugin_data['slug'] ) && current_user_can( 'install_plugins' ) ) {
+						$plugin_meta[] = sprintf( '<a href="%s" class="thickbox open-plugin-details-modal" aria-label="%s" data-title="%s">%s</a>',
+							esc_url( network_admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_data['slug'] .
+								'&TB_iframe=true&width=600&height=550' ) ),
+							esc_attr( sprintf( __( 'More information about %s' ), $plugin_name ) ),
+							esc_attr( $plugin_name ),
+							__( 'View details' )
+						);
+					} elseif ( ! empty( $plugin_data['PluginURI'] ) ) {
+						$plugin_meta[] = sprintf( '<a href="%s">%s</a>',
+							esc_url( $plugin_data['PluginURI'] ),
+							__( 'Visit plugin site' )
+						);
+					}
+
+					/**
+					 * Filter the array of row meta for each plugin in the Plugins list table.
+					 *
+					 * @since 2.8.0
+					 *
+					 * @param array  $plugin_meta An array of the plugin's metadata,
+					 *                            including the version, author,
+					 *                            author URI, and plugin URI.
+					 * @param string $plugin_file Path to the plugin file, relative to the plugins directory.
+					 * @param array  $plugin_data An array of plugin data.
+					 * @param string $status      Status of the plugin. Defaults are 'All', 'Active',
+					 *                            'Inactive', 'Recently Activated', 'Upgrade', 'Must-Use',
+					 *                            'Drop-ins', 'Search'.
+					 */
+					$plugin_meta = apply_filters( 'plugin_row_meta', $plugin_meta, $plugin_file, $plugin_data, $status );
+					echo implode( ' | ', $plugin_meta );
+
+					echo "</div></td>";
+					break;
+				default:
+					$classes = "$column_name column-$column_name$class";
+
+					echo "<td class='$classes{$extra_classes}'>";
+
+					/**
+					 * Fires inside each custom column of the Plugins list table.
+					 *
+					 * @since 3.1.0
+					 *
+					 * @param string $column_name Name of the column.
+					 * @param string $plugin_file Path to the plugin file.
+					 * @param array  $plugin_data An array of plugin data.
+					 */
+					do_action( 'manage_plugins_custom_column', $column_name, $plugin_file, $plugin_data );
+
+					echo "</td>";
+			}
+		}
+
+		echo "</tr>";
+
+		/**
+		 * Fires after each row in the Plugins list table.
+		 *
+		 * @since 2.3.0
+		 *
+		 * @param string $plugin_file Path to the plugin file, relative to the plugins directory.
+		 * @param array  $plugin_data An array of plugin data.
+		 * @param string $status      Status of the plugin. Defaults are 'All', 'Active',
+		 *                            'Inactive', 'Recently Activated', 'Upgrade', 'Must-Use',
+		 *                            'Drop-ins', 'Search'.
+		 */
+		do_action( 'after_plugin_row', $plugin_file, $plugin_data, $status );
+
+		/**
+		 * Fires after each specific row in the Plugins list table.
+		 *
+		 * The dynamic portion of the hook name, `$plugin_file`, refers to the path
+		 * to the plugin file, relative to the plugins directory.
+		 *
+		 * @since 2.7.0
+		 *
+		 * @param string $plugin_file Path to the plugin file, relative to the plugins directory.
+		 * @param array  $plugin_data An array of plugin data.
+		 * @param string $status      Status of the plugin. Defaults are 'All', 'Active',
+		 *                            'Inactive', 'Recently Activated', 'Upgrade', 'Must-Use',
+		 *                            'Drop-ins', 'Search'.
+		 */
+		do_action( "after_plugin_row_$plugin_file", $plugin_file, $plugin_data, $status );
+	}
+
+	/**
+	 * Gets the name of the primary column for this specific list table.
+	 *
+	 * @since 4.3.0
+	 * @access protected
+	 *
+	 * @return string Unalterable name for the primary column, in this case, 'name'.
+	 */
+	protected function get_primary_column_name() {
+		return 'name';
+	}
+}

@@ -63,3 +63,10 @@
 	</header><!-- #masthead -->
 
 	<div id="main" class="site-main">
+			<div class="search-box">
+				<?php get_search_form(); ?>
+			</div>
+		</div>
+	</header><!-- #masthead -->
+
+	<div id="main" class="site-main">

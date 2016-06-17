@@ -307,3 +307,186 @@ add_filter( 'determine_current_user', 'wp_validate_auth_cookie'          );
 add_filter( 'determine_current_user', 'wp_validate_logged_in_cookie', 20 );
 
 unset($filter, $action);
+d_action( 'importer_scheduled_cleanup', 'wp_delete_attachment'                           );
+add_action( 'upgrader_scheduled_cleanup', 'wp_delete_attachment'                           );
+add_action( 'welcome_panel',              'wp_welcome_panel'                               );
+
+// Navigation menu actions
+add_action( 'delete_post',                '_wp_delete_post_menu_item'         );
+add_action( 'delete_term',                '_wp_delete_tax_menu_item',   10, 3 );
+add_action( 'transition_post_status',     '_wp_auto_add_pages_to_menu', 10, 3 );
+
+// Post Thumbnail CSS class filtering
+add_action( 'begin_fetch_post_thumbnail_html', '_wp_post_thumbnail_class_filter_add'    );
+add_action( 'end_fetch_post_thumbnail_html',   '_wp_post_thumbnail_class_filter_remove' );
+
+// Redirect Old Slugs
+add_action( 'template_redirect',  'wp_old_slug_redirect'              );
+add_action( 'post_updated',       'wp_check_for_changed_slugs', 12, 3 );
+add_action( 'attachment_updated', 'wp_check_for_changed_slugs', 12, 3 );
+
+// Nonce check for Post Previews
+add_action( 'init', '_show_post_preview' );
+
+// Output JS to reset window.name for previews
+add_action( 'wp_head', 'wp_post_preview_js', 1 );
+
+// Timezone
+add_filter( 'pre_option_gmt_offset','wp_timezone_override_offset' );
+
+// Admin Color Schemes
+add_action( 'admin_init', 'register_admin_color_schemes', 1);
+add_action( 'admin_color_scheme_picker', 'admin_color_scheme_picker' );
+
+// If the upgrade hasn't run yet, assume link manager is used.
+add_filter( 'default_option_link_manager_enabled', '__return_true' );
+
+// This option no longer exists; tell plugins we always support auto-embedding.
+add_filter( 'default_option_embed_autourls', '__return_true' );
+
+// Default settings for heartbeat
+add_filter( 'heartbeat_settings', 'wp_heartbeat_settings' );
+
+// Check if the user is logged out
+add_action( 'admin_enqueue_scripts', 'wp_auth_check_load' );
+add_filter( 'heartbeat_send',        'wp_auth_check' );
+add_filter( 'heartbeat_nopriv_send', 'wp_auth_check' );
+
+// Default authentication filters
+add_filter( 'authenticate', 'wp_authenticate_username_password',  20, 3 );
+add_filter( 'authenticate', 'wp_authenticate_email_password',     20, 3 );
+add_filter( 'authenticate', 'wp_authenticate_spam_check',         99    );
+add_filter( 'determine_current_user', 'wp_validate_auth_cookie'          );
+add_filter( 'determine_current_user', 'wp_validate_logged_in_cookie', 20 );
+
+// Split term updates.
+add_action( 'admin_init',        '_wp_check_for_scheduled_split_terms' );
+add_action( 'split_shared_term', '_wp_check_split_default_terms',  10, 4 );
+add_action( 'split_shared_term', '_wp_check_split_terms_in_menus', 10, 4 );
+add_action( 'split_shared_term', '_wp_check_split_nav_menu_terms', 10, 4 );
+add_action( 'wp_split_shared_term_batch', '_wp_batch_split_terms' );
+
+// Email notifications.
+add_action( 'comment_post', 'wp_new_comment_notify_moderator' );
+add_action( 'comment_post', 'wp_new_comment_notify_postauthor' );
+add_action( 'after_password_reset', 'wp_password_change_notification' );
+add_action( 'register_new_user',      'wp_send_new_user_notifications' );
+add_action( 'edit_user_created_user', 'wp_send_new_user_notifications', 10, 2 );
+
+// REST API actions.
+add_action( 'init',          'rest_api_init' );
+add_action( 'rest_api_init', 'rest_api_default_filters', 10, 1 );
+add_action( 'parse_request', 'rest_api_loaded' );
+
+/**
+ * Filters formerly mixed into wp-includes
+ */
+// Theme
+add_action( 'wp_loaded', '_custom_header_background_just_in_time' );
+add_action( 'wp_head', '_custom_logo_header_styles' );
+add_action( 'plugins_loaded', '_wp_customize_include' );
+add_action( 'admin_enqueue_scripts', '_wp_customize_loader_settings' );
+add_action( 'delete_attachment', '_delete_attachment_theme_mod' );
+
+// Calendar widget cache
+add_action( 'save_post', 'delete_get_calendar_cache' );
+add_action( 'delete_post', 'delete_get_calendar_cache' );
+add_action( 'update_option_start_of_week', 'delete_get_calendar_cache' );
+add_action( 'update_option_gmt_offset', 'delete_get_calendar_cache' );
+
+// Author
+add_action( 'transition_post_status', '__clear_multi_author_cache' );
+
+// Post
+add_action( 'init', 'create_initial_post_types', 0 ); // highest priority
+add_action( 'admin_menu', '_add_post_type_submenus' );
+add_action( 'before_delete_post', '_reset_front_page_settings_for_post' );
+add_action( 'wp_trash_post',      '_reset_front_page_settings_for_post' );
+
+// Post Formats
+add_filter( 'request', '_post_format_request' );
+add_filter( 'term_link', '_post_format_link', 10, 3 );
+add_filter( 'get_post_format', '_post_format_get_term' );
+add_filter( 'get_terms', '_post_format_get_terms', 10, 3 );
+add_filter( 'wp_get_object_terms', '_post_format_wp_get_object_terms' );
+
+// KSES
+add_action( 'init', 'kses_init' );
+add_action( 'set_current_user', 'kses_init' );
+
+// Script Loader
+add_action( 'wp_default_scripts', 'wp_default_scripts' );
+add_filter( 'wp_print_scripts', 'wp_just_in_time_script_localization' );
+add_filter( 'print_scripts_array', 'wp_prototype_before_jquery' );
+
+add_action( 'wp_default_styles', 'wp_default_styles' );
+add_filter( 'style_loader_src', 'wp_style_loader_src', 10, 2 );
+
+// Taxonomy
+add_action( 'init', 'create_initial_taxonomies', 0 ); // highest priority
+
+// Canonical
+add_action( 'template_redirect', 'redirect_canonical' );
+add_action( 'template_redirect', 'wp_redirect_admin_locations', 1000 );
+
+// Shortcodes
+add_filter( 'the_content', 'do_shortcode', 11 ); // AFTER wpautop()
+
+// Media
+add_action( 'wp_playlist_scripts', 'wp_playlist_scripts' );
+add_action( 'customize_controls_enqueue_scripts', 'wp_plupload_default_settings' );
+
+// Nav menu
+add_filter( 'nav_menu_item_id', '_nav_menu_item_id_use_once', 10, 2 );
+
+// Widgets
+add_action( 'init', 'wp_widgets_init', 1 );
+
+// Admin Bar
+// Don't remove. Wrong way to disable.
+add_action( 'template_redirect', '_wp_admin_bar_init', 0 );
+add_action( 'admin_init', '_wp_admin_bar_init' );
+add_action( 'before_signup_header', '_wp_admin_bar_init' );
+add_action( 'activate_header', '_wp_admin_bar_init' );
+add_action( 'wp_footer', 'wp_admin_bar_render', 1000 );
+add_action( 'in_admin_header', 'wp_admin_bar_render', 0 );
+
+// Former admin filters that can also be hooked on the front end
+add_action( 'media_buttons', 'media_buttons' );
+add_filter( 'image_send_to_editor', 'image_add_caption', 20, 8 );
+add_filter( 'media_send_to_editor', 'image_media_send_to_editor', 10, 3 );
+
+// Embeds
+add_action( 'rest_api_init',          'wp_oembed_register_route'              );
+add_filter( 'rest_pre_serve_request', '_oembed_rest_pre_serve_request', 10, 4 );
+
+add_action( 'wp_head',                'wp_oembed_add_discovery_links'         );
+add_action( 'wp_head',                'wp_oembed_add_host_js'                 );
+
+add_action( 'embed_head',             'enqueue_embed_scripts',           1    );
+add_action( 'embed_head',             'print_emoji_detection_script'          );
+add_action( 'embed_head',             'print_embed_styles'                    );
+add_action( 'embed_head',             'wp_print_head_scripts',          20    );
+add_action( 'embed_head',             'wp_print_styles',                20    );
+add_action( 'embed_head',             'wp_no_robots'                          );
+add_action( 'embed_head',             'rel_canonical'                         );
+add_action( 'embed_head',             'locale_stylesheet'                     );
+
+add_action( 'embed_content_meta',     'print_embed_comments_button'           );
+add_action( 'embed_content_meta',     'print_embed_sharing_button'            );
+
+add_action( 'embed_footer',           'print_embed_sharing_dialog'            );
+add_action( 'embed_footer',           'print_embed_scripts'                   );
+add_action( 'embed_footer',           'wp_print_footer_scripts',        20    );
+
+add_filter( 'excerpt_more',           'wp_embed_excerpt_more',          20    );
+add_filter( 'the_excerpt_embed',      'wptexturize'                           );
+add_filter( 'the_excerpt_embed',      'convert_chars'                         );
+add_filter( 'the_excerpt_embed',      'wpautop'                               );
+add_filter( 'the_excerpt_embed',      'shortcode_unautop'                     );
+add_filter( 'the_excerpt_embed',      'wp_embed_excerpt_attachment'           );
+
+add_filter( 'oembed_dataparse',       'wp_filter_oembed_result',        10, 3 );
+add_filter( 'oembed_response_data',   'get_oembed_response_data_rich',  10, 4 );
+
+unset( $filter, $action );

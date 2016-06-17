@@ -61,4 +61,6 @@ tinymce.PluginManager.add('directionality', function(editor) {
 		cmd: 'mceDirectionRTL',
 		stateSelector: generateSelector('rtl')
 	});
+});Selector('rtl')
+	});
 });

@@ -179,4 +179,47 @@ This changelog is for the WordPress plugin. For the Fancybox main changelog go t
 
 == Frequently Asked Questions ==
 
-You can find a FAQ section ay [plugins.josepardilla.com](http://plugins.josepardilla.com/fancybox-for-wordpress/faq/).
+You can find a FAQ section ay [plugins.josepardilla.com](http://plugins.josepardilla.com/fancybox-for-wordpress/faq/).g files
+* Fixed "Click to close" overlay text
+* Moved images to /img/ folder
+
+
+== Upgrade Notice ==
+
+= 3.0.5 =
+Fixes the Revert options button and wrong version number on settings page. Also updates links in settings page and readme file.
+
+
+== Installation ==
+
+1. Upload the `fancybox-for-wordpress` folder to the `/wp-content/plugins/` directory
+2. Activate the plugin through the 'Plugins' menu in WordPress
+3. That's it, [FancyBox](http://fancybox.net/) will be automatically applied to all your image links and galleries.
+4. If you want to customize a bit the look and feel of FancyBox, go to the Options Page under General Options in the WordPress Admin panel
+
+
+== Screenshots ==
+
+1. Simple example of fancybox on a post. [Live demo here](http://blog.moskis.net/2012/01/20/teclado-apple-en-windows-7/)
+2. Basic settings on Options Page in the Admin Panel. This makes it very easy to customize the plugin to your needs
+
+
+== Frequently Asked Questions ==
+
+**- There was a vulnerability detected in versions 3.0.2 and lower, is my site in danger?**
+
+This vulnerability was patched in version 3.0.3.
+
+An additional change was introduced in version 3.0.4 to make sure that the malicious code can't be printed to visitors even if it still remains in the database.
+
+If you think your site might still be using a vulnerable version of the plugin please log in to your WordPress admin panel, disable the plugin and clear any cache if your site uses a cache system.
+
+If you wish to continue using the plugin, check that the plugin is updated to the latest version from your admin panel and enable it. Then check the plugin's settings page and make sure there's no abnormal code in any of the fields, especially on the Extra Calls tab. If you are not sure about the code you see in the settings please use the Revert to Defaults button at the bottom of the settings page.
+
+If you think your site might be compromised in any other way check this guide: [WordPress Codex - FAQ My site was hacked](http://codex.wordpress.org/FAQ_My_site_was_hacked).
+
+**- Is the FancyBox script vulnerable or unsafe?**
+
+No, there's nothing wrong with the actual FancyBox script that i know of.
+
+The vulnerability detected in versions 3.0.2 and lower of the "FancyBox for WordPress" plugin was limited to the plugin itself. Other FancyBox plugins or manual implementations of FancyBox are unrelated to this issue.

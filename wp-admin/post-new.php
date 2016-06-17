@@ -72,3 +72,13 @@ $post = get_default_post_to_edit( $post_type, true );
 $post_ID = $post->ID;
 include( ABSPATH . 'wp-admin/edit-form-advanced.php' );
 include( ABSPATH . 'wp-admin/admin-footer.php' );
+oter', '_admin_notice_post_locked' );
+
+	unset( $check_users );
+}
+
+// Show post form.
+$post = get_default_post_to_edit( $post_type, true );
+$post_ID = $post->ID;
+include( ABSPATH . 'wp-admin/edit-form-advanced.php' );
+include( ABSPATH . 'wp-admin/admin-footer.php' );

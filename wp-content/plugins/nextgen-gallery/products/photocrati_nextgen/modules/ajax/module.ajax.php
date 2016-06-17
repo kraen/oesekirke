@@ -101,3 +101,26 @@ class M_Ajax extends C_Base_Module
 }
 
 new M_Ajax();
+t_instance();
+	}
+
+	function get( $key, $default = null ) {
+		$retval = $default;
+
+		switch ( $key ) {
+			case 'ajax_slug':
+				$retval = $this->slug;
+				break;
+			case 'ajax_url':
+				$retval = site_url( "/?{$this->slug}=1" );
+				if ( is_ssl() && strpos( $retval, 'https' ) === false ) {
+					$retval = str_replace( 'http', 'https', $retval );
+				}
+				break;
+		}
+
+		return $retval;
+	}
+}
+
+new M_Ajax();

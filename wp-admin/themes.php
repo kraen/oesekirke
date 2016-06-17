@@ -407,3 +407,43 @@ $can_delete = current_user_can( 'delete_themes' );
 </script>
 
 <?php require( ABSPATH . 'wp-admin/admin-footer.php' );
+( __( 'By %s' ), '{{{ data.authorAndUri }}}' ); ?></p>
+
+				<# if ( data.hasUpdate ) { #>
+				<div class="notice notice-warning notice-alt notice-large">
+					<h3 class="notice-title"><?php _e( 'Update Available' ); ?></h3>
+					{{{ data.update }}}
+				</div>
+				<# } #>
+				<p class="theme-description">{{{ data.description }}}</p>
+
+				<# if ( data.parent ) { #>
+					<p class="parent-theme"><?php printf( __( 'This is a child theme of %s.' ), '<strong>{{{ data.parent }}}</strong>' ); ?></p>
+				<# } #>
+
+				<# if ( data.tags ) { #>
+					<p class="theme-tags"><span><?php _e( 'Tags:' ); ?></span> {{{ data.tags }}}</p>
+				<# } #>
+			</div>
+		</div>
+
+		<div class="theme-actions">
+			<div class="active-theme">
+				<a href="{{{ data.actions.customize }}}" class="button button-primary customize load-customize hide-if-no-customize"><?php _e( 'Customize' ); ?></a>
+				<?php echo implode( ' ', $current_theme_actions ); ?>
+			</div>
+			<div class="inactive-theme">
+				<# if ( data.actions.activate ) { #>
+					<a href="{{{ data.actions.activate }}}" class="button button-secondary activate"><?php _e( 'Activate' ); ?></a>
+				<# } #>
+				<a href="{{{ data.actions.customize }}}" class="button button-primary load-customize hide-if-no-customize"><?php _e( 'Live Preview' ); ?></a>
+			</div>
+
+			<# if ( ! data.active && data.actions['delete'] ) { #>
+				<a href="{{{ data.actions['delete'] }}}" class="button button-secondary delete-theme"><?php _e( 'Delete' ); ?></a>
+			<# } #>
+		</div>
+	</div>
+</script>
+
+<?php require( ABSPATH . 'wp-admin/admin-footer.php' );

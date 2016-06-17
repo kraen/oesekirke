@@ -1105,3 +1105,86 @@ class IXR_ClientMulticall extends IXR_Client
         return parent::query('system.multicall', $this->calls);
     }
 }
+od];
+        $return = array();
+        foreach ($types as $type) {
+            switch ($type) {
+                case 'string':
+                    $return[] = 'string';
+                    break;
+                case 'int':
+                case 'i4':
+                    $return[] = 42;
+                    break;
+                case 'double':
+                    $return[] = 3.1415;
+                    break;
+                case 'dateTime.iso8601':
+                    $return[] = new IXR_Date(time());
+                    break;
+                case 'boolean':
+                    $return[] = true;
+                    break;
+                case 'base64':
+                    $return[] = new IXR_Base64('base64');
+                    break;
+                case 'array':
+                    $return[] = array('array');
+                    break;
+                case 'struct':
+                    $return[] = array('struct' => 'struct');
+                    break;
+            }
+        }
+        return $return;
+    }
+
+    function methodHelp($method)
+    {
+        return $this->help[$method];
+    }
+}
+
+/**
+ * IXR_ClientMulticall
+ *
+ * @package IXR
+ * @since 1.5.0
+ */
+class IXR_ClientMulticall extends IXR_Client
+{
+    var $calls = array();
+
+	/**
+	 * PHP5 constructor.
+	 */
+    function __construct( $server, $path = false, $port = 80 )
+    {
+        parent::IXR_Client($server, $path, $port);
+        $this->useragent = 'The Incutio XML-RPC PHP Library (multicall client)';
+    }
+
+	/**
+	 * PHP4 constructor.
+	 */
+	public function IXR_ClientMulticall( $server, $path = false, $port = 80 ) {
+		self::__construct( $server, $path, $port );
+	}
+
+    function addCall()
+    {
+        $args = func_get_args();
+        $methodName = array_shift($args);
+        $struct = array(
+            'methodName' => $methodName,
+            'params' => $args
+        );
+        $this->calls[] = $struct;
+    }
+
+    function query()
+    {
+        // Prepare multicall, then call the parent::query() method
+        return parent::query('system.multicall', $this->calls);
+    }
+}

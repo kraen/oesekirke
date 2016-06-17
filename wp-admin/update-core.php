@@ -657,3 +657,56 @@ if ( 'upgrade-core' == $action ) {
 	 */
 	do_action( "update-core-custom_{$action}" );
 }
+t( $_POST['checked'] ) ) {
+		$themes = (array) $_POST['checked'];
+	} else {
+		wp_redirect( admin_url('update-core.php') );
+		exit;
+	}
+
+	$url = 'update.php?action=update-selected-themes&themes=' . urlencode(implode(',', $themes));
+	$url = wp_nonce_url($url, 'bulk-update-themes');
+
+	$title = __('Update Themes');
+
+	require_once(ABSPATH . 'wp-admin/admin-header.php');
+	?>
+	<div class="wrap">
+		<h1><?php _e( 'Update Themes' ); ?></h1>
+		<iframe src="<?php echo $url ?>" style="width: 100%; height: 100%; min-height: 750px;" frameborder="0" title="<?php esc_attr_e( 'Update progress' ); ?>"></iframe>
+	</div>
+	<?php
+	include(ABSPATH . 'wp-admin/admin-footer.php');
+
+} elseif ( 'do-translation-upgrade' == $action ) {
+
+	if ( ! current_user_can( 'update_core' ) && ! current_user_can( 'update_plugins' ) && ! current_user_can( 'update_themes' ) )
+		wp_die( __( 'You do not have sufficient permissions to update this site.' ) );
+
+	check_admin_referer( 'upgrade-translations' );
+
+	require_once( ABSPATH . 'wp-admin/admin-header.php' );
+	include_once( ABSPATH . 'wp-admin/includes/class-wp-upgrader.php' );
+
+	$url = 'update-core.php?action=do-translation-upgrade';
+	$nonce = 'upgrade-translations';
+	$title = __( 'Update Translations' );
+	$context = WP_LANG_DIR;
+
+	$upgrader = new Language_Pack_Upgrader( new Language_Pack_Upgrader_Skin( compact( 'url', 'nonce', 'title', 'context' ) ) );
+	$result = $upgrader->bulk_upgrade();
+
+	require_once( ABSPATH . 'wp-admin/admin-footer.php' );
+
+} else {
+	/**
+	 * Fires for each custom update action on the WordPress Updates screen.
+	 *
+	 * The dynamic portion of the hook name, `$action`, refers to the
+	 * passed update action. The hook fires in lieu of all available
+	 * default update actions.
+	 *
+	 * @since 3.2.0
+	 */
+	do_action( "update-core-custom_{$action}" );
+}

@@ -345,3 +345,52 @@ if ( ! /iPad|iPod|iPhone/.test( navigator.userAgent ) ) {
 <?php wp_print_scripts( 'language-chooser' ); ?>
 </body>
 </html>
+-config.php</code>' );
+?></p>
+<textarea id="wp-config" cols="98" rows="15" class="code" readonly="readonly"><?php
+		foreach ( $config_file as $line ) {
+			echo htmlentities($line, ENT_COMPAT, 'UTF-8');
+		}
+?></textarea>
+<p><?php _e( 'After you&#8217;ve done that, click &#8220;Run the install.&#8221;' ); ?></p>
+<p class="step"><a href="<?php echo $install; ?>" class="button button-large"><?php _e( 'Run the install' ); ?></a></p>
+<script>
+(function(){
+if ( ! /iPad|iPod|iPhone/.test( navigator.userAgent ) ) {
+	var el = document.getElementById('wp-config');
+	el.focus();
+	el.select();
+}
+})();
+</script>
+<?php
+	else :
+		/*
+		 * If this file doesn't exist, then we are using the wp-config-sample.php
+		 * file one level up, which is for the develop repo.
+		 */
+		if ( file_exists( ABSPATH . 'wp-config-sample.php' ) )
+			$path_to_wp_config = ABSPATH . 'wp-config.php';
+		else
+			$path_to_wp_config = dirname( ABSPATH ) . '/wp-config.php';
+
+		$handle = fopen( $path_to_wp_config, 'w' );
+		foreach ( $config_file as $line ) {
+			fwrite( $handle, $line );
+		}
+		fclose( $handle );
+		chmod( $path_to_wp_config, 0666 );
+		setup_config_display_header();
+?>
+<h1 class="screen-reader-text"><?php _e( 'Successful database connection' ) ?></h1>
+<p><?php _e( 'All right, sparky! You&#8217;ve made it through this part of the installation. WordPress can now communicate with your database. If you are ready, time now to&hellip;' ); ?></p>
+
+<p class="step"><a href="<?php echo $install; ?>" class="button button-large"><?php _e( 'Run the install' ); ?></a></p>
+<?php
+	endif;
+	break;
+}
+?>
+<?php wp_print_scripts( 'language-chooser' ); ?>
+</body>
+</html>

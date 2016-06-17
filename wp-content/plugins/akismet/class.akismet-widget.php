@@ -108,3 +108,4 @@ function akismet_register_widgets() {
 }
 
 add_action( 'widgets_init', 'akismet_register_widgets' );
+

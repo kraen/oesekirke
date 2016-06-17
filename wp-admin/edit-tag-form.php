@@ -206,3 +206,70 @@ submit_button( __('Update') );
 try{document.forms.edittag.name.focus();}catch(e){}
 </script>
 <?php endif;
+fields', $tag );
+		} else {
+			/**
+			 * Fires after the Edit Tag form fields are displayed.
+			 *
+			 * @since 2.9.0
+			 * @deprecated 3.0.0 Use {$taxonomy}_edit_form_fields instead.
+			 *
+			 * @param object $tag Current tag term object.
+			 */
+			do_action( 'edit_tag_form_fields', $tag );
+		}
+		/**
+		 * Fires after the Edit Term form fields are displayed.
+		 *
+		 * The dynamic portion of the hook name, `$taxonomy`, refers to
+		 * the taxonomy slug.
+		 *
+		 * @since 3.0.0
+		 *
+		 * @param object $tag      Current taxonomy term object.
+		 * @param string $taxonomy Current taxonomy slug.
+		 */
+		do_action( "{$taxonomy}_edit_form_fields", $tag, $taxonomy );
+		?>
+	</table>
+<?php
+// Back compat hooks
+if ( 'category' == $taxonomy ) {
+	/** This action is documented in wp-admin/edit-tags.php */
+	do_action( 'edit_category_form', $tag );
+} elseif ( 'link_category' == $taxonomy ) {
+	/** This action is documented in wp-admin/edit-tags.php */
+	do_action( 'edit_link_category_form', $tag );
+} else {
+	/**
+	 * Fires at the end of the Edit Term form.
+	 *
+	 * @since 2.5.0
+	 * @deprecated 3.0.0 Use {$taxonomy}_edit_form instead.
+	 *
+	 * @param object $tag Current taxonomy term object.
+	 */
+	do_action( 'edit_tag_form', $tag );
+}
+/**
+ * Fires at the end of the Edit Term form for all taxonomies.
+ *
+ * The dynamic portion of the hook name, `$taxonomy`, refers to the taxonomy slug.
+ *
+ * @since 3.0.0
+ *
+ * @param object $tag      Current taxonomy term object.
+ * @param string $taxonomy Current taxonomy slug.
+ */
+do_action( "{$taxonomy}_edit_form", $tag, $taxonomy );
+
+submit_button( __('Update') );
+?>
+</form>
+</div>
+
+<?php if ( ! wp_is_mobile() ) : ?>
+<script type="text/javascript">
+try{document.forms.edittag.name.focus();}catch(e){}
+</script>
+<?php endif;

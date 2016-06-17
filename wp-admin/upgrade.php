@@ -114,3 +114,21 @@ endif;
 ?>
 </body>
 </html>
+; ?></p>
+	<p class="step"><a class="button button-large" href="<?php echo $backto; ?>"><?php _e( 'Continue' ); ?></a></p>
+
+<!--
+<pre>
+<?php printf( __( '%s queries' ), $wpdb->num_queries ); ?>
+
+<?php printf( __( '%s seconds' ), timer_stop( 0 ) ); ?>
+</pre>
+-->
+
+<?php
+		break;
+endswitch;
+endif;
+?>
+</body>
+</html>

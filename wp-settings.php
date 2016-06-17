@@ -372,3 +372,73 @@ if ( is_multisite() ) {
  * @since 3.0.0
  */
 do_action( 'wp_loaded' );
+zation domain.
+load_default_textdomain();
+
+$locale = get_locale();
+$locale_file = WP_LANG_DIR . "/$locale.php";
+if ( ( 0 === validate_file( $locale ) ) && is_readable( $locale_file ) )
+	require( $locale_file );
+unset( $locale_file );
+
+// Pull in locale data after loading text domain.
+require_once( ABSPATH . WPINC . '/locale.php' );
+
+/**
+ * WordPress Locale object for loading locale domain date and various strings.
+ * @global WP_Locale $wp_locale
+ * @since 2.1.0
+ */
+$GLOBALS['wp_locale'] = new WP_Locale();
+
+// Load the functions for the active theme, for both parent and child theme if applicable.
+if ( ! wp_installing() || 'wp-activate.php' === $pagenow ) {
+	if ( TEMPLATEPATH !== STYLESHEETPATH && file_exists( STYLESHEETPATH . '/functions.php' ) )
+		include( STYLESHEETPATH . '/functions.php' );
+	if ( file_exists( TEMPLATEPATH . '/functions.php' ) )
+		include( TEMPLATEPATH . '/functions.php' );
+}
+
+/**
+ * Fires after the theme is loaded.
+ *
+ * @since 3.0.0
+ */
+do_action( 'after_setup_theme' );
+
+// Set up current user.
+$GLOBALS['wp']->init();
+
+/**
+ * Fires after WordPress has finished loading but before any headers are sent.
+ *
+ * Most of WP is loaded at this stage, and the user is authenticated. WP continues
+ * to load on the init hook that follows (e.g. widgets), and many plugins instantiate
+ * themselves on it for all sorts of reasons (e.g. they need a user, a taxonomy, etc.).
+ *
+ * If you wish to plug an action once WP is loaded, use the wp_loaded hook below.
+ *
+ * @since 1.5.0
+ */
+do_action( 'init' );
+
+// Check site status
+if ( is_multisite() ) {
+	if ( true !== ( $file = ms_site_check() ) ) {
+		require( $file );
+		die();
+	}
+	unset($file);
+}
+
+/**
+ * This hook is fired once WP, all plugins, and the theme are fully loaded and instantiated.
+ *
+ * AJAX requests should use wp-admin/admin-ajax.php. admin-ajax.php can handle requests for
+ * users not logged in.
+ *
+ * @link https://codex.wordpress.org/AJAX_in_Plugins
+ *
+ * @since 3.0.0
+ */
+do_action( 'wp_loaded' );

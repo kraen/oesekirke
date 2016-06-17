@@ -146,3 +146,31 @@ class M_NextGen_Basic_Tagcloud extends C_Base_Module
 }
 
 new M_NextGen_Basic_Tagcloud();
+r.php',
+            'A_Nextgen_Basic_Tagcloud_Urls' => 'adapter.nextgen_basic_tagcloud_urls.php',
+            'C_Taxonomy_Controller' => 'class.taxonomy_controller.php'
+        );
+    }
+}
+
+class C_NextGen_Basic_Tagcloud_Installer extends C_Gallery_Display_Installer
+{
+	/**
+	 * Installs the display type for NextGEN Basic Tagcloud
+	 */
+	function install()
+	{
+		$this->install_display_type(
+			NGG_BASIC_TAGCLOUD, array(
+				'title'					=>	__('NextGEN Basic TagCloud', 'nggallery'),
+				'entity_types'			=>	array('image'),
+				'preview_image_relpath'	=>	'photocrati-nextgen_basic_tagcloud#preview.gif',
+				'default_source'		=>	'tags',
+				'view_order' => NGG_DISPLAY_PRIORITY_BASE + 100
+			)
+
+		);
+	}
+}
+
+new M_NextGen_Basic_Tagcloud();

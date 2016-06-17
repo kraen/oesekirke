@@ -429,3 +429,31 @@ class WP_Theme_Install_List_Table extends WP_Themes_List_Table {
 		return $status;
 	}
 }
+nt::_js_vars( compact( 'tab', 'type' ) );
+	}
+
+	/**
+	 * Check to see if the theme is already installed.
+	 *
+	 * @since 3.4.0
+	 * @access private
+	 *
+	 * @param object $theme - A WordPress.org Theme API object.
+	 * @return string Theme status.
+	 */
+	private function _get_theme_status( $theme ) {
+		$status = 'install';
+
+		$installed_theme = wp_get_theme( $theme->slug );
+		if ( $installed_theme->exists() ) {
+			if ( version_compare( $installed_theme->get('Version'), $theme->version, '=' ) )
+				$status = 'latest_installed';
+			elseif ( version_compare( $installed_theme->get('Version'), $theme->version, '>' ) )
+				$status = 'newer_installed';
+			else
+				$status = 'update_available';
+		}
+
+		return $status;
+	}
+}

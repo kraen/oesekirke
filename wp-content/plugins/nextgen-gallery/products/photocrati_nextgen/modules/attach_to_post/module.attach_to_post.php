@@ -399,3 +399,32 @@ class M_Attach_To_Post extends C_Base_Module
 }
 
 new M_Attach_To_Post();
+		case 'gallery_preview_url':
+				// TODO: This url will be used in 2.0.69
+				if (FALSE) $retval = admin_url('/?'.NGG_ATTACH_TO_POST_SLUG.'='.NGG_ATTACH_TO_POST_SLUG.'/preview');
+				else $retval = $this->get_router()->get_url('/'.NGG_ATTACH_TO_POST_SLUG.'/preview', FALSE);
+				break;
+			case 'attach_to_post_display_tab_js_url':
+				$retval = admin_url('/?'.NGG_ATTACH_TO_POST_SLUG.'=js');
+				break;
+		}
+
+		if (is_ssl() && strpos($retval, 'https') === FALSE) $retval = str_replace('http', 'https', $retval);
+
+		return $retval;
+	}
+}
+
+class C_Attach_To_Post_Installer
+{
+	function install()
+	{
+		// Delete cached values. Needed for 2.0.7 and less
+		$settings = C_NextGen_Settings::get_instance();
+		$settings->delete('attach_to_post_url');
+		$settings->delete('gallery_preview_url');
+		$settings->delete('attach_to_post_display_tab_js_url');
+	}
+}
+
+new M_Attach_To_Post();

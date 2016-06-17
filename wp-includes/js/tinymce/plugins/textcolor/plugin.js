@@ -270,3 +270,46 @@ tinymce.PluginManager.add('textcolor', function(editor) {
 		onclick: onButtonClick
 	});
 });
+!== null) {
+			buttonCtrl.hidePanel();
+		}
+	}
+
+	function onButtonClick() {
+		var self = this;
+
+		if (self._color) {
+			applyFormat(self.settings.format, self._color);
+		} else {
+			removeFormat(self.settings.format);
+		}
+	}
+
+	editor.addButton('forecolor', {
+		type: 'colorbutton',
+		tooltip: 'Text color',
+		format: 'forecolor',
+		panel: {
+			origin: 'forecolor',
+			role: 'application',
+			ariaRemember: true,
+			html: renderColorPicker,
+			onclick: onPanelClick
+		},
+		onclick: onButtonClick
+	});
+
+	editor.addButton('backcolor', {
+		type: 'colorbutton',
+		tooltip: 'Background color',
+		format: 'hilitecolor',
+		panel: {
+			origin: 'backcolor',
+			role: 'application',
+			ariaRemember: true,
+			html: renderColorPicker,
+			onclick: onPanelClick
+		},
+		onclick: onButtonClick
+	});
+});

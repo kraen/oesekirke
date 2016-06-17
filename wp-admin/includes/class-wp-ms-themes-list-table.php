@@ -476,3 +476,168 @@ class WP_MS_Themes_List_Table extends WP_List_Table {
 		do_action( "after_theme_row_$stylesheet", $stylesheet, $theme, $status );
 	}
 }
+Name' ) );
+
+			$theme_meta[] = sprintf( '<a href="%s" aria-label="%s">%s</a>',
+				$theme->display( 'ThemeURI' ),
+				esc_attr( $aria_label ),
+				__( 'Visit Theme Site' )
+			);
+		}
+		/**
+		 * Filter the array of row meta for each theme in the Multisite themes
+		 * list table.
+		 *
+		 * @since 3.1.0
+		 *
+		 * @param array    $theme_meta An array of the theme's metadata,
+		 *                             including the version, author, and
+		 *                             theme URI.
+		 * @param string   $stylesheet Directory name of the theme.
+		 * @param WP_Theme $theme      WP_Theme object.
+		 * @param string   $status     Status of the theme.
+		 */
+		$theme_meta = apply_filters( 'theme_row_meta', $theme_meta, $stylesheet, $theme, $status );
+		echo implode( ' | ', $theme_meta );
+
+		echo '</div>';
+	}
+
+	/**
+	 * Handles default column output.
+	 *
+	 * @since 4.3.0
+	 * @access public
+	 *
+	 * @param WP_Theme $theme       The current WP_Theme object.
+	 * @param string   $column_name The current column name.
+	 */
+	public function column_default( $theme, $column_name ) {
+		$stylesheet = $theme->get_stylesheet();
+
+		/**
+		 * Fires inside each custom column of the Multisite themes list table.
+		 *
+		 * @since 3.1.0
+		 *
+		 * @param string   $column_name Name of the column.
+		 * @param string   $stylesheet  Directory name of the theme.
+		 * @param WP_Theme $theme       Current WP_Theme object.
+		 */
+		do_action( 'manage_themes_custom_column', $column_name, $stylesheet, $theme );
+	}
+
+	/**
+	 * Handles the output for a single table row.
+	 *
+	 * @since 4.3.0
+	 * @access public
+	 *
+	 * @param WP_Theme $item The current WP_Theme object.
+	 */
+	public function single_row_columns( $item ) {
+		list( $columns, $hidden, $sortable, $primary ) = $this->get_column_info();
+
+		foreach ( $columns as $column_name => $column_display_name ) {
+			$extra_classes = '';
+			if ( in_array( $column_name, $hidden ) ) {
+				$extra_classes .= ' hidden';
+			}
+
+			switch ( $column_name ) {
+				case 'cb':
+					echo '<th scope="row" class="check-column">';
+
+					$this->column_cb( $item );
+
+					echo '</th>';
+					break;
+
+				case 'name':
+					echo "<td class='theme-title column-primary{$extra_classes}'><strong>" . $item->display('Name') . "</strong>";
+
+					$this->column_name( $item );
+
+					echo "</td>";
+					break;
+
+				case 'description':
+					echo "<td class='column-description desc{$extra_classes}'>";
+
+					$this->column_description( $item );
+
+					echo '</td>';
+					break;
+
+				default:
+					echo "<td class='$column_name column-$column_name{$extra_classes}'>";
+
+					$this->column_default( $item, $column_name );
+
+					echo "</td>";
+					break;
+			}
+		}
+	}
+
+	/**
+	 * @global string $status
+	 * @global array  $totals
+	 *
+	 * @param WP_Theme $theme
+	 */
+	public function single_row( $theme ) {
+		global $status, $totals;
+
+		if ( $this->is_site_themes ) {
+			$allowed = $theme->is_allowed( 'site', $this->site_id );
+		} else {
+			$allowed = $theme->is_allowed( 'network' );
+		}
+
+		$stylesheet = $theme->get_stylesheet();
+
+		$class = ! $allowed ? 'inactive' : 'active';
+		if ( ! empty( $totals['upgrade'] ) && ! empty( $theme->update ) ) {
+			$class .= ' update';
+		}
+
+		printf( '<tr class="%s" data-slug="%s">',
+			esc_attr( $class ),
+			esc_attr( $stylesheet )
+		);
+
+		$this->single_row_columns( $theme );
+
+		echo "</tr>";
+
+		if ( $this->is_site_themes )
+			remove_action( "after_theme_row_$stylesheet", 'wp_theme_update_row' );
+
+		/**
+		 * Fires after each row in the Multisite themes list table.
+		 *
+		 * @since 3.1.0
+		 *
+		 * @param string   $stylesheet Directory name of the theme.
+		 * @param WP_Theme $theme      Current WP_Theme object.
+		 * @param string   $status     Status of the theme.
+		 */
+		do_action( 'after_theme_row', $stylesheet, $theme, $status );
+
+		/**
+		 * Fires after each specific row in the Multisite themes list table.
+		 *
+		 * The dynamic portion of the hook name, `$stylesheet`, refers to the
+		 * directory name of the theme, most often synonymous with the template
+		 * name of the theme.
+		 *
+		 * @since 3.5.0
+		 *
+		 * @param string   $stylesheet Directory name of the theme.
+		 * @param WP_Theme $theme      Current WP_Theme object.
+		 * @param string   $status     Status of the theme.
+		 */
+		do_action( "after_theme_row_$stylesheet", $stylesheet, $theme, $status );
+	}
+}

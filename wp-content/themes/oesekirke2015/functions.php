@@ -113,3 +113,40 @@ add_shortcode('catlist', 'list_category');
         }
 
         ?>
+
+
+  if(isset($class)) :
+    $classy = " class=\"$class\"";
+  endif;
+
+  if (isset($src)) :
+
+    $billede = "<div id=\"billede\"$classy>";
+
+    if(!strstr($src,'http://')) :
+      $billede .= "<a href=\"" . site_url() . "/images/$src\">";
+      $billede .= "<img src=\"" . site_url() . "/images/$src\">";
+      $billede .= "</a>";
+      else :
+        $billede .= "<a href=\"$src\">";
+        $billede .= "<img src=\"$src\">";
+        $billede .= "</a>";
+      endif;
+
+      if (isset($tekst)) :
+        $billede .= "<div class=\"caption\">";
+        $billede .= $tekst;
+        $billede .= "</div>";
+      endif;
+
+      $billede .= "</div>";
+
+    endif;
+
+    return $billede;
+
+  }
+
+add_shortcode('billede', 'picture');
+
+?>

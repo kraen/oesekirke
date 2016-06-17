@@ -233,3 +233,9 @@ class Text_Diff_Renderer {
     }
 
 }
+ function _changed($orig, $final)
+    {
+        return $this->_deleted($orig) . "---\n" . $this->_added($final);
+    }
+
+}

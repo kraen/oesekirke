@@ -412,3 +412,6 @@ function clean_bookmark_cache( $bookmark_id ) {
 	wp_cache_delete( 'get_bookmarks', 'bookmark' );
 	clean_object_term_cache( $bookmark_id, 'link');
 }
+kmarks', 'bookmark' );
+	clean_object_term_cache( $bookmark_id, 'link');
+}

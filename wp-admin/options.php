@@ -275,3 +275,18 @@ foreach ( (array) $options as $option ) :
 
 <?php
 include( ABSPATH . 'wp-admin/admin-footer.php' );
+ext" name="<?php echo $name ?>" id="<?php echo $name ?>" value="<?php echo esc_attr( $value ) ?>"<?php disabled( $disabled, true ) ?> />
+	<?php endif ?></td>
+</tr>
+<?php endforeach; ?>
+  </table>
+
+<input type="hidden" name="page_options" value="<?php echo esc_attr( implode( ',', $options_to_update ) ); ?>" />
+
+<?php submit_button( __( 'Save Changes' ), 'primary', 'Update' ); ?>
+
+  </form>
+</div>
+
+<?php
+include( ABSPATH . 'wp-admin/admin-footer.php' );

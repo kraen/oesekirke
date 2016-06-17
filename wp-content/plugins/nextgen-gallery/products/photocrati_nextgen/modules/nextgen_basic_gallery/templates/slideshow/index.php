@@ -91,3 +91,8 @@
 	});
 </script>
 <?php $this->end_element(); ?>
+al) * 1000); ?>
+		});
+	});
+</script>
+<?php $this->end_element(); ?>

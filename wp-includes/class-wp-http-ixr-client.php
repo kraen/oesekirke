@@ -106,3 +106,17 @@ class WP_HTTP_IXR_Client extends IXR_Client {
 		return true;
 	}
 }
+Error(-32700, 'parse error. not well formed');
+			return false;
+		}
+
+		// Is the message a fault?
+		if ( $this->message->messageType == 'fault' ) {
+			$this->error = new IXR_Error($this->message->faultCode, $this->message->faultString);
+			return false;
+		}
+
+		// Message must be OK
+		return true;
+	}
+}

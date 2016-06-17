@@ -265,3 +265,26 @@
             });
     })(jQuery);
 </script>
+t(events)
+									});
+								}
+							}
+                        },
+
+                        Error: function(up, args){
+							if (typeof(up.error_msg) == 'undefined') {
+								up.error_msg = args.msg;
+							}{}
+                        }
+                    };
+                    $("#uploader").pluploadQueue(plupload_options);
+                    var uploader = $('#uploader').pluploadQueue();
+                    uploader.refresh();
+                    window.Frame_Event_Publisher.broadcast();
+
+                };
+
+                window.init_plupload();
+            });
+    })(jQuery);
+</script>

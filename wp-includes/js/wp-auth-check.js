@@ -110,3 +110,15 @@
 	});
 
 }(jQuery));
+() > next ) {
+			data['wp-auth-check'] = true;
+		}
+	}).ready( function() {
+		schedule();
+		wrap = $('#wp-auth-check-wrap');
+		wrap.find('.wp-auth-check-close').on( 'click', function() {
+			hide();
+		});
+	});
+
+}(jQuery));

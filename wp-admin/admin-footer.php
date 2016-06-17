@@ -97,3 +97,6 @@ if ( function_exists('get_site_option') ) {
 <script type="text/javascript">if(typeof wpOnload=='function')wpOnload();</script>
 </body>
 </html>
+=='function')wpOnload();</script>
+</body>
+</html>

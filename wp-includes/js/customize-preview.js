@@ -159,3 +159,88 @@
 	});
 
 })( wp, jQuery );
+
+				setting._dirty = false;
+			} );
+		} );
+
+		api.preview.bind( 'nonce-refresh', function( nonce ) {
+			$.extend( api.settings.nonce, nonce );
+		} );
+
+		/*
+		 * Send a message to the parent customize frame with a list of which
+		 * containers and controls are active.
+		 */
+		api.preview.send( 'ready', {
+			activePanels: api.settings.activePanels,
+			activeSections: api.settings.activeSections,
+			activeControls: api.settings.activeControls
+		} );
+
+		// Display a loading indicator when preview is reloading, and remove on failure.
+		api.preview.bind( 'loading-initiated', function () {
+			$( 'body' ).addClass( 'wp-customizer-unloading' );
+		});
+		api.preview.bind( 'loading-failed', function () {
+			$( 'body' ).removeClass( 'wp-customizer-unloading' );
+		});
+
+		/* Custom Backgrounds */
+		bg = $.map(['color', 'image', 'position_x', 'repeat', 'attachment'], function( prop ) {
+			return 'background_' + prop;
+		});
+
+		api.when.apply( api, bg ).done( function( color, image, position_x, repeat, attachment ) {
+			var body = $(document.body),
+				head = $('head'),
+				style = $('#custom-background-css'),
+				update;
+
+			update = function() {
+				var css = '';
+
+				// The body will support custom backgrounds if either
+				// the color or image are set.
+				//
+				// See get_body_class() in /wp-includes/post-template.php
+				body.toggleClass( 'custom-background', !! ( color() || image() ) );
+
+				if ( color() )
+					css += 'background-color: ' + color() + ';';
+
+				if ( image() ) {
+					css += 'background-image: url("' + image() + '");';
+					css += 'background-position: top ' + position_x() + ';';
+					css += 'background-repeat: ' + repeat() + ';';
+					css += 'background-attachment: ' + attachment() + ';';
+				}
+
+				// Refresh the stylesheet by removing and recreating it.
+				style.remove();
+				style = $('<style type="text/css" id="custom-background-css">body.custom-background { ' + css + ' }</style>').appendTo( head );
+			};
+
+			$.each( arguments, function() {
+				this.bind( update );
+			});
+		});
+
+		/**
+		 * Custom Logo
+		 *
+		 * Toggle the wp-custom-logo body class when a logo is added or removed.
+		 *
+		 * @since 4.5.0
+		 */
+		api( 'custom_logo', function( setting ) {
+			$( 'body' ).toggleClass( 'wp-custom-logo', !! setting.get() );
+			setting.bind( function( attachmentId ) {
+				$( 'body' ).toggleClass( 'wp-custom-logo', !! attachmentId );
+			} );
+		} );
+
+		api.trigger( 'preview-ready' );
+	});
+
+})( wp, jQuery );

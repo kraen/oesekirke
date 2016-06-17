@@ -2243,4 +2243,15 @@ echo 'QuicktimeParseNikonNCTG()::unknown $data_size_type: '.$data_size_type.'<br
 		return substr($pascalstring, 1);
 	}
 
+} - 1, 1) === "\x00") {
+			return substr($nullterminatedstring, 0, strlen($nullterminatedstring) - 1);
+		}
+		return $nullterminatedstring;
+	}
+
+	public function Pascal2String($pascalstring) {
+		// Pascal strings have 1 unsigned byte at the beginning saying how many chars (1-255) are in the string
+		return substr($pascalstring, 1);
+	}
+
 }

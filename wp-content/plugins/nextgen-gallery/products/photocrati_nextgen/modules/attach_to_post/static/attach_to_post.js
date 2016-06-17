@@ -120,3 +120,8 @@ jQuery(function($){
 		opacity: 1.0
 	});
 });
+isibility: 'visible'
+	}).animate({
+		opacity: 1.0
+	});
+});

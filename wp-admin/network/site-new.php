@@ -155,3 +155,67 @@ if ( ! empty( $messages ) ) {
 </div>
 <?php
 require( ABSPATH . 'wp-admin/admin-footer.php' );
+ '', $current_site->domain ); ?></span>
+			<?php } else {
+				echo $current_site->domain . $current_site->path ?><input name="blog[domain]" type="text" class="regular-text" id="site-address" aria-describedby="site-address-desc"  autocapitalize="none" autocorrect="off" />
+			<?php }
+			echo '<p class="description" id="site-address-desc">' . __( 'Only lowercase letters (a-z), numbers, and hyphens are allowed.' ) . '</p>';
+			?>
+			</td>
+		</tr>
+		<tr class="form-field form-required">
+			<th scope="row"><label for="site-title"><?php _e( 'Site Title' ) ?></label></th>
+			<td><input name="blog[title]" type="text" class="regular-text" id="site-title" /></td>
+		</tr>
+		<?php
+		$languages    = get_available_languages();
+		$translations = wp_get_available_translations();
+		if ( ! empty( $languages ) || ! empty( $translations ) ) :
+			?>
+			<tr class="form-field form-required">
+				<th scope="row"><label for="site-language"><?php _e( 'Site Language' ); ?></label></th>
+				<td>
+					<?php
+					// Network default.
+					$lang = get_site_option( 'WPLANG' );
+
+					// Use English if the default isn't available.
+					if ( ! in_array( $lang, $languages ) ) {
+						$lang = '';
+					}
+
+					wp_dropdown_languages( array(
+						'name'                        => 'WPLANG',
+						'id'                          => 'site-language',
+						'selected'                    => $lang,
+						'languages'                   => $languages,
+						'translations'                => $translations,
+						'show_available_translations' => wp_can_install_language_pack(),
+					) );
+					?>
+				</td>
+			</tr>
+		<?php endif; // Languages. ?>
+		<tr class="form-field form-required">
+			<th scope="row"><label for="admin-email"><?php _e( 'Admin Email' ) ?></label></th>
+			<td><input name="blog[email]" type="email" class="regular-text wp-suggest-user" id="admin-email" data-autocomplete-type="search" data-autocomplete-field="user_email" /></td>
+		</tr>
+		<tr class="form-field">
+			<td colspan="2"><?php _e( 'A new user will be created if the above email address is not in the database.' ) ?><br /><?php _e( 'The username and password will be mailed to this email address.' ) ?></td>
+		</tr>
+	</table>
+
+	<?php
+	/**
+	 * Fires at the end of the new site form in network admin.
+	 *
+	 * @since 4.5.0
+	 */
+	do_action( 'network_site_new_form' );
+
+	submit_button( __( 'Add Site' ), 'primary', 'add-site' );
+	?>
+	</form>
+</div>
+<?php
+require( ABSPATH . 'wp-admin/admin-footer.php' );

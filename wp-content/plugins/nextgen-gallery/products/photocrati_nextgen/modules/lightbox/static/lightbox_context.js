@@ -25,3 +25,8 @@ function nextgen_lightbox_filter_selector($, selector)
 		
 		return selector;
 }
+tor.not('.use_imagebrowser_effect');
+		}
+		
+		return selector;
+}

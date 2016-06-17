@@ -1454,3 +1454,26 @@ window.wp = window.wp || {};
 	});
 
 }(jQuery));
+ious ) {
+			if ( previous ) {
+				previous.trigger( 'selection:unsingle', previous, this );
+
+				// If the model was already removed, trigger the collection
+				// event manually.
+				if ( ! this.get( previous.cid ) ) {
+					this.trigger( 'selection:unsingle', previous, this );
+				}
+			}
+			if ( this._single ) {
+				this._single.trigger( 'selection:single', this._single, this );
+			}
+		}
+
+		// Return the single model, or the last model as a fallback.
+		return this._single;
+	}
+});
+
+module.exports = Selection;
+
+},{}]},{},[1]);

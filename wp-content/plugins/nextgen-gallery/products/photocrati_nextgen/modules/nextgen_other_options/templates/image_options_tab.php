@@ -256,3 +256,9 @@
 		</tr>
 	</tbody>
 </table>
+ding]"
+							 value="<?php echo esc_attr($related_images_heading)?>"/>
+			</td>
+		</tr>
+	</tbody>
+</table>

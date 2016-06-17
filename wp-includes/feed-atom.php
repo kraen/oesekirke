@@ -85,3 +85,7 @@ do_action( 'rss_tag_pre', 'atom' );
 	</entry>
 	<?php endwhile ; ?>
 </feed>
+dif; ?>
+	</entry>
+	<?php endwhile ; ?>
+</feed>

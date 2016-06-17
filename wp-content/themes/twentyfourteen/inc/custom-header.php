@@ -145,3 +145,4 @@ function twentyfourteen_admin_header_image() {
 <?php
 }
 endif; // twentyfourteen_admin_header_image
+ourteen_admin_header_image

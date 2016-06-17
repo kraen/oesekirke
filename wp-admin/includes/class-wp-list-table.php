@@ -1101,3 +1101,368 @@ class WP_List_Table {
 		printf( "<script type='text/javascript'>list_args = %s;</script>\n", wp_json_encode( $args ) );
 	}
 }
+( $data[1] ) )
+				$data[1] = false;
+
+			$sortable[$id] = $data;
+		}
+
+		$primary = $this->get_primary_column_name();
+		$this->_column_headers = array( $columns, $hidden, $sortable, $primary );
+
+		return $this->_column_headers;
+	}
+
+	/**
+	 * Return number of visible columns
+	 *
+	 * @since 3.1.0
+	 * @access public
+	 *
+	 * @return int
+	 */
+	public function get_column_count() {
+		list ( $columns, $hidden ) = $this->get_column_info();
+		$hidden = array_intersect( array_keys( $columns ), array_filter( $hidden ) );
+		return count( $columns ) - count( $hidden );
+	}
+
+	/**
+	 * Print column headers, accounting for hidden and sortable columns.
+	 *
+	 * @since 3.1.0
+	 * @access public
+	 *
+	 * @staticvar int $cb_counter
+	 *
+	 * @param bool $with_id Whether to set the id attribute or not
+	 */
+	public function print_column_headers( $with_id = true ) {
+		list( $columns, $hidden, $sortable, $primary ) = $this->get_column_info();
+
+		$current_url = set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
+		$current_url = remove_query_arg( 'paged', $current_url );
+
+		if ( isset( $_GET['orderby'] ) ) {
+			$current_orderby = $_GET['orderby'];
+		} else {
+			$current_orderby = '';
+		}
+
+		if ( isset( $_GET['order'] ) && 'desc' === $_GET['order'] ) {
+			$current_order = 'desc';
+		} else {
+			$current_order = 'asc';
+		}
+
+		if ( ! empty( $columns['cb'] ) ) {
+			static $cb_counter = 1;
+			$columns['cb'] = '<label class="screen-reader-text" for="cb-select-all-' . $cb_counter . '">' . __( 'Select All' ) . '</label>'
+				. '<input id="cb-select-all-' . $cb_counter . '" type="checkbox" />';
+			$cb_counter++;
+		}
+
+		foreach ( $columns as $column_key => $column_display_name ) {
+			$class = array( 'manage-column', "column-$column_key" );
+
+			if ( in_array( $column_key, $hidden ) ) {
+				$class[] = 'hidden';
+			}
+
+			if ( 'cb' === $column_key )
+				$class[] = 'check-column';
+			elseif ( in_array( $column_key, array( 'posts', 'comments', 'links' ) ) )
+				$class[] = 'num';
+
+			if ( $column_key === $primary ) {
+				$class[] = 'column-primary';
+			}
+
+			if ( isset( $sortable[$column_key] ) ) {
+				list( $orderby, $desc_first ) = $sortable[$column_key];
+
+				if ( $current_orderby === $orderby ) {
+					$order = 'asc' === $current_order ? 'desc' : 'asc';
+					$class[] = 'sorted';
+					$class[] = $current_order;
+				} else {
+					$order = $desc_first ? 'desc' : 'asc';
+					$class[] = 'sortable';
+					$class[] = $desc_first ? 'asc' : 'desc';
+				}
+
+				$column_display_name = '<a href="' . esc_url( add_query_arg( compact( 'orderby', 'order' ), $current_url ) ) . '"><span>' . $column_display_name . '</span><span class="sorting-indicator"></span></a>';
+			}
+
+			$tag = ( 'cb' === $column_key ) ? 'td' : 'th';
+			$scope = ( 'th' === $tag ) ? 'scope="col"' : '';
+			$id = $with_id ? "id='$column_key'" : '';
+
+			if ( !empty( $class ) )
+				$class = "class='" . join( ' ', $class ) . "'";
+
+			echo "<$tag $scope $id $class>$column_display_name</$tag>";
+		}
+	}
+
+	/**
+	 * Display the table
+	 *
+	 * @since 3.1.0
+	 * @access public
+	 */
+	public function display() {
+		$singular = $this->_args['singular'];
+
+		$this->display_tablenav( 'top' );
+
+		$this->screen->render_screen_reader_content( 'heading_list' );
+?>
+<table class="wp-list-table <?php echo implode( ' ', $this->get_table_classes() ); ?>">
+	<thead>
+	<tr>
+		<?php $this->print_column_headers(); ?>
+	</tr>
+	</thead>
+
+	<tbody id="the-list"<?php
+		if ( $singular ) {
+			echo " data-wp-lists='list:$singular'";
+		} ?>>
+		<?php $this->display_rows_or_placeholder(); ?>
+	</tbody>
+
+	<tfoot>
+	<tr>
+		<?php $this->print_column_headers( false ); ?>
+	</tr>
+	</tfoot>
+
+</table>
+<?php
+		$this->display_tablenav( 'bottom' );
+	}
+
+	/**
+	 * Get a list of CSS classes for the WP_List_Table table tag.
+	 *
+	 * @since 3.1.0
+	 * @access protected
+	 *
+	 * @return array List of CSS classes for the table tag.
+	 */
+	protected function get_table_classes() {
+		return array( 'widefat', 'fixed', 'striped', $this->_args['plural'] );
+	}
+
+	/**
+	 * Generate the table navigation above or below the table
+	 *
+	 * @since 3.1.0
+	 * @access protected
+	 * @param string $which
+	 */
+	protected function display_tablenav( $which ) {
+		if ( 'top' === $which ) {
+			wp_nonce_field( 'bulk-' . $this->_args['plural'] );
+		}
+		?>
+	<div class="tablenav <?php echo esc_attr( $which ); ?>">
+
+		<?php if ( $this->has_items() ): ?>
+		<div class="alignleft actions bulkactions">
+			<?php $this->bulk_actions( $which ); ?>
+		</div>
+		<?php endif;
+		$this->extra_tablenav( $which );
+		$this->pagination( $which );
+?>
+
+		<br class="clear" />
+	</div>
+<?php
+	}
+
+	/**
+	 * Extra controls to be displayed between bulk actions and pagination
+	 *
+	 * @since 3.1.0
+	 * @access protected
+	 *
+	 * @param string $which
+	 */
+	protected function extra_tablenav( $which ) {}
+
+	/**
+	 * Generate the tbody element for the list table.
+	 *
+	 * @since 3.1.0
+	 * @access public
+	 */
+	public function display_rows_or_placeholder() {
+		if ( $this->has_items() ) {
+			$this->display_rows();
+		} else {
+			echo '<tr class="no-items"><td class="colspanchange" colspan="' . $this->get_column_count() . '">';
+			$this->no_items();
+			echo '</td></tr>';
+		}
+	}
+
+	/**
+	 * Generate the table rows
+	 *
+	 * @since 3.1.0
+	 * @access public
+	 */
+	public function display_rows() {
+		foreach ( $this->items as $item )
+			$this->single_row( $item );
+	}
+
+	/**
+	 * Generates content for a single row of the table
+	 *
+	 * @since 3.1.0
+	 * @access public
+	 *
+	 * @param object $item The current item
+	 */
+	public function single_row( $item ) {
+		echo '<tr>';
+		$this->single_row_columns( $item );
+		echo '</tr>';
+	}
+
+	/**
+	 *
+	 * @param object $item
+	 * @param string $column_name
+	 */
+	protected function column_default( $item, $column_name ) {}
+
+	/**
+	 *
+	 * @param object $item
+	 */
+	protected function column_cb( $item ) {}
+
+	/**
+	 * Generates the columns for a single row of the table
+	 *
+	 * @since 3.1.0
+	 * @access protected
+	 *
+	 * @param object $item The current item
+	 */
+	protected function single_row_columns( $item ) {
+		list( $columns, $hidden, $sortable, $primary ) = $this->get_column_info();
+
+		foreach ( $columns as $column_name => $column_display_name ) {
+			$classes = "$column_name column-$column_name";
+			if ( $primary === $column_name ) {
+				$classes .= ' has-row-actions column-primary';
+			}
+
+			if ( in_array( $column_name, $hidden ) ) {
+				$classes .= ' hidden';
+			}
+
+			// Comments column uses HTML in the display name with screen reader text.
+			// Instead of using esc_attr(), we strip tags to get closer to a user-friendly string.
+			$data = 'data-colname="' . wp_strip_all_tags( $column_display_name ) . '"';
+
+			$attributes = "class='$classes' $data";
+
+			if ( 'cb' === $column_name ) {
+				echo '<th scope="row" class="check-column">';
+				echo $this->column_cb( $item );
+				echo '</th>';
+			} elseif ( method_exists( $this, '_column_' . $column_name ) ) {
+				echo call_user_func(
+					array( $this, '_column_' . $column_name ),
+					$item,
+					$classes,
+					$data,
+					$primary
+				);
+			} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
+				echo "<td $attributes>";
+				echo call_user_func( array( $this, 'column_' . $column_name ), $item );
+				echo $this->handle_row_actions( $item, $column_name, $primary );
+				echo "</td>";
+			} else {
+				echo "<td $attributes>";
+				echo $this->column_default( $item, $column_name );
+				echo $this->handle_row_actions( $item, $column_name, $primary );
+				echo "</td>";
+			}
+		}
+	}
+
+	/**
+	 * Generates and display row actions links for the list table.
+	 *
+	 * @since 4.3.0
+	 * @access protected
+	 *
+	 * @param object $item        The item being acted upon.
+	 * @param string $column_name Current column name.
+	 * @param string $primary     Primary column name.
+	 * @return string The row actions HTML, or an empty string if the current column is the primary column.
+	 */
+	protected function handle_row_actions( $item, $column_name, $primary ) {
+		return $column_name === $primary ? '<button type="button" class="toggle-row"><span class="screen-reader-text">' . __( 'Show more details' ) . '</span></button>' : '';
+ 	}
+
+	/**
+	 * Handle an incoming ajax request (called from admin-ajax.php)
+	 *
+	 * @since 3.1.0
+	 * @access public
+	 */
+	public function ajax_response() {
+		$this->prepare_items();
+
+		ob_start();
+		if ( ! empty( $_REQUEST['no_placeholder'] ) ) {
+			$this->display_rows();
+		} else {
+			$this->display_rows_or_placeholder();
+		}
+
+		$rows = ob_get_clean();
+
+		$response = array( 'rows' => $rows );
+
+		if ( isset( $this->_pagination_args['total_items'] ) ) {
+			$response['total_items_i18n'] = sprintf(
+				_n( '%s item', '%s items', $this->_pagination_args['total_items'] ),
+				number_format_i18n( $this->_pagination_args['total_items'] )
+			);
+		}
+		if ( isset( $this->_pagination_args['total_pages'] ) ) {
+			$response['total_pages'] = $this->_pagination_args['total_pages'];
+			$response['total_pages_i18n'] = number_format_i18n( $this->_pagination_args['total_pages'] );
+		}
+
+		die( wp_json_encode( $response ) );
+	}
+
+	/**
+	 * Send required variables to JavaScript land
+	 *
+	 * @access public
+	 */
+	public function _js_vars() {
+		$args = array(
+			'class'  => get_class( $this ),
+			'screen' => array(
+				'id'   => $this->screen->id,
+				'base' => $this->screen->base,
+			)
+		);
+
+		printf( "<script type='text/javascript'>list_args = %s;</script>\n", wp_json_encode( $args ) );
+	}
+}

@@ -73,3 +73,28 @@
 	}
 
 })(jQuery);
+iner.addClass( 'opening' );
+
+		if ( section.hasClass( 'open' ) ) {
+			section.toggleClass( 'open' );
+			content.toggle( true ).slideToggle( 150 );
+		} else {
+			siblingsToggleControl.attr( 'aria-expanded', 'false' );
+			siblings.removeClass( 'open' );
+			siblings.find( '.accordion-section-content' ).show().slideUp( 150 );
+			content.toggle( false ).slideToggle( 150 );
+			section.toggleClass( 'open' );
+		}
+
+		// We have to wait for the animations to finish
+		setTimeout(function(){
+		    container.removeClass( 'opening' );
+		}, 150);
+
+		// If there's an element with an aria-expanded attribute, assume it's a toggle control and toggle the aria-expanded value.
+		if ( sectionToggleControl ) {
+			sectionToggleControl.attr( 'aria-expanded', String( sectionToggleControl.attr( 'aria-expanded' ) === 'false' ) );
+		}
+	}
+
+})(jQuery);

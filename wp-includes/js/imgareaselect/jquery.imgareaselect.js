@@ -1203,3 +1203,38 @@ $.fn.imgAreaSelect = function (options) {
 };
 
 })(jQuery);
+/* Yes there is -- is it supposed to be removed? */
+            if (options.remove) {
+                /* Remove the plugin */
+                $(this).data('imgAreaSelect').remove();
+                $(this).removeData('imgAreaSelect');
+            }
+            else
+                /* Reset options */
+                $(this).data('imgAreaSelect').setOptions(options);
+        }
+        else if (!options.remove) {
+            /* No exising instance -- create a new one */
+
+            /*
+             * If neither the "enable" nor the "disable" option is present, add
+             * "enable" as the default
+             */
+            if (options.enable === undefined && options.disable === undefined)
+                options.enable = true;
+
+            $(this).data('imgAreaSelect', new $.imgAreaSelect(this, options));
+        }
+    });
+
+    if (options.instance)
+        /*
+         * Return the imgAreaSelect instance bound to the first element in the
+         * set
+         */
+        return $(this).data('imgAreaSelect');
+
+    return this;
+};
+
+})(jQuery);

@@ -300,3 +300,22 @@ function get_cli_args( $param, $required = false ) {
 
 	return $return;
 }
+[$i];
+		}
+	}
+
+	// Check array for specified param
+	if ( isset( $out[$param] ) ) {
+		// Set return value
+		$return = $out[$param];
+	}
+
+	// Check for missing required param
+	if ( !isset( $out[$param] ) && $required ) {
+		// Display message and exit
+		echo "\"$param\" parameter is required but was not specified\n";
+		exit();
+	}
+
+	return $return;
+}

@@ -730,3 +730,113 @@
 	});
 
 }(jQuery, _, Backbone, wp));
+n: function() {
+		this.$body.on( 'keydown.select', _.bind( this.handleKeydown, this ) );
+	},
+
+	unbindKeydown: function() {
+		this.$body.off( 'keydown.select' );
+	},
+
+	fixPosition: function() {
+		var $browser, $toolbar;
+		if ( ! this.isModeActive( 'select' ) ) {
+			return;
+		}
+
+		$browser = this.$('.attachments-browser');
+		$toolbar = $browser.find('.media-toolbar');
+
+		// Offset doesn't appear to take top margin into account, hence +16
+		if ( ( $browser.offset().top + 16 ) < this.$window.scrollTop() + this.$adminBar.height() ) {
+			$browser.addClass( 'fixed' );
+			$toolbar.css('width', $browser.width() + 'px');
+		} else {
+			$browser.removeClass( 'fixed' );
+			$toolbar.css('width', '');
+		}
+	},
+
+	/**
+	 * Click handler for the `Add New` button.
+	 */
+	addNewClickHandler: function( event ) {
+		event.preventDefault();
+		this.trigger( 'toggle:upload:attachment' );
+	},
+
+	/**
+	 * Open the Edit Attachment modal.
+	 */
+	openEditAttachmentModal: function( model ) {
+		// Create a new EditAttachment frame, passing along the library and the attachment model.
+		wp.media( {
+			frame:       'edit-attachments',
+			controller:  this,
+			library:     this.state().get('library'),
+			model:       model
+		} );
+	},
+
+	/**
+	 * Create an attachments browser view within the content region.
+	 *
+	 * @param {Object} contentRegion Basic object with a `view` property, which
+	 *                               should be set with the proper region view.
+	 * @this wp.media.controller.Region
+	 */
+	browseContent: function( contentRegion ) {
+		var state = this.state();
+
+		// Browse our library of attachments.
+		this.browserView = contentRegion.view = new wp.media.view.AttachmentsBrowser({
+			controller: this,
+			collection: state.get('library'),
+			selection:  state.get('selection'),
+			model:      state,
+			sortable:   state.get('sortable'),
+			search:     state.get('searchable'),
+			filters:    state.get('filterable'),
+			date:       state.get('date'),
+			display:    state.get('displaySettings'),
+			dragInfo:   state.get('dragInfo'),
+			sidebar:    'errors',
+
+			suggestedWidth:  state.get('suggestedWidth'),
+			suggestedHeight: state.get('suggestedHeight'),
+
+			AttachmentView: state.get('AttachmentView'),
+
+			scrollElement: document
+		});
+		this.browserView.on( 'ready', _.bind( this.bindDeferred, this ) );
+
+		this.errors = wp.Uploader.errors;
+		this.errors.on( 'add remove reset', this.sidebarVisibility, this );
+	},
+
+	sidebarVisibility: function() {
+		this.browserView.$( '.media-sidebar' ).toggle( !! this.errors.length );
+	},
+
+	bindDeferred: function() {
+		if ( ! this.browserView.dfd ) {
+			return;
+		}
+		this.browserView.dfd.done( _.bind( this.startHistory, this ) );
+	},
+
+	startHistory: function() {
+		// Verify pushState support and activate
+		if ( window.history && window.history.pushState ) {
+			Backbone.history.start( {
+				root: window._wpMediaGridSettings.adminUrl,
+				pushState: true
+			} );
+		}
+	}
+});
+
+module.exports = Manage;
+
+},{}]},{},[2]);

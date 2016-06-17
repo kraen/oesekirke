@@ -954,3 +954,120 @@ function wp_dropdown_languages( $args = array() ) {
 
 	echo '</select>';
 }
+guage selector.
+ *
+ * @since 4.0.0
+ * @since 4.3.0 Introduced the `echo` argument.
+ *
+ * @see get_available_languages()
+ * @see wp_get_available_translations()
+ *
+ * @param string|array $args {
+ *     Optional. Array or string of arguments for outputting the language selector.
+ *
+ *     @type string   $id                           ID attribute of the select element. Default empty.
+ *     @type string   $name                         Name attribute of the select element. Default empty.
+ *     @type array    $languages                    List of installed languages, contain only the locales.
+ *                                                  Default empty array.
+ *     @type array    $translations                 List of available translations. Default result of
+ *                                                  wp_get_available_translations().
+ *     @type string   $selected                     Language which should be selected. Default empty.
+ *     @type bool|int $echo                         Whether to echo the generated markup. Accepts 0, 1, or their
+ *                                                  boolean equivalents. Default 1.
+ *     @type bool     $show_available_translations  Whether to show available translations. Default true.
+ * }
+ * @return string HTML content
+ */
+function wp_dropdown_languages( $args = array() ) {
+
+	$args = wp_parse_args( $args, array(
+		'id'           => '',
+		'name'         => '',
+		'languages'    => array(),
+		'translations' => array(),
+		'selected'     => '',
+		'echo'         => 1,
+		'show_available_translations' => true,
+	) );
+
+	$translations = $args['translations'];
+	if ( empty( $translations ) ) {
+		require_once( ABSPATH . 'wp-admin/includes/translation-install.php' );
+		$translations = wp_get_available_translations();
+	}
+
+	/*
+	 * $args['languages'] should only contain the locales. Find the locale in
+	 * $translations to get the native name. Fall back to locale.
+	 */
+	$languages = array();
+	foreach ( $args['languages'] as $locale ) {
+		if ( isset( $translations[ $locale ] ) ) {
+			$translation = $translations[ $locale ];
+			$languages[] = array(
+				'language'    => $translation['language'],
+				'native_name' => $translation['native_name'],
+				'lang'        => current( $translation['iso'] ),
+			);
+
+			// Remove installed language from available translations.
+			unset( $translations[ $locale ] );
+		} else {
+			$languages[] = array(
+				'language'    => $locale,
+				'native_name' => $locale,
+				'lang'        => '',
+			);
+		}
+	}
+
+	$translations_available = ( ! empty( $translations ) && $args['show_available_translations'] );
+
+	$output = sprintf( '<select name="%s" id="%s">', esc_attr( $args['name'] ), esc_attr( $args['id'] ) );
+
+	// Holds the HTML markup.
+	$structure = array();
+
+	// List installed languages.
+	if ( $translations_available ) {
+		$structure[] = '<optgroup label="' . esc_attr_x( 'Installed', 'translations' ) . '">';
+	}
+	$structure[] = '<option value="" lang="en" data-installed="1">English (United States)</option>';
+	foreach ( $languages as $language ) {
+		$structure[] = sprintf(
+			'<option value="%s" lang="%s"%s data-installed="1">%s</option>',
+			esc_attr( $language['language'] ),
+			esc_attr( $language['lang'] ),
+			selected( $language['language'], $args['selected'], false ),
+			esc_html( $language['native_name'] )
+		);
+	}
+	if ( $translations_available ) {
+		$structure[] = '</optgroup>';
+	}
+
+	// List available translations.
+	if ( $translations_available ) {
+		$structure[] = '<optgroup label="' . esc_attr_x( 'Available', 'translations' ) . '">';
+		foreach ( $translations as $translation ) {
+			$structure[] = sprintf(
+				'<option value="%s" lang="%s"%s>%s</option>',
+				esc_attr( $translation['language'] ),
+				esc_attr( current( $translation['iso'] ) ),
+				selected( $translation['language'], $args['selected'], false ),
+				esc_html( $translation['native_name'] )
+			);
+		}
+		$structure[] = '</optgroup>';
+	}
+
+	$output .= join( "\n", $structure );
+
+	$output .= '</select>';
+
+	if ( $args['echo'] ) {
+		echo $output;
+	}
+
+	return $output;
+}

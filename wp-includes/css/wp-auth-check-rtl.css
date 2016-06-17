@@ -98,3 +98,27 @@
 #wp-auth-check-wrap.fallback .wp-auth-check-close {
 	display: block;
 }
+portant;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+#wp-auth-check-wrap .wp-auth-check-close:hover,
+#wp-auth-check-wrap .wp-auth-check-close:focus {
+	color: #0073aa;
+}
+
+#wp-auth-check-wrap .wp-auth-fallback-expired {
+	outline: 0;
+}
+
+#wp-auth-check-wrap .wp-auth-fallback {
+	font-size: 14px;
+	line-height: 21px;
+	padding: 0 25px;
+	display: none;
+}
+
+#wp-auth-check-wrap.fallback .wp-auth-fallback,
+#wp-auth-check-wrap.fallback .wp-auth-check-close {
+	display: block;
+}

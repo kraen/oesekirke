@@ -178,3 +178,37 @@ if ( ! empty( $messages ) ) {
 </div>
 <?php
 require( ABSPATH . 'wp-admin/admin-footer.php' );
+="blog[registered]" type="text" id="blog_registered" value="<?php echo esc_attr( $details->registered ) ?>" /></td>
+		</tr>
+		<tr class="form-field">
+			<th scope="row"><label for="blog_last_updated"><?php _e( 'Last Updated' ); ?></label></th>
+			<td><input name="blog[last_updated]" type="text" id="blog_last_updated" value="<?php echo esc_attr( $details->last_updated ) ?>" /></td>
+		</tr>
+		<?php
+		$attribute_fields = array( 'public' => __( 'Public' ) );
+		if ( ! $is_main_site ) {
+			$attribute_fields['archived'] = __( 'Archived' );
+			$attribute_fields['spam']     = _x( 'Spam', 'site' );
+			$attribute_fields['deleted']  = __( 'Deleted' );
+		}
+		$attribute_fields['mature'] = __( 'Mature' );
+		?>
+		<tr>
+			<th scope="row"><?php _e( 'Attributes' ); ?></th>
+			<td>
+			<fieldset>
+			<legend class="screen-reader-text"><?php _e( 'Set site attributes' ) ?></legend>
+			<?php foreach ( $attribute_fields as $field_key => $field_label ) : ?>
+				<label><input type="checkbox" name="blog[<?php echo $field_key; ?>]" value="1" <?php checked( (bool) $details->$field_key, true ); disabled( ! in_array( $details->$field_key, array( 0, 1 ) ) ); ?> />
+				<?php echo $field_label; ?></label><br/>
+			<?php endforeach; ?>
+			<fieldset>
+			</td>
+		</tr>
+	</table>
+	<?php submit_button(); ?>
+</form>
+
+</div>
+<?php
+require( ABSPATH . 'wp-admin/admin-footer.php' );

@@ -70,4 +70,6 @@
 			<textarea id="cssfile_contents" name="cssfile_contents" <?php echo ($activateCSS == 0 ? 'disabled' : ''); ?>></textarea>
 		</td>
 	</tr>
+</table>/td>
+	</tr>
 </table>

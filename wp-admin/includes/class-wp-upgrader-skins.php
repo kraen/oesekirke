@@ -782,3 +782,37 @@ class Automatic_Upgrader_Skin extends WP_Upgrader_Skin {
 	public function before() {}
 	public function after() {}
 }
+$string );
+
+		// Only allow basic HTML in the messages, as it'll be used in emails/logs rather than direct browser output.
+		$string = wp_kses( $string, array(
+			'a' => array(
+				'href' => true
+			),
+			'br' => true,
+			'em' => true,
+			'strong' => true,
+		) );
+
+		if ( empty( $string ) )
+			return;
+
+		$this->messages[] = $string;
+	}
+
+	/**
+	 * @access public
+	 */
+	public function header() {
+		ob_start();
+	}
+
+	/**
+	 * @access public
+	 */
+	public function footer() {
+		$output = ob_get_clean();
+		if ( ! empty( $output ) )
+			$this->feedback( $output );
+	}
+}

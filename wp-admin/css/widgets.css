@@ -575,3 +575,28 @@ div#widgets-right .widget-top:hover,
 		margin: 0;
 	}
 }
+ui-draggable-dragging {
+		min-width: 49%;
+	}
+
+	#widgets-left #available-widgets .widget:nth-child(even) {
+		float: right;
+	}
+
+	#widgets-right .sidebars-column-1,
+	#widgets-right .sidebars-column-2 {
+		float: left;
+		width: 49%;
+	}
+
+	#widgets-right .sidebars-column-1 {
+		margin-right: 2%;
+	}
+
+	#widgets-right.single-sidebar .sidebars-column-1,
+	#widgets-right.single-sidebar .sidebars-column-2 {
+		float: none;
+		width: 100%;
+		margin: 0;
+	}
+}

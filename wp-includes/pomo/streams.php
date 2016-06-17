@@ -238,4 +238,49 @@ class POMO_CachedIntFileReader extends POMO_CachedFileReader {
 		parent::POMO_CachedFileReader($filename);
 	}
 }
+endif;f ( ! class_exists( 'POMO_CachedFileReader', false ) ):
+/**
+ * Reads the contents of the file in the beginning.
+ */
+class POMO_CachedFileReader extends POMO_StringReader {
+	/**
+	 * PHP5 constructor.
+	 */
+	function __construct( $filename ) {
+		parent::POMO_StringReader();
+		$this->_str = file_get_contents($filename);
+		if (false === $this->_str)
+			return false;
+		$this->_pos = 0;
+	}
+
+	/**
+	 * PHP4 constructor.
+	 */
+	public function POMO_CachedFileReader( $filename ) {
+		self::__construct( $filename );
+	}
+}
 endif;
+
+if ( ! class_exists( 'POMO_CachedIntFileReader', false ) ):
+/**
+ * Reads the contents of the file in the beginning.
+ */
+class POMO_CachedIntFileReader extends POMO_CachedFileReader {
+	/**
+	 * PHP5 constructor.
+	 */
+	public function __construct( $filename ) {
+		parent::POMO_CachedFileReader($filename);
+	}
+
+	/**
+	 * PHP4 constructor.
+	 */
+	function POMO_CachedIntFileReader( $filename ) {
+		self::__construct( $filename );
+	}
+}
+endif;
+

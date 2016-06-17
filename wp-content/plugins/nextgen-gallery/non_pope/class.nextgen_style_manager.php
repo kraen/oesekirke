@@ -281,3 +281,28 @@ class C_NextGen_Style_Manager
 		return self::$_instance;
 	}
 }
+		=>	basename($abspath),
+				'abspath'		=>	$abspath,
+				'name'			=>	$name,
+				'description'	=>	$desc,
+				'author'		=>	$author,
+				'version'		=>	$version
+			);
+		}
+
+		return $retval;
+	}
+
+	/**
+	 * Gets an instance of the class
+	 * @return C_NextGen_Style_Manager
+	 */
+	static function get_instance()
+	{
+		if (is_null(self::$_instance)){
+			$klass = get_class();
+			self::$_instance = new $klass();
+		}
+		return self::$_instance;
+	}
+}

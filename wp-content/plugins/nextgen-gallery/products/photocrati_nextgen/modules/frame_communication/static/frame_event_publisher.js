@@ -160,3 +160,34 @@ window.Frame_Event_Publisher = {
 jQuery(function($){
 	Frame_Event_Publisher.broadcast();
 });
+vent_data));
+					var cookie_name = 'X-Frame-Events_'+event_id;
+					this.delete_cookie(cookie_name);
+				}
+			}
+		}
+		catch (Exception) {}
+		return frame_events;
+	},
+
+	delete_cookie: function(cookie){
+		var date = new Date();
+		document.cookie = cookie+'=; expires='+date.toGMTString()+';';
+	},
+
+	listen_for: function(signal, callback){
+		var publisher = this;
+		jQuery(window).bind(signal, function(e, event){
+			var context = event.context;
+			var event_id = event.id;
+			if (!publisher.has_received_event(event_id)) {
+				callback.call(publisher, event);
+				publisher.received[event_id] = event;
+			}
+		});
+	}
+};
+
+jQuery(function($){
+    Frame_Event_Publisher.broadcast();
+});

@@ -19,4 +19,4 @@
             <?php endforeach ?>
         </select>
     </td>
-</tr>
+</tr>tr>

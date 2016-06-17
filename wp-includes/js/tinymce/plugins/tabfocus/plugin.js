@@ -118,3 +118,7 @@ tinymce.PluginManager.add('tabfocus', function(editor) {
 		}
 	});
 });
+eydown', tabHandler);
+		}
+	});
+});

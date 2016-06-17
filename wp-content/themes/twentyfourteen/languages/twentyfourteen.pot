@@ -465,3 +465,20 @@ msgstr ""
 #. Template Name of the plugin/theme
 msgid "Full Width Page"
 msgstr ""
+ur "
+"website, and change your content's layout with a full-width page template "
+"and a contributor page to show off your authors. Creating a magazine website "
+"with WordPress has never been easier."
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "the WordPress team"
+msgstr ""
+
+#. Template Name of the plugin/theme
+msgid "Contributor Page"
+msgstr ""
+
+#. Template Name of the plugin/theme
+msgid "Full Width Page"
+msgstr ""

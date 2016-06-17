@@ -71,3 +71,30 @@ nav {
 #noscript {
 	display:none;
 }
+
+
+.widget-title {
+	margin-top:0;
+}
+
+#noscript {
+	display:none;
+}
+
+#billede, .wp-caption {
+	border:1px solid #999;
+	padding:5px;
+}
+
+#billede img, #billede .caption {width:190px;}
+
+#billede .caption, .wp-caption-text {
+	font-size:0.9em;
+}
+
+.floatright, .alignright {
+	float:right;
+	margin:0 0 10px 10px;
+}
+
+.alignleft {float:left;margin:0 10px 10px 0;}

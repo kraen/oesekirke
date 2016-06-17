@@ -617,3 +617,145 @@ var wpLink;
 
 	$( document ).ready( wpLink.init );
 })( jQuery );
+Class( 'selected' );
+			// Make sure the element is visible
+			liHeight = li.outerHeight();
+			elHeight = this.element.height();
+			liTop = li.position().top;
+			elTop = this.element.scrollTop();
+
+			if ( liTop < 0 ) // Make first visible element
+				this.element.scrollTop( elTop + liTop );
+			else if ( liTop + liHeight > elHeight ) // Make last visible element
+				this.element.scrollTop( elTop + liTop - elHeight + liHeight );
+
+			// Trigger the river-select event
+			this.element.trigger( 'river-select', [ li, event, this ] );
+		},
+		deselect: function() {
+			if ( this.selected )
+				this.selected.removeClass( 'selected' );
+			this.selected = false;
+		},
+		prev: function() {
+			if ( ! this.visible )
+				return;
+
+			var to;
+			if ( this.selected ) {
+				to = this.selected.prev( 'li' );
+				if ( to.length )
+					this.select( to );
+			}
+		},
+		next: function() {
+			if ( ! this.visible )
+				return;
+
+			var to = this.selected ? this.selected.next( 'li' ) : $( 'li:not(.unselectable):first', this.element );
+			if ( to.length )
+				this.select( to );
+		},
+		ajax: function( callback ) {
+			var self = this,
+				delay = this.query.page == 1 ? 0 : wpLink.minRiverAJAXDuration,
+				response = wpLink.delayedCallback( function( results, params ) {
+					self.process( results, params );
+					if ( callback )
+						callback( results, params );
+				}, delay );
+
+			this.query.ajax( response );
+		},
+		change: function( search ) {
+			if ( this.query && this._search == search )
+				return;
+
+			this._search = search;
+			this.query = new Query( search );
+			this.element.scrollTop( 0 );
+		},
+		process: function( results, params ) {
+			var list = '', alt = true, classes = '',
+				firstPage = params.page == 1;
+
+			if ( ! results ) {
+				if ( firstPage ) {
+					list += '<li class="unselectable no-matches-found"><span class="item-title"><em>' +
+						wpLinkL10n.noMatchesFound + '</em></span></li>';
+				}
+			} else {
+				$.each( results, function() {
+					classes = alt ? 'alternate' : '';
+					classes += this.title ? '' : ' no-title';
+					list += classes ? '<li class="' + classes + '">' : '<li>';
+					list += '<input type="hidden" class="item-permalink" value="' + this.permalink + '" />';
+					list += '<span class="item-title">';
+					list += this.title ? this.title : wpLinkL10n.noTitle;
+					list += '</span><span class="item-info">' + this.info + '</span></li>';
+					alt = ! alt;
+				});
+			}
+
+			this.ul[ firstPage ? 'html' : 'append' ]( list );
+		},
+		maybeLoad: function() {
+			var self = this,
+				el = this.element,
+				bottom = el.scrollTop() + el.height();
+
+			if ( ! this.query.ready() || bottom < this.contentHeight.height() - wpLink.riverBottomThreshold )
+				return;
+
+			setTimeout(function() {
+				var newTop = el.scrollTop(),
+					newBottom = newTop + el.height();
+
+				if ( ! self.query.ready() || newBottom < self.contentHeight.height() - wpLink.riverBottomThreshold )
+					return;
+
+				self.waiting.addClass( 'is-active' );
+				el.scrollTop( newTop + self.waiting.outerHeight() );
+
+				self.ajax( function() {
+					self.waiting.removeClass( 'is-active' );
+				});
+			}, wpLink.timeToTriggerRiver );
+		}
+	});
+
+	Query = function( search ) {
+		this.page = 1;
+		this.allLoaded = false;
+		this.querying = false;
+		this.search = search;
+	};
+
+	$.extend( Query.prototype, {
+		ready: function() {
+			return ! ( this.querying || this.allLoaded );
+		},
+		ajax: function( callback ) {
+			var self = this,
+				query = {
+					action : 'wp-link-ajax',
+					page : this.page,
+					'_ajax_linking_nonce' : inputs.nonce.val()
+				};
+
+			if ( this.search )
+				query.search = this.search;
+
+			this.querying = true;
+
+			$.post( window.ajaxurl, query, function( r ) {
+				self.page++;
+				self.querying = false;
+				self.allLoaded = ! r;
+				callback( r, query );
+			}, 'json' );
+		}
+	});
+
+	$( document ).ready( wpLink.init );
+})( jQuery, window.wpLinkL10n, window.wp );

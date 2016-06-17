@@ -130,3 +130,10 @@ include( ABSPATH . 'wp-admin/admin-header.php' );
 
 <?php
 require( ABSPATH . 'wp-admin/admin-footer.php' );
+?>
+	</div><!-- dashboard-widgets-wrap -->
+
+</div><!-- wrap -->
+
+<?php
+require( ABSPATH . 'wp-admin/admin-footer.php' );

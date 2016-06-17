@@ -705,3 +705,113 @@ class WP_Object_Cache {
 		return true;
 	}
 }
+ssed and PHP finishes. The method is
+	 * more for cache plugins which use files.
+	 *
+	 * @since 2.0.0
+	 * @access public
+	 *
+	 * @param int|string $key    What to call the contents in the cache.
+	 * @param mixed      $data   The contents to store in the cache.
+	 * @param string     $group  Optional. Where to group the cache contents. Default 'default'.
+	 * @param int        $expire Not Used.
+	 * @return true Always returns true.
+	 */
+	public function set( $key, $data, $group = 'default', $expire = 0 ) {
+		if ( empty( $group ) )
+			$group = 'default';
+
+		if ( $this->multisite && ! isset( $this->global_groups[ $group ] ) )
+			$key = $this->blog_prefix . $key;
+
+		if ( is_object( $data ) )
+			$data = clone $data;
+
+		$this->cache[$group][$key] = $data;
+		return true;
+	}
+
+	/**
+	 * Echoes the stats of the caching.
+	 *
+	 * Gives the cache hits, and cache misses. Also prints every cached group,
+	 * key and the data.
+	 *
+	 * @since 2.0.0
+	 * @access public
+	 */
+	public function stats() {
+		echo "<p>";
+		echo "<strong>Cache Hits:</strong> {$this->cache_hits}<br />";
+		echo "<strong>Cache Misses:</strong> {$this->cache_misses}<br />";
+		echo "</p>";
+		echo '<ul>';
+		foreach ($this->cache as $group => $cache) {
+			echo "<li><strong>Group:</strong> $group - ( " . number_format( strlen( serialize( $cache ) ) / KB_IN_BYTES, 2 ) . 'k )</li>';
+		}
+		echo '</ul>';
+	}
+
+	/**
+	 * Switches the interal blog ID.
+	 *
+	 * This changes the blog ID used to create keys in blog specific groups.
+	 *
+	 * @since 3.5.0
+	 * @access public
+	 *
+	 * @param int $blog_id Blog ID.
+	 */
+	public function switch_to_blog( $blog_id ) {
+		$blog_id = (int) $blog_id;
+		$this->blog_prefix = $this->multisite ? $blog_id . ':' : '';
+	}
+
+	/**
+	 * Serves as a utility function to determine whether a key exists in the cache.
+	 *
+	 * @since 3.4.0
+	 * @access protected
+	 *
+	 * @param int|string $key   Cache key to check for existence.
+	 * @param string     $group Cache group for the key existence check.
+	 * @return bool Whether the key exists in the cache for the given group.
+	 */
+	protected function _exists( $key, $group ) {
+		return isset( $this->cache[ $group ] ) && ( isset( $this->cache[ $group ][ $key ] ) || array_key_exists( $key, $this->cache[ $group ] ) );
+	}
+
+	/**
+	 * Sets up object properties; PHP 5 style constructor.
+	 *
+	 * @since 2.0.8
+	 *
+     * @global int $blog_id Global blog ID.
+	 */
+	public function __construct() {
+		global $blog_id;
+
+		$this->multisite = is_multisite();
+		$this->blog_prefix =  $this->multisite ? $blog_id . ':' : '';
+
+
+		/**
+		 * @todo This should be moved to the PHP4 style constructor, PHP5
+		 * already calls __destruct()
+		 */
+		register_shutdown_function( array( $this, '__destruct' ) );
+	}
+
+	/**
+	 * Saves the object cache before object is completely destroyed.
+	 *
+	 * Called upon object destruction, which should be when PHP ends.
+	 *
+	 * @since 2.0.8
+	 *
+	 * @return true Always returns true.
+	 */
+	public function __destruct() {
+		return true;
+	}
+}

@@ -212,3 +212,24 @@ class C_Photocrati_Resource_Manager
 		return self::$instance = new $klass;
 	}
 }
+ Once we have the footer scripts, we can modify the buffer and
+		// move the resources around
+		if ($this->wrote_footer) $this->move_resources();
+
+		return $this->buffer;
+	}
+
+	/**
+	 * PHP shutdown callback. Manipulate and output the buffer
+	 */
+	function shutdown()
+	{
+		if ($this->run_shutdown) echo $this->output_buffer(TRUE);
+	}
+
+	static function init()
+	{
+		$klass = get_class();
+		return self::$instance = new $klass;
+	}
+}

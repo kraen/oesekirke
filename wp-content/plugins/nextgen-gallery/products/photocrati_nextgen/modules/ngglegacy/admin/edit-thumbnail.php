@@ -181,3 +181,18 @@ if ($thumbnail_crop_frame != null)
 	});
 //]]>
 </script>
+r>
+</table>
+
+<script type="text/javascript">
+//<![CDATA[
+	jQuery(document).ready(function(){
+		jQuery('#imageToEdit').Jcrop({
+			onChange: showPreview,
+			onSelect: showPreview,
+			<?php echo $default_crop_js_parameter; ?>
+			aspectRatio: <?php echo str_replace(',', '.', round($WidthHtmlPrev/$HeightHtmlPrev, 3)); ?>
+		});
+	});
+//]]>
+</script>

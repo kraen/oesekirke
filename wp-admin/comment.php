@@ -297,3 +297,52 @@ default:
 } // end switch
 
 include( ABSPATH . 'wp-admin/admin-footer.php' );
+_id), $redir );
+			break;
+		case 'unspamcomment' :
+			wp_unspam_comment( $comment );
+			$redir = add_query_arg( array('unspammed' => '1'), $redir );
+			break;
+		case 'approvecomment' :
+			wp_set_comment_status( $comment, 'approve' );
+			$redir = add_query_arg( array( 'approved' => 1 ), $redir );
+			break;
+		case 'unapprovecomment' :
+			wp_set_comment_status( $comment, 'hold' );
+			$redir = add_query_arg( array( 'unapproved' => 1 ), $redir );
+			break;
+	}
+
+	wp_redirect( $redir );
+	die;
+
+case 'editedcomment' :
+
+	$comment_id = absint( $_POST['comment_ID'] );
+	$comment_post_id = absint( $_POST['comment_post_ID'] );
+
+	check_admin_referer( 'update-comment_' . $comment_id );
+
+	edit_comment();
+
+	$location = ( empty( $_POST['referredby'] ) ? "edit-comments.php?p=$comment_post_id" : $_POST['referredby'] ) . '#comment-' . $comment_id;
+
+	/**
+	 * Filter the URI the user is redirected to after editing a comment in the admin.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param string $location The URI the user will be redirected to.
+	 * @param int $comment_id The ID of the comment being edited.
+	 */
+	$location = apply_filters( 'comment_edit_redirect', $location, $comment_id );
+	wp_redirect( $location );
+
+	exit();
+
+default:
+	wp_die( __('Unknown action.') );
+
+} // end switch
+
+include( ABSPATH . 'wp-admin/admin-footer.php' );

@@ -161,4 +161,6 @@ tinyMCEPopup.onInit.add(function() {
 			enableUpDown: true
 		}, tinyMCEPopup.dom);*/
 	});
+});opup.dom);*/
+	});
 });

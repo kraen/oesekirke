@@ -540,3 +540,12 @@ tinymce.util.Dispatcher = function(scope) {
 		return returnValue;
 	};
 };
+	break;
+			}
+		}
+
+		self.inDispatch = false;
+
+		return returnValue;
+	};
+};

@@ -33,3 +33,8 @@ class C_Component_Factory extends C_Component
 		return self::$_instances[$context];
     }
 }
+context);
+		}
+		return self::$_instances[$context];
+    }
+}

@@ -84,3 +84,15 @@
 
     <?php print $maximum_entity_count_field; ?>
 </table>
+ton delete button-secondary"
+                   data-proxy-value="cache"
+                   data-confirm="<?php echo $cache_confirmation; ?>"
+                   value='<?php echo $cache_label; ?>'
+                />
+        </td>
+    </tr>
+
+    <?php print $slug_field; ?>
+
+    <?php print $maximum_entity_count_field; ?>
+</table>

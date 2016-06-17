@@ -148,4 +148,65 @@ class M_NextGen_Basic_Album extends C_Base_Module
 }
 
 
+new M_NextGen_Basic_Album();GG_BASIC_COMPACT_ALBUM, $params);
+
+        unset($params['id']);
+
+        $renderer = C_Displayed_Gallery_Renderer::get_instance();
+        return $renderer->display_images($params, $inner_content);
+    }
+
+    function get_type_list()
+    {
+        return array(
+            'A_NextGen_Album_Breadcrumbs' => 'adapter.nextgen_album_breadcrumbs.php',
+            'A_Nextgen_Basic_Album' => 'adapter.nextgen_basic_album.php',
+            'A_Nextgen_Basic_Album_Controller' => 'adapter.nextgen_basic_album_controller.php',
+            'A_Nextgen_Basic_Album_Mapper' => 'adapter.nextgen_basic_album_mapper.php',
+            'A_Nextgen_Basic_Album_Routes' => 'adapter.nextgen_basic_album_routes.php',
+            'A_Nextgen_Basic_Album_Urls' => 'adapter.nextgen_basic_album_urls.php',
+            'A_Nextgen_Basic_Compact_Album_Form' => 'adapter.nextgen_basic_compact_album_form.php',
+            'A_Nextgen_Basic_Extended_Album_Form' => 'adapter.nextgen_basic_extended_album_form.php',
+            'Mixin_Nextgen_Basic_Album_Form' => 'mixin.nextgen_basic_album_form.php'
+        );
+    }
+}
+
+class C_NextGen_Basic_Album_Installer extends C_Gallery_Display_Installer
+{
+	function install()
+	{
+		$this->install_display_type(
+			NGG_BASIC_COMPACT_ALBUM, array(
+				'title'					=>	__('NextGEN Basic Compact Album', 'nggallery'),
+				'entity_types'			=>	array('album', 'gallery'),
+				'preview_image_relpath'	=>	'photocrati-nextgen_basic_album#compact_preview.jpg',
+				'default_source'		=>	'albums',
+				'view_order'            => NGG_DISPLAY_PRIORITY_BASE + 200,
+			));
+
+		$this->install_display_type(
+			NGG_BASIC_EXTENDED_ALBUM, array(
+				'title'					=>	__('NextGEN Basic Extended Album', 'nggallery'),
+				'entity_types'			=>	array('album', 'gallery'),
+				'preview_image_relpath'	=>	'photocrati-nextgen_basic_album#extended_preview.jpg',
+				'default_source'		=>	'albums',
+				'view_order' => NGG_DISPLAY_PRIORITY_BASE + 210
+			));
+	}
+}
+
+function nggShowAlbum($albumID, $template = 'extend', $gallery_template = '')
+{
+	$renderer = C_Displayed_Gallery_Renderer::get_instance();
+	$retval = $renderer->display_images(array(
+		'album_ids' => array($albumID),
+		'display_type' => 'photocrati-nextgen_basic_extended_album',
+		'template' => $template,
+		'gallery_display_template' => $gallery_template
+	));
+
+	return apply_filters('ngg_show_album_content', $retval, $albumID);
+}
+
 new M_NextGen_Basic_Album();

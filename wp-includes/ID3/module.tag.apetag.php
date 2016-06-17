@@ -368,4 +368,74 @@ class getid3_apetag extends getid3_handler
 		return in_array(strtolower($itemkey), $APEtagItemIsUTF8Lookup);
 	}
 
+}g'] != 'APETAGEX') {
+			return false;
+		}
+		$headerfooterinfo_raw['version']      = getid3_lib::LittleEndian2Int(substr($APEheaderFooterData,  8, 4));
+		$headerfooterinfo_raw['tagsize']      = getid3_lib::LittleEndian2Int(substr($APEheaderFooterData, 12, 4));
+		$headerfooterinfo_raw['tag_items']    = getid3_lib::LittleEndian2Int(substr($APEheaderFooterData, 16, 4));
+		$headerfooterinfo_raw['global_flags'] = getid3_lib::LittleEndian2Int(substr($APEheaderFooterData, 20, 4));
+		$headerfooterinfo_raw['reserved']     =                              substr($APEheaderFooterData, 24, 8);
+
+		$headerfooterinfo['tag_version']         = $headerfooterinfo_raw['version'] / 1000;
+		if ($headerfooterinfo['tag_version'] >= 2) {
+			$headerfooterinfo['flags'] = $this->parseAPEtagFlags($headerfooterinfo_raw['global_flags']);
+		}
+		return $headerfooterinfo;
+	}
+
+	public function parseAPEtagFlags($rawflagint) {
+		// "Note: APE Tags 1.0 do not use any of the APE Tag flags.
+		// All are set to zero on creation and ignored on reading."
+		// http://wiki.hydrogenaud.io/index.php?title=Ape_Tags_Flags
+		$flags['header']            = (bool) ($rawflagint & 0x80000000);
+		$flags['footer']            = (bool) ($rawflagint & 0x40000000);
+		$flags['this_is_header']    = (bool) ($rawflagint & 0x20000000);
+		$flags['item_contents_raw'] =        ($rawflagint & 0x00000006) >> 1;
+		$flags['read_only']         = (bool) ($rawflagint & 0x00000001);
+
+		$flags['item_contents']     = $this->APEcontentTypeFlagLookup($flags['item_contents_raw']);
+
+		return $flags;
+	}
+
+	public function APEcontentTypeFlagLookup($contenttypeid) {
+		static $APEcontentTypeFlagLookup = array(
+			0 => 'utf-8',
+			1 => 'binary',
+			2 => 'external',
+			3 => 'reserved'
+		);
+		return (isset($APEcontentTypeFlagLookup[$contenttypeid]) ? $APEcontentTypeFlagLookup[$contenttypeid] : 'invalid');
+	}
+
+	public function APEtagItemIsUTF8Lookup($itemkey) {
+		static $APEtagItemIsUTF8Lookup = array(
+			'title',
+			'subtitle',
+			'artist',
+			'album',
+			'debut album',
+			'publisher',
+			'conductor',
+			'track',
+			'composer',
+			'comment',
+			'copyright',
+			'publicationright',
+			'file',
+			'year',
+			'record date',
+			'record location',
+			'genre',
+			'media',
+			'related',
+			'isrc',
+			'abstract',
+			'language',
+			'bibliography'
+		);
+		return in_array(strtolower($itemkey), $APEtagItemIsUTF8Lookup);
+	}
+
 }

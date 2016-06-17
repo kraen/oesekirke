@@ -3322,3 +3322,550 @@ function wpview_media_sandbox_styles() {
 
 	return array( $mediaelement, $wpmediaelement );
 }
+ 'file'
+		'align' => get_option( 'image_default_align' ), // empty default
+		'size'  => get_option( 'image_default_size' ),  // empty default
+	);
+
+	$exts = array_merge( wp_get_audio_extensions(), wp_get_video_extensions() );
+	$mimes = get_allowed_mime_types();
+	$ext_mimes = array();
+	foreach ( $exts as $ext ) {
+		foreach ( $mimes as $ext_preg => $mime_match ) {
+			if ( preg_match( '#' . $ext . '#i', $ext_preg ) ) {
+				$ext_mimes[ $ext ] = $mime_match;
+				break;
+			}
+		}
+	}
+
+	$has_audio = $wpdb->get_var( "
+		SELECT ID
+		FROM $wpdb->posts
+		WHERE post_type = 'attachment'
+		AND post_mime_type LIKE 'audio%'
+		LIMIT 1
+	" );
+	$has_video = $wpdb->get_var( "
+		SELECT ID
+		FROM $wpdb->posts
+		WHERE post_type = 'attachment'
+		AND post_mime_type LIKE 'video%'
+		LIMIT 1
+	" );
+	$months = $wpdb->get_results( $wpdb->prepare( "
+		SELECT DISTINCT YEAR( post_date ) AS year, MONTH( post_date ) AS month
+		FROM $wpdb->posts
+		WHERE post_type = %s
+		ORDER BY post_date DESC
+	", 'attachment' ) );
+	foreach ( $months as $month_year ) {
+		$month_year->text = sprintf( __( '%1$s %2$d' ), $wp_locale->get_month( $month_year->month ), $month_year->year );
+	}
+
+	$settings = array(
+		'tabs'      => $tabs,
+		'tabUrl'    => add_query_arg( array( 'chromeless' => true ), admin_url('media-upload.php') ),
+		'mimeTypes' => wp_list_pluck( get_post_mime_types(), 0 ),
+		/** This filter is documented in wp-admin/includes/media.php */
+		'captions'  => ! apply_filters( 'disable_captions', '' ),
+		'nonce'     => array(
+			'sendToEditor' => wp_create_nonce( 'media-send-to-editor' ),
+		),
+		'post'    => array(
+			'id' => 0,
+		),
+		'defaultProps' => $props,
+		'attachmentCounts' => array(
+			'audio' => ( $has_audio ) ? 1 : 0,
+			'video' => ( $has_video ) ? 1 : 0
+		),
+		'embedExts'    => $exts,
+		'embedMimes'   => $ext_mimes,
+		'contentWidth' => $content_width,
+		'months'       => $months,
+		'mediaTrash'   => MEDIA_TRASH ? 1 : 0
+	);
+
+	$post = null;
+	if ( isset( $args['post'] ) ) {
+		$post = get_post( $args['post'] );
+		$settings['post'] = array(
+			'id' => $post->ID,
+			'nonce' => wp_create_nonce( 'update-post_' . $post->ID ),
+		);
+
+		$thumbnail_support = current_theme_supports( 'post-thumbnails', $post->post_type ) && post_type_supports( $post->post_type, 'thumbnail' );
+		if ( ! $thumbnail_support && 'attachment' === $post->post_type && $post->post_mime_type ) {
+			if ( wp_attachment_is( 'audio', $post ) ) {
+				$thumbnail_support = post_type_supports( 'attachment:audio', 'thumbnail' ) || current_theme_supports( 'post-thumbnails', 'attachment:audio' );
+			} elseif ( wp_attachment_is( 'video', $post ) ) {
+				$thumbnail_support = post_type_supports( 'attachment:video', 'thumbnail' ) || current_theme_supports( 'post-thumbnails', 'attachment:video' );
+			}
+		}
+
+		if ( $thumbnail_support ) {
+			$featured_image_id = get_post_meta( $post->ID, '_thumbnail_id', true );
+			$settings['post']['featuredImageId'] = $featured_image_id ? $featured_image_id : -1;
+		}
+	}
+
+	if ( $post ) {
+		$post_type_object = get_post_type_object( $post->post_type );
+	} else {
+		$post_type_object = get_post_type_object( 'post' );
+	}
+
+	$strings = array(
+		// Generic
+		'url'         => __( 'URL' ),
+		'addMedia'    => __( 'Add Media' ),
+		'search'      => __( 'Search' ),
+		'select'      => __( 'Select' ),
+		'cancel'      => __( 'Cancel' ),
+		'update'      => __( 'Update' ),
+		'replace'     => __( 'Replace' ),
+		'remove'      => __( 'Remove' ),
+		'back'        => __( 'Back' ),
+		/* translators: This is a would-be plural string used in the media manager.
+		   If there is not a word you can use in your language to avoid issues with the
+		   lack of plural support here, turn it into "selected: %d" then translate it.
+		 */
+		'selected'    => __( '%d selected' ),
+		'dragInfo'    => __( 'Drag and drop to reorder media files.' ),
+
+		// Upload
+		'uploadFilesTitle'  => __( 'Upload Files' ),
+		'uploadImagesTitle' => __( 'Upload Images' ),
+
+		// Library
+		'mediaLibraryTitle'      => __( 'Media Library' ),
+		'insertMediaTitle'       => __( 'Insert Media' ),
+		'createNewGallery'       => __( 'Create a new gallery' ),
+		'createNewPlaylist'      => __( 'Create a new playlist' ),
+		'createNewVideoPlaylist' => __( 'Create a new video playlist' ),
+		'returnToLibrary'        => __( '&#8592; Return to library' ),
+		'allMediaItems'          => __( 'All media items' ),
+		'allDates'               => __( 'All dates' ),
+		'noItemsFound'           => __( 'No items found.' ),
+		'insertIntoPost'         => $post_type_object->labels->insert_into_item,
+		'unattached'             => __( 'Unattached' ),
+		'trash'                  => _x( 'Trash', 'noun' ),
+		'uploadedToThisPost'     => $post_type_object->labels->uploaded_to_this_item,
+		'warnDelete'             => __( "You are about to permanently delete this item.\n  'Cancel' to stop, 'OK' to delete." ),
+		'warnBulkDelete'         => __( "You are about to permanently delete these items.\n  'Cancel' to stop, 'OK' to delete." ),
+		'warnBulkTrash'          => __( "You are about to trash these items.\n  'Cancel' to stop, 'OK' to delete." ),
+		'bulkSelect'             => __( 'Bulk Select' ),
+		'cancelSelection'        => __( 'Cancel Selection' ),
+		'trashSelected'          => __( 'Trash Selected' ),
+		'untrashSelected'        => __( 'Untrash Selected' ),
+		'deleteSelected'         => __( 'Delete Selected' ),
+		'deletePermanently'      => __( 'Delete Permanently' ),
+		'apply'                  => __( 'Apply' ),
+		'filterByDate'           => __( 'Filter by date' ),
+		'filterByType'           => __( 'Filter by type' ),
+		'searchMediaLabel'       => __( 'Search Media' ),
+		'noMedia'                => __( 'No media files found.' ),
+
+		// Library Details
+		'attachmentDetails'  => __( 'Attachment Details' ),
+
+		// From URL
+		'insertFromUrlTitle' => __( 'Insert from URL' ),
+
+		// Featured Images
+		'setFeaturedImageTitle' => $post_type_object->labels->featured_image,
+		'setFeaturedImage'      => $post_type_object->labels->set_featured_image,
+
+		// Gallery
+		'createGalleryTitle' => __( 'Create Gallery' ),
+		'editGalleryTitle'   => __( 'Edit Gallery' ),
+		'cancelGalleryTitle' => __( '&#8592; Cancel Gallery' ),
+		'insertGallery'      => __( 'Insert gallery' ),
+		'updateGallery'      => __( 'Update gallery' ),
+		'addToGallery'       => __( 'Add to gallery' ),
+		'addToGalleryTitle'  => __( 'Add to Gallery' ),
+		'reverseOrder'       => __( 'Reverse order' ),
+
+		// Edit Image
+		'imageDetailsTitle'     => __( 'Image Details' ),
+		'imageReplaceTitle'     => __( 'Replace Image' ),
+		'imageDetailsCancel'    => __( 'Cancel Edit' ),
+		'editImage'             => __( 'Edit Image' ),
+
+		// Crop Image
+		'chooseImage' => __( 'Choose Image' ),
+		'selectAndCrop' => __( 'Select and Crop' ),
+		'skipCropping' => __( 'Skip Cropping' ),
+		'cropImage' => __( 'Crop Image' ),
+		'cropYourImage' => __( 'Crop your image' ),
+		'cropping' => __( 'Cropping&hellip;' ),
+		'suggestedDimensions' => __( 'Suggested image dimensions:' ),
+		'cropError' => __( 'There has been an error cropping your image.' ),
+
+		// Edit Audio
+		'audioDetailsTitle'     => __( 'Audio Details' ),
+		'audioReplaceTitle'     => __( 'Replace Audio' ),
+		'audioAddSourceTitle'   => __( 'Add Audio Source' ),
+		'audioDetailsCancel'    => __( 'Cancel Edit' ),
+
+		// Edit Video
+		'videoDetailsTitle'     => __( 'Video Details' ),
+		'videoReplaceTitle'     => __( 'Replace Video' ),
+		'videoAddSourceTitle'   => __( 'Add Video Source' ),
+		'videoDetailsCancel'    => __( 'Cancel Edit' ),
+		'videoSelectPosterImageTitle' => __( 'Select Poster Image' ),
+		'videoAddTrackTitle'	=> __( 'Add Subtitles' ),
+
+ 		// Playlist
+ 		'playlistDragInfo'    => __( 'Drag and drop to reorder tracks.' ),
+ 		'createPlaylistTitle' => __( 'Create Audio Playlist' ),
+ 		'editPlaylistTitle'   => __( 'Edit Audio Playlist' ),
+ 		'cancelPlaylistTitle' => __( '&#8592; Cancel Audio Playlist' ),
+ 		'insertPlaylist'      => __( 'Insert audio playlist' ),
+ 		'updatePlaylist'      => __( 'Update audio playlist' ),
+ 		'addToPlaylist'       => __( 'Add to audio playlist' ),
+ 		'addToPlaylistTitle'  => __( 'Add to Audio Playlist' ),
+
+ 		// Video Playlist
+ 		'videoPlaylistDragInfo'    => __( 'Drag and drop to reorder videos.' ),
+ 		'createVideoPlaylistTitle' => __( 'Create Video Playlist' ),
+ 		'editVideoPlaylistTitle'   => __( 'Edit Video Playlist' ),
+ 		'cancelVideoPlaylistTitle' => __( '&#8592; Cancel Video Playlist' ),
+ 		'insertVideoPlaylist'      => __( 'Insert video playlist' ),
+ 		'updateVideoPlaylist'      => __( 'Update video playlist' ),
+ 		'addToVideoPlaylist'       => __( 'Add to video playlist' ),
+ 		'addToVideoPlaylistTitle'  => __( 'Add to Video Playlist' ),
+	);
+
+	/**
+	 * Filter the media view settings.
+	 *
+	 * @since 3.5.0
+	 *
+	 * @param array   $settings List of media view settings.
+	 * @param WP_Post $post     Post object.
+	 */
+	$settings = apply_filters( 'media_view_settings', $settings, $post );
+
+	/**
+	 * Filter the media view strings.
+	 *
+	 * @since 3.5.0
+	 *
+	 * @param array   $strings List of media view strings.
+	 * @param WP_Post $post    Post object.
+	 */
+	$strings = apply_filters( 'media_view_strings', $strings,  $post );
+
+	$strings['settings'] = $settings;
+
+	// Ensure we enqueue media-editor first, that way media-views is
+	// registered internally before we try to localize it. see #24724.
+	wp_enqueue_script( 'media-editor' );
+	wp_localize_script( 'media-views', '_wpMediaViewsL10n', $strings );
+
+	wp_enqueue_script( 'media-audiovideo' );
+	wp_enqueue_style( 'media-views' );
+	if ( is_admin() ) {
+		wp_enqueue_script( 'mce-view' );
+		wp_enqueue_script( 'image-edit' );
+	}
+	wp_enqueue_style( 'imgareaselect' );
+	wp_plupload_default_settings();
+
+	require_once ABSPATH . WPINC . '/media-template.php';
+	add_action( 'admin_footer', 'wp_print_media_templates' );
+	add_action( 'wp_footer', 'wp_print_media_templates' );
+	add_action( 'customize_controls_print_footer_scripts', 'wp_print_media_templates' );
+
+	/**
+	 * Fires at the conclusion of wp_enqueue_media().
+	 *
+	 * @since 3.5.0
+	 */
+	do_action( 'wp_enqueue_media' );
+}
+
+/**
+ * Retrieves media attached to the passed post.
+ *
+ * @since 3.6.0
+ *
+ * @param string      $type Mime type.
+ * @param int|WP_Post $post Optional. Post ID or WP_Post object. Default is global $post.
+ * @return array Found attachments.
+ */
+function get_attached_media( $type, $post = 0 ) {
+	if ( ! $post = get_post( $post ) )
+		return array();
+
+	$args = array(
+		'post_parent' => $post->ID,
+		'post_type' => 'attachment',
+		'post_mime_type' => $type,
+		'posts_per_page' => -1,
+		'orderby' => 'menu_order',
+		'order' => 'ASC',
+	);
+
+	/**
+	 * Filter arguments used to retrieve media attached to the given post.
+	 *
+	 * @since 3.6.0
+	 *
+	 * @param array  $args Post query arguments.
+	 * @param string $type Mime type of the desired media.
+	 * @param mixed  $post Post ID or object.
+	 */
+	$args = apply_filters( 'get_attached_media_args', $args, $type, $post );
+
+	$children = get_children( $args );
+
+	/**
+	 * Filter the list of media attached to the given post.
+	 *
+	 * @since 3.6.0
+	 *
+	 * @param array  $children Associative array of media attached to the given post.
+	 * @param string $type     Mime type of the media desired.
+	 * @param mixed  $post     Post ID or object.
+	 */
+	return (array) apply_filters( 'get_attached_media', $children, $type, $post );
+}
+
+/**
+ * Check the content blob for an audio, video, object, embed, or iframe tags.
+ *
+ * @since 3.6.0
+ *
+ * @param string $content A string which might contain media data.
+ * @param array  $types   An array of media types: 'audio', 'video', 'object', 'embed', or 'iframe'.
+ * @return array A list of found HTML media embeds.
+ */
+function get_media_embedded_in_content( $content, $types = null ) {
+	$html = array();
+
+	/**
+	 * Filter the embedded media types that are allowed to be returned from the content blob.
+	 *
+	 * @since 4.2.0
+	 *
+	 * @param array $allowed_media_types An array of allowed media types. Default media types are
+	 *                                   'audio', 'video', 'object', 'embed', and 'iframe'.
+	 */
+	$allowed_media_types = apply_filters( 'media_embedded_in_content_allowed_types', array( 'audio', 'video', 'object', 'embed', 'iframe' ) );
+
+	if ( ! empty( $types ) ) {
+		if ( ! is_array( $types ) ) {
+			$types = array( $types );
+		}
+
+		$allowed_media_types = array_intersect( $allowed_media_types, $types );
+	}
+
+	$tags = implode( '|', $allowed_media_types );
+
+	if ( preg_match_all( '#<(?P<tag>' . $tags . ')[^<]*?(?:>[\s\S]*?<\/(?P=tag)>|\s*\/>)#', $content, $matches ) ) {
+		foreach ( $matches[0] as $match ) {
+			$html[] = $match;
+		}
+	}
+
+	return $html;
+}
+
+/**
+ * Retrieves galleries from the passed post's content.
+ *
+ * @since 3.6.0
+ *
+ * @param int|WP_Post $post Post ID or object.
+ * @param bool        $html Optional. Whether to return HTML or data in the array. Default true.
+ * @return array A list of arrays, each containing gallery data and srcs parsed
+ *               from the expanded shortcode.
+ */
+function get_post_galleries( $post, $html = true ) {
+	if ( ! $post = get_post( $post ) )
+		return array();
+
+	if ( ! has_shortcode( $post->post_content, 'gallery' ) )
+		return array();
+
+	$galleries = array();
+	if ( preg_match_all( '/' . get_shortcode_regex() . '/s', $post->post_content, $matches, PREG_SET_ORDER ) ) {
+		foreach ( $matches as $shortcode ) {
+			if ( 'gallery' === $shortcode[2] ) {
+				$srcs = array();
+
+				$gallery = do_shortcode_tag( $shortcode );
+				if ( $html ) {
+					$galleries[] = $gallery;
+				} else {
+					preg_match_all( '#src=([\'"])(.+?)\1#is', $gallery, $src, PREG_SET_ORDER );
+					if ( ! empty( $src ) ) {
+						foreach ( $src as $s )
+							$srcs[] = $s[2];
+					}
+
+					$data = shortcode_parse_atts( $shortcode[3] );
+					$data['src'] = array_values( array_unique( $srcs ) );
+					$galleries[] = $data;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Filter the list of all found galleries in the given post.
+	 *
+	 * @since 3.6.0
+	 *
+	 * @param array   $galleries Associative array of all found post galleries.
+	 * @param WP_Post $post      Post object.
+	 */
+	return apply_filters( 'get_post_galleries', $galleries, $post );
+}
+
+/**
+ * Check a specified post's content for gallery and, if present, return the first
+ *
+ * @since 3.6.0
+ *
+ * @param int|WP_Post $post Optional. Post ID or WP_Post object. Default is global $post.
+ * @param bool        $html Optional. Whether to return HTML or data. Default is true.
+ * @return string|array Gallery data and srcs parsed from the expanded shortcode.
+ */
+function get_post_gallery( $post = 0, $html = true ) {
+	$galleries = get_post_galleries( $post, $html );
+	$gallery = reset( $galleries );
+
+	/**
+	 * Filter the first-found post gallery.
+	 *
+	 * @since 3.6.0
+	 *
+	 * @param array       $gallery   The first-found post gallery.
+	 * @param int|WP_Post $post      Post ID or object.
+	 * @param array       $galleries Associative array of all found post galleries.
+	 */
+	return apply_filters( 'get_post_gallery', $gallery, $post, $galleries );
+}
+
+/**
+ * Retrieve the image srcs from galleries from a post's content, if present
+ *
+ * @since 3.6.0
+ *
+ * @see get_post_galleries()
+ *
+ * @param int|WP_Post $post Optional. Post ID or WP_Post object. Default is global `$post`.
+ * @return array A list of lists, each containing image srcs parsed.
+ *               from an expanded shortcode
+ */
+function get_post_galleries_images( $post = 0 ) {
+	$galleries = get_post_galleries( $post, false );
+	return wp_list_pluck( $galleries, 'src' );
+}
+
+/**
+ * Checks a post's content for galleries and return the image srcs for the first found gallery
+ *
+ * @since 3.6.0
+ *
+ * @see get_post_gallery()
+ *
+ * @param int|WP_Post $post Optional. Post ID or WP_Post object. Default is global `$post`.
+ * @return array A list of a gallery's image srcs in order.
+ */
+function get_post_gallery_images( $post = 0 ) {
+	$gallery = get_post_gallery( $post, false );
+	return empty( $gallery['src'] ) ? array() : $gallery['src'];
+}
+
+/**
+ * Maybe attempts to generate attachment metadata, if missing.
+ *
+ * @since 3.9.0
+ *
+ * @param WP_Post $attachment Attachment object.
+ */
+function wp_maybe_generate_attachment_metadata( $attachment ) {
+	if ( empty( $attachment ) || ( empty( $attachment->ID ) || ! $attachment_id = (int) $attachment->ID ) ) {
+		return;
+	}
+
+	$file = get_attached_file( $attachment_id );
+	$meta = wp_get_attachment_metadata( $attachment_id );
+	if ( empty( $meta ) && file_exists( $file ) ) {
+		$_meta = get_post_meta( $attachment_id );
+		$regeneration_lock = 'wp_generating_att_' . $attachment_id;
+		if ( ! array_key_exists( '_wp_attachment_metadata', $_meta ) && ! get_transient( $regeneration_lock ) ) {
+			set_transient( $regeneration_lock, $file );
+			wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, $file ) );
+			delete_transient( $regeneration_lock );
+		}
+	}
+}
+
+/**
+ * Tries to convert an attachment URL into a post ID.
+ *
+ * @since 4.0.0
+ *
+ * @global wpdb $wpdb WordPress database abstraction object.
+ *
+ * @param string $url The URL to resolve.
+ * @return int The found post ID, or 0 on failure.
+ */
+function attachment_url_to_postid( $url ) {
+	global $wpdb;
+
+	$dir = wp_get_upload_dir();
+	$path = $url;
+
+	$site_url = parse_url( $dir['url'] );
+	$image_path = parse_url( $path );
+
+	//force the protocols to match if needed
+	if ( isset( $image_path['scheme'] ) && ( $image_path['scheme'] !== $site_url['scheme'] ) ) {
+		$path = str_replace( $image_path['scheme'], $site_url['scheme'], $path );
+	}
+
+	if ( 0 === strpos( $path, $dir['baseurl'] . '/' ) ) {
+		$path = substr( $path, strlen( $dir['baseurl'] . '/' ) );
+	}
+
+	$sql = $wpdb->prepare(
+		"SELECT post_id FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value = %s",
+		$path
+	);
+	$post_id = $wpdb->get_var( $sql );
+
+	/**
+	 * Filter an attachment id found by URL.
+	 *
+	 * @since 4.2.0
+	 *
+	 * @param int|null $post_id The post_id (if any) found by the function.
+	 * @param string   $url     The URL being looked up.
+	 */
+	return (int) apply_filters( 'attachment_url_to_postid', $post_id, $url );
+}
+
+/**
+ * Returns the URLs for CSS files used in an iframe-sandbox'd TinyMCE media view.
+ *
+ * @since 4.0.0
+ *
+ * @global string $wp_version
+ *
+ * @return array The relevant CSS file URLs.
+ */
+function wpview_media_sandbox_styles() {
+ 	$version = 'ver=' . $GLOBALS['wp_version'];
+ 	$mediaelement = includes_url( "js/mediaelement/mediaelementplayer.min.css?$version" );
+ 	$wpmediaelement = includes_url( "js/mediaelement/wp-mediaelement.css?$version" );
+
+	return array( $mediaelement, $wpmediaelement );
+}

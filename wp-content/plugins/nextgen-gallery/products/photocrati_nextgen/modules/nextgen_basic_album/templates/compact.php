@@ -36,3 +36,4 @@
     <br class="ngg-clear"/>
 </div>
 <?php $this->end_element(); ?>
+<?php $this->end_element(); ?>

@@ -160,3 +160,37 @@ do_meta_boxes(null, 'normal', $comment);
 try{document.post.name.focus();}catch(e){}
 </script>
 <?php endif;
+ documented in wp-admin/edit-form-advanced.php */
+do_action( 'add_meta_boxes', 'comment', $comment );
+
+/**
+ * Fires when comment-specific meta boxes are added.
+ *
+ * @since 3.0.0
+ *
+ * @param WP_Comment $comment Comment object.
+ */
+do_action( 'add_meta_boxes_comment', $comment );
+
+do_meta_boxes(null, 'normal', $comment);
+
+$referer = wp_get_referer();
+?>
+</div>
+
+<input type="hidden" name="c" value="<?php echo esc_attr($comment->comment_ID) ?>" />
+<input type="hidden" name="p" value="<?php echo esc_attr($comment->comment_post_ID) ?>" />
+<input name="referredby" type="hidden" id="referredby" value="<?php echo $referer ? esc_url( $referer ) : ''; ?>" />
+<?php wp_original_referer_field(true, 'previous'); ?>
+<input type="hidden" name="noredir" value="1" />
+
+</div><!-- /post-body -->
+</div>
+</div>
+</form>
+
+<?php if ( ! wp_is_mobile() ) : ?>
+<script type="text/javascript">
+try{document.post.name.focus();}catch(e){}
+</script>
+<?php endif;

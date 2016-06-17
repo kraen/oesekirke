@@ -271,3 +271,30 @@ echo apply_filters( 'default_avatar_select', $avatar_list );
 </div>
 
 <?php include( ABSPATH . 'wp-admin/admin-footer.php' ); ?>
+atar_list .= '<br />';
+}
+
+remove_filter( 'pre_option_show_avatars', '__return_true', 100 );
+
+/**
+ * Filter the HTML output of the default avatar list.
+ *
+ * @since 2.6.0
+ *
+ * @param string $avatar_list HTML markup of the avatar list.
+ */
+echo apply_filters( 'default_avatar_select', $avatar_list );
+?>
+
+</fieldset></td>
+</tr>
+<?php do_settings_fields('discussion', 'avatars'); ?>
+</table>
+
+<?php do_settings_sections('discussion'); ?>
+
+<?php submit_button(); ?>
+</form>
+</div>
+
+<?php include( ABSPATH . 'wp-admin/admin-footer.php' ); ?>

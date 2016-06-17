@@ -253,3 +253,25 @@ window.wp = window.wp || {};
 	// Expose the API publicly on window.wp.customize.Loader
 	api.Loader = Loader;
 })( wp, jQuery );
+Overlay hide/show utility methods.
+		 */
+		overlay: {
+			show: function() {
+				this.element.fadeIn( 200, Loader.opened );
+			},
+
+			hide: function() {
+				this.element.fadeOut( 200, Loader.closed );
+			}
+		}
+	});
+
+	// Bootstrap the Loader on document#ready.
+	$( function() {
+		Loader.settings = _wpCustomizeLoaderSettings;
+		Loader.initialize();
+	});
+
+	// Expose the API publicly on window.wp.customize.Loader
+	api.Loader = Loader;
+})( wp, jQuery );

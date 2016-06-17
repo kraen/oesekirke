@@ -80,3 +80,20 @@ add_filter( 'default_site_option_ms_files_rewriting', '__return_true' );
 
 // Whitelist multisite domains for HTTP requests
 add_filter( 'http_request_host_is_external', 'ms_allowed_http_request_hosts', 20, 2 );
+ion', '__return_false' );
+add_filter( 'force_filtered_html_on_import', '__return_true' );
+
+// WP_HOME and WP_SITEURL should not have any effect in MS
+remove_filter( 'option_siteurl', '_config_wp_siteurl' );
+remove_filter( 'option_home',    '_config_wp_home'    );
+
+// Some options changes should trigger blog details refresh.
+add_action( 'update_option_blogname',   'refresh_blog_details', 10, 0 );
+add_action( 'update_option_siteurl',    'refresh_blog_details', 10, 0 );
+add_action( 'update_option_post_count', 'refresh_blog_details', 10, 0 );
+
+// If the network upgrade hasn't run yet, assume ms-files.php rewriting is used.
+add_filter( 'default_site_option_ms_files_rewriting', '__return_true' );
+
+// Whitelist multisite domains for HTTP requests
+add_filter( 'http_request_host_is_external', 'ms_allowed_http_request_hosts', 20, 2 );

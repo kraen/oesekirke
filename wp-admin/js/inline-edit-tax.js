@@ -140,3 +140,41 @@ inlineEditTax = {
 
 $(document).ready(function(){inlineEditTax.init();});
 })(jQuery);
+aved );
+						});
+
+					} else {
+						$errorSpan.html( r ).show();
+						// Some error strings may contain HTML entities (e.g. `&#8220`), let's use the HTML element's text.
+						wp.a11y.speak( $errorSpan.text() );
+					}
+				} else {
+					$errorSpan.html( inlineEditL10n.error ).show();
+					wp.a11y.speak( inlineEditL10n.error );
+				}
+			}
+		);
+		// Prevent submitting the form when pressing Enter on a focused field.
+		return false;
+	},
+
+	revert : function() {
+		var id = $('table.widefat tr.inline-editor').attr('id');
+
+		if ( id ) {
+			$( 'table.widefat .spinner' ).removeClass( 'is-active' );
+			$('#'+id).siblings('tr.hidden').addBack().remove();
+			id = id.substr( id.lastIndexOf('-') + 1 );
+			// Show the taxonomy row and move focus back to the Quick Edit link.
+			$( this.what + id ).show().find( '.editinline' ).focus();
+		}
+	},
+
+	getId : function(o) {
+		var id = o.tagName === 'TR' ? o.id : $(o).parents('tr').attr('id'), parts = id.split('-');
+		return parts[parts.length - 1];
+	}
+};
+
+$(document).ready(function(){inlineEditTax.init();});
+})( jQuery, window.wp );

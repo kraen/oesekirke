@@ -115,3 +115,13 @@ do_action( 'rss_tag_pre', 'rss2' );
 	<?php endwhile; ?>
 </channel>
 </rss>
+ach RSS2 feed item.
+	 *
+	 * @since 2.0.0
+	 */
+	do_action( 'rss2_item' );
+	?>
+	</item>
+	<?php endwhile; ?>
+</channel>
+</rss>

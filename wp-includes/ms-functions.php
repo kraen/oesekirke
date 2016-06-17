@@ -2434,3 +2434,88 @@ function wp_get_sites( $args = array() ) {
 
 	return $site_results;
 }
+to limit the query to. Default 100.
+ *     @type int       $offset     Exclude the first x sites. Used in combination with the $limit parameter. Default 0.
+ * }
+ * @return array An empty array if the install is considered "large" via wp_is_large_network(). Otherwise,
+ *               an associative array of site data arrays, each containing the site (network) ID, blog ID,
+ *               site domain and path, dates registered and modified, and the language ID. Also, boolean
+ *               values for whether the site is public, archived, mature, spam, and/or deleted.
+ */
+function wp_get_sites( $args = array() ) {
+	global $wpdb;
+
+	if ( wp_is_large_network() )
+		return array();
+
+	$defaults = array(
+		'network_id' => $wpdb->siteid,
+		'public'     => null,
+		'archived'   => null,
+		'mature'     => null,
+		'spam'       => null,
+		'deleted'    => null,
+		'limit'      => 100,
+		'offset'     => 0,
+	);
+
+	$args = wp_parse_args( $args, $defaults );
+
+	$query = "SELECT * FROM $wpdb->blogs WHERE 1=1 ";
+
+	if ( isset( $args['network_id'] ) && ( is_array( $args['network_id'] ) || is_numeric( $args['network_id'] ) ) ) {
+		$network_ids = implode( ',', wp_parse_id_list( $args['network_id'] ) );
+		$query .= "AND site_id IN ($network_ids) ";
+	}
+
+	if ( isset( $args['public'] ) )
+		$query .= $wpdb->prepare( "AND public = %d ", $args['public'] );
+
+	if ( isset( $args['archived'] ) )
+		$query .= $wpdb->prepare( "AND archived = %d ", $args['archived'] );
+
+	if ( isset( $args['mature'] ) )
+		$query .= $wpdb->prepare( "AND mature = %d ", $args['mature'] );
+
+	if ( isset( $args['spam'] ) )
+		$query .= $wpdb->prepare( "AND spam = %d ", $args['spam'] );
+
+	if ( isset( $args['deleted'] ) )
+		$query .= $wpdb->prepare( "AND deleted = %d ", $args['deleted'] );
+
+	if ( isset( $args['limit'] ) && $args['limit'] ) {
+		if ( isset( $args['offset'] ) && $args['offset'] )
+			$query .= $wpdb->prepare( "LIMIT %d , %d ", $args['offset'], $args['limit'] );
+		else
+			$query .= $wpdb->prepare( "LIMIT %d ", $args['limit'] );
+	}
+
+	$site_results = $wpdb->get_results( $query, ARRAY_A );
+
+	return $site_results;
+}
+
+/**
+ * Retrieves a list of reserved site on a sub-directory Multisite install.
+ *
+ * @since 4.4.0
+ *
+ * @return array $names Array of reserved subdirectory names.
+ */
+function get_subdirectory_reserved_names() {
+	$names = array(
+		'page', 'comments', 'blog', 'files', 'feed', 'wp-admin',
+		'wp-content', 'wp-includes', 'wp-json', 'embed'
+	);
+
+	/**
+	 * Filter reserved site names on a sub-directory Multisite install.
+	 *
+	 * @since 3.0.0
+	 * @since 4.4.0 'wp-admin', 'wp-content', 'wp-includes', 'wp-json', and 'embed' were added
+	 *              to the reserved names list.
+	 *
+	 * @param array $subdirectory_reserved_names Array of reserved names.
+	 */
+	return apply_filters( 'subdirectory_reserved_names', $names );
+}

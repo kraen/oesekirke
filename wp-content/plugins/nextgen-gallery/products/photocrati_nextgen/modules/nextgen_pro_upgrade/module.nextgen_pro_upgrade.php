@@ -36,3 +36,14 @@ class M_NextGen_Pro_Upgrade extends C_Base_Module
 }
 
 new M_NextGen_Pro_Upgrade;
+list()
+    {
+        return array(
+            'A_NextGen_Pro_Upgrade_Controller' => 'adapter.nextgen_pro_upgrade_controller.php',
+            'A_NextGen_Pro_Plus_Upgrade_Page' => 'adapter.nextgen_pro_plus_upgrade_page.php',
+            'A_NextGen_Pro_Upgrade_Page' => 'adapter.nextgen_pro_upgrade_page.php'
+        );
+    }
+}
+
+new M_NextGen_Pro_Upgrade;

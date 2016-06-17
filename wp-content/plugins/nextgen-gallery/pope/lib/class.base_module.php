@@ -182,3 +182,17 @@ abstract class C_Base_Module extends C_Component
     function _register_adapters() {}
     function _register_utilities() {}
 }
+     // windows allows absolute paths like this
+        if (preg_match('#^[a-zA-Z]:\\\\#', $path))
+        {
+            return true;
+        }
+
+        // a path starting with / or \ is absolute; anything else is relative
+        return ($path[0] == '/' || $path[0] == '\\');
+    }
+
+    function _register_hooks() {}
+    function _register_adapters() {}
+    function _register_utilities() {}
+}

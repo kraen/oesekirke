@@ -243,3 +243,36 @@ function wp_widget_control( $sidebar_args ) {
 
 	return $sidebar_args;
 }
+type="hidden" name="add_new" class="add_new" value="<?php echo esc_attr($add_new); ?>" />
+
+	<div class="widget-control-actions">
+		<div class="alignleft">
+		<a class="widget-control-remove" href="#remove"><?php _e('Delete'); ?></a> |
+		<a class="widget-control-close" href="#close"><?php _e('Close'); ?></a>
+		</div>
+		<div class="alignright<?php if ( 'noform' === $has_form ) echo ' widget-control-noform'; ?>">
+			<?php submit_button( __( 'Save' ), 'button-primary widget-control-save right', 'savewidget', false, array( 'id' => 'widget-' . esc_attr( $id_format ) . '-savewidget' ) ); ?>
+			<span class="spinner"></span>
+		</div>
+		<br class="clear" />
+	</div>
+	<?php echo $after_form; ?>
+	</div>
+
+	<div class="widget-description">
+<?php echo ( $widget_description = wp_widget_description($widget_id) ) ? "$widget_description\n" : "$widget_title\n"; ?>
+	</div>
+<?php
+	echo $sidebar_args['after_widget'];
+
+	return $sidebar_args;
+}
+
+/**
+ *
+ * @param string $classes
+ * @return string
+ */
+function wp_widgets_access_body_class($classes) {
+	return "$classes widgets_access ";
+}

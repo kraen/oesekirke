@@ -89,3 +89,11 @@ Webmaster
 echo '</div>';
 
 include( ABSPATH . 'wp-admin/admin-footer.php' );
+ ?></strong></label></p>
+		<?php submit_button( __( 'Delete My Site Permanently' ) ); ?>
+	</form>
+ 	<?php
+}
+echo '</div>';
+
+include( ABSPATH . 'wp-admin/admin-footer.php' );

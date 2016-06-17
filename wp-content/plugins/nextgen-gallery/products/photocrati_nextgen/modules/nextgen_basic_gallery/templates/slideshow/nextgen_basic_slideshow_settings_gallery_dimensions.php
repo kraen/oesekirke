@@ -27,3 +27,4 @@
         <label for='<?php echo esc_attr($display_type_name); ?>_gallery_height'>h</label>
     </td>
 </tr>
+tr>

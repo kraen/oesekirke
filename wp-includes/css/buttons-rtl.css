@@ -362,3 +362,26 @@ TABLE OF CONTENTS:
 	}
 
 }
+px right margin to match all other buttons */
+	}
+
+	/* Reset responsive styles in Press This, Customizer */
+
+	.wp-core-ui.wp-customizer .button {
+		padding: 0 10px 1px;
+		font-size: 13px;
+		line-height: 26px;
+		height: 28px;
+		margin: 0;
+		vertical-align: inherit;
+	}
+
+	/* Reset responsive styles on Log in button on iframed login form */
+
+	.interim-login .button.button-large {
+		height: 30px;
+		line-height: 28px;
+		padding: 0 12px 2px;
+	}
+
+}

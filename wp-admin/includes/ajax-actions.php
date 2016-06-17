@@ -2799,3 +2799,500 @@ function wp_ajax_destroy_sessions() {
 
 	wp_send_json_success( array( 'message' => $message ) );
 }
+ {
+		$user = get_user_option( 'wporg_favorites' );
+		if ( $user ) {
+			$args['user'] = $user;
+		}
+	}
+
+	$old_filter = isset( $args['browse'] ) ? $args['browse'] : 'search';
+
+	/** This filter is documented in wp-admin/includes/class-wp-theme-install-list-table.php */
+	$args = apply_filters( 'install_themes_table_api_args_' . $old_filter, $args );
+
+	$api = themes_api( 'query_themes', $args );
+
+	if ( is_wp_error( $api ) ) {
+		wp_send_json_error();
+	}
+
+	$update_php = network_admin_url( 'update.php?action=install-theme' );
+	foreach ( $api->themes as &$theme ) {
+		$theme->install_url = add_query_arg( array(
+			'theme'    => $theme->slug,
+			'_wpnonce' => wp_create_nonce( 'install-theme_' . $theme->slug )
+		), $update_php );
+
+		$theme->name        = wp_kses( $theme->name, $themes_allowedtags );
+		$theme->author      = wp_kses( $theme->author, $themes_allowedtags );
+		$theme->version     = wp_kses( $theme->version, $themes_allowedtags );
+		$theme->description = wp_kses( $theme->description, $themes_allowedtags );
+		$theme->stars       = wp_star_rating( array( 'rating' => $theme->rating, 'type' => 'percent', 'number' => $theme->num_ratings, 'echo' => false ) );
+		$theme->num_ratings = number_format_i18n( $theme->num_ratings );
+		$theme->preview_url = set_url_scheme( $theme->preview_url );
+	}
+
+	wp_send_json_success( $api );
+}
+
+/**
+ * Apply [embed] AJAX handlers to a string.
+ *
+ * @since 4.0.0
+ *
+ * @global WP_Post    $post       Global $post.
+ * @global WP_Embed   $wp_embed   Embed API instance.
+ * @global WP_Scripts $wp_scripts
+ */
+function wp_ajax_parse_embed() {
+	global $post, $wp_embed;
+
+	if ( ! $post = get_post( (int) $_POST['post_ID'] ) ) {
+		wp_send_json_error();
+	}
+
+	if ( empty( $_POST['shortcode'] ) || ! current_user_can( 'edit_post', $post->ID ) ) {
+		wp_send_json_error();
+	}
+
+	$shortcode = wp_unslash( $_POST['shortcode'] );
+
+	preg_match( '/' . get_shortcode_regex() . '/s', $shortcode, $matches );
+	$atts = shortcode_parse_atts( $matches[3] );
+	if ( ! empty( $matches[5] ) ) {
+		$url = $matches[5];
+	} elseif ( ! empty( $atts['src'] ) ) {
+		$url = $atts['src'];
+	} else {
+		$url = '';
+	}
+
+	$parsed = false;
+	setup_postdata( $post );
+
+	$wp_embed->return_false_on_fail = true;
+
+	if ( is_ssl() && 0 === strpos( $url, 'http://' ) ) {
+		// Admin is ssl and the user pasted non-ssl URL.
+		// Check if the provider supports ssl embeds and use that for the preview.
+		$ssl_shortcode = preg_replace( '%^(\\[embed[^\\]]*\\])http://%i', '$1https://', $shortcode );
+		$parsed = $wp_embed->run_shortcode( $ssl_shortcode );
+
+		if ( ! $parsed ) {
+			$no_ssl_support = true;
+		}
+	}
+
+	if ( $url && ! $parsed ) {
+		$parsed = $wp_embed->run_shortcode( $shortcode );
+	}
+
+	if ( ! $parsed ) {
+		wp_send_json_error( array(
+			'type' => 'not-embeddable',
+			'message' => sprintf( __( '%s failed to embed.' ), '<code>' . esc_html( $url ) . '</code>' ),
+		) );
+	}
+
+	if ( has_shortcode( $parsed, 'audio' ) || has_shortcode( $parsed, 'video' ) ) {
+		$styles = '';
+		$mce_styles = wpview_media_sandbox_styles();
+		foreach ( $mce_styles as $style ) {
+			$styles .= sprintf( '<link rel="stylesheet" href="%s"/>', $style );
+		}
+
+		$html = do_shortcode( $parsed );
+
+		global $wp_scripts;
+		if ( ! empty( $wp_scripts ) ) {
+			$wp_scripts->done = array();
+		}
+		ob_start();
+		wp_print_scripts( 'wp-mediaelement' );
+		$scripts = ob_get_clean();
+
+		$parsed = $styles . $html . $scripts;
+	}
+
+
+	if ( ! empty( $no_ssl_support ) || ( is_ssl() && ( preg_match( '%<(iframe|script|embed) [^>]*src="http://%', $parsed ) ||
+		preg_match( '%<link [^>]*href="http://%', $parsed ) ) ) ) {
+		// Admin is ssl and the embed is not. Iframes, scripts, and other "active content" will be blocked.
+		wp_send_json_error( array(
+			'type' => 'not-ssl',
+			'message' => __( 'This preview is unavailable in the editor.' ),
+		) );
+	}
+
+	wp_send_json_success( array(
+		'body' => $parsed,
+		'attr' => $wp_embed->last_attr
+	) );
+}
+
+/**
+ * @since 4.0.0
+ *
+ * @global WP_Post    $post
+ * @global WP_Scripts $wp_scripts
+ */
+function wp_ajax_parse_media_shortcode() {
+	global $post, $wp_scripts;
+
+	if ( empty( $_POST['shortcode'] ) ) {
+		wp_send_json_error();
+	}
+
+	$shortcode = wp_unslash( $_POST['shortcode'] );
+
+	if ( ! empty( $_POST['post_ID'] ) ) {
+		$post = get_post( (int) $_POST['post_ID'] );
+	}
+
+	// the embed shortcode requires a post
+	if ( ! $post || ! current_user_can( 'edit_post', $post->ID ) ) {
+		if ( 'embed' === $shortcode ) {
+			wp_send_json_error();
+		}
+	} else {
+		setup_postdata( $post );
+	}
+
+	$parsed = do_shortcode( $shortcode  );
+
+	if ( empty( $parsed ) ) {
+		wp_send_json_error( array(
+			'type' => 'no-items',
+			'message' => __( 'No items found.' ),
+		) );
+	}
+
+	$head = '';
+	$styles = wpview_media_sandbox_styles();
+
+	foreach ( $styles as $style ) {
+		$head .= '<link type="text/css" rel="stylesheet" href="' . $style . '">';
+	}
+
+	if ( ! empty( $wp_scripts ) ) {
+		$wp_scripts->done = array();
+	}
+
+	ob_start();
+
+	echo $parsed;
+
+	if ( 'playlist' === $_REQUEST['type'] ) {
+		wp_underscore_playlist_templates();
+
+		wp_print_scripts( 'wp-playlist' );
+	} else {
+		wp_print_scripts( array( 'froogaloop', 'wp-mediaelement' ) );
+	}
+
+	wp_send_json_success( array(
+		'head' => $head,
+		'body' => ob_get_clean()
+	) );
+}
+
+/**
+ * AJAX handler for destroying multiple open sessions for a user.
+ *
+ * @since 4.1.0
+ */
+function wp_ajax_destroy_sessions() {
+	$user = get_userdata( (int) $_POST['user_id'] );
+	if ( $user ) {
+		if ( ! current_user_can( 'edit_user', $user->ID ) ) {
+			$user = false;
+		} elseif ( ! wp_verify_nonce( $_POST['nonce'], 'update-user_' . $user->ID ) ) {
+			$user = false;
+		}
+	}
+
+	if ( ! $user ) {
+		wp_send_json_error( array(
+			'message' => __( 'Could not log out user sessions. Please try again.' ),
+		) );
+	}
+
+	$sessions = WP_Session_Tokens::get_instance( $user->ID );
+
+	if ( $user->ID === get_current_user_id() ) {
+		$sessions->destroy_others( wp_get_session_token() );
+		$message = __( 'You are now logged out everywhere else.' );
+	} else {
+		$sessions->destroy_all();
+		/* translators: 1: User's display name. */
+		$message = sprintf( __( '%s has been logged out.' ), $user->display_name );
+	}
+
+	wp_send_json_success( array( 'message' => $message ) );
+}
+
+
+/**
+ * AJAX handler for updating a plugin.
+ *
+ * @since 4.2.0
+ *
+ * @see Plugin_Upgrader
+ */
+function wp_ajax_update_plugin() {
+	global $wp_filesystem;
+
+	$plugin = urldecode( $_POST['plugin'] );
+
+	$status = array(
+		'update'     => 'plugin',
+		'plugin'     => $plugin,
+		'slug'       => sanitize_key( $_POST['slug'] ),
+		'oldVersion' => '',
+		'newVersion' => '',
+	);
+
+	$plugin_data = get_plugin_data( WP_PLUGIN_DIR . '/' . $plugin );
+	if ( $plugin_data['Version'] ) {
+		$status['oldVersion'] = sprintf( __( 'Version %s' ), $plugin_data['Version'] );
+	}
+
+	if ( ! current_user_can( 'update_plugins' ) ) {
+		$status['error'] = __( 'You do not have sufficient permissions to update plugins for this site.' );
+ 		wp_send_json_error( $status );
+	}
+
+	check_ajax_referer( 'updates' );
+
+	include_once( ABSPATH . 'wp-admin/includes/class-wp-upgrader.php' );
+
+	wp_update_plugins();
+
+	$skin = new Automatic_Upgrader_Skin();
+	$upgrader = new Plugin_Upgrader( $skin );
+	$result = $upgrader->bulk_upgrade( array( $plugin ) );
+
+	if ( is_array( $result ) && empty( $result[$plugin] ) && is_wp_error( $skin->result ) ) {
+		$result = $skin->result;
+	}
+
+	if ( is_array( $result ) && !empty( $result[ $plugin ] ) ) {
+		$plugin_update_data = current( $result );
+
+		/*
+		 * If the `update_plugins` site transient is empty (e.g. when you update
+		 * two plugins in quick succession before the transient repopulates),
+		 * this may be the return.
+		 *
+		 * Preferably something can be done to ensure `update_plugins` isn't empty.
+		 * For now, surface some sort of error here.
+		 */
+		if ( $plugin_update_data === true ) {
+			$status['error'] = __( 'Plugin update failed.' );
+ 			wp_send_json_error( $status );
+		}
+
+		$plugin_data = get_plugins( '/' . $result[ $plugin ]['destination_name'] );
+		$plugin_data = reset( $plugin_data );
+
+		if ( $plugin_data['Version'] ) {
+			$status['newVersion'] = sprintf( __( 'Version %s' ), $plugin_data['Version'] );
+		}
+
+		wp_send_json_success( $status );
+	} else if ( is_wp_error( $result ) ) {
+		$status['error'] = $result->get_error_message();
+ 		wp_send_json_error( $status );
+
+ 	} else if ( is_bool( $result ) && ! $result ) {
+		$status['errorCode'] = 'unable_to_connect_to_filesystem';
+		$status['error'] = __( 'Unable to connect to the filesystem. Please confirm your credentials.' );
+
+		// Pass through the error from WP_Filesystem if one was raised
+		if ( is_wp_error( $wp_filesystem->errors ) && $wp_filesystem->errors->get_error_code() ) {
+			$status['error'] = $wp_filesystem->errors->get_error_message();
+		}
+
+		wp_send_json_error( $status );
+
+	} else {
+		// An unhandled error occured
+		$status['error'] = __( 'Plugin update failed.' );
+		wp_send_json_error( $status );
+	}
+}
+
+/**
+ * AJAX handler for saving a post from Press This.
+ *
+ * @since 4.2.0
+ *
+ * @global WP_Press_This $wp_press_this
+ */
+function wp_ajax_press_this_save_post() {
+	if ( empty( $GLOBALS['wp_press_this'] ) ) {
+		include( ABSPATH . 'wp-admin/includes/class-wp-press-this.php' );
+	}
+
+	$GLOBALS['wp_press_this']->save_post();
+}
+
+/**
+ * AJAX handler for creating new category from Press This.
+ *
+ * @since 4.2.0
+ *
+ * @global WP_Press_This $wp_press_this
+ */
+function wp_ajax_press_this_add_category() {
+	if ( empty( $GLOBALS['wp_press_this'] ) ) {
+		include( ABSPATH . 'wp-admin/includes/class-wp-press-this.php' );
+	}
+
+	$GLOBALS['wp_press_this']->add_category();
+}
+
+/**
+ * AJAX handler for cropping an image.
+ *
+ * @since 4.3.0
+ *
+ * @global WP_Site_Icon $wp_site_icon
+ */
+function wp_ajax_crop_image() {
+	$attachment_id = absint( $_POST['id'] );
+
+	check_ajax_referer( 'image_editor-' . $attachment_id, 'nonce' );
+	if ( ! current_user_can( 'customize' ) ) {
+		wp_send_json_error();
+	}
+
+	$context = str_replace( '_', '-', $_POST['context'] );
+	$data    = array_map( 'absint', $_POST['cropDetails'] );
+	$cropped = wp_crop_image( $attachment_id, $data['x1'], $data['y1'], $data['width'], $data['height'], $data['dst_width'], $data['dst_height'] );
+
+	if ( ! $cropped || is_wp_error( $cropped ) ) {
+		wp_send_json_error( array( 'message' => __( 'Image could not be processed.' ) ) );
+	}
+
+	switch ( $context ) {
+		case 'site-icon':
+			require_once ABSPATH . '/wp-admin/includes/class-wp-site-icon.php';
+			global $wp_site_icon;
+
+			// Skip creating a new attachment if the attachment is a Site Icon.
+			if ( get_post_meta( $attachment_id, '_wp_attachment_context', true ) == $context ) {
+
+				// Delete the temporary cropped file, we don't need it.
+				wp_delete_file( $cropped );
+
+				// Additional sizes in wp_prepare_attachment_for_js().
+				add_filter( 'image_size_names_choose', array( $wp_site_icon, 'additional_sizes' ) );
+				break;
+			}
+
+			/** This filter is documented in wp-admin/custom-header.php */
+			$cropped = apply_filters( 'wp_create_file_in_uploads', $cropped, $attachment_id ); // For replication.
+			$object  = $wp_site_icon->create_attachment_object( $cropped, $attachment_id );
+			unset( $object['ID'] );
+
+			// Update the attachment.
+			add_filter( 'intermediate_image_sizes_advanced', array( $wp_site_icon, 'additional_sizes' ) );
+			$attachment_id = $wp_site_icon->insert_attachment( $object, $cropped );
+			remove_filter( 'intermediate_image_sizes_advanced', array( $wp_site_icon, 'additional_sizes' ) );
+
+			// Additional sizes in wp_prepare_attachment_for_js().
+			add_filter( 'image_size_names_choose', array( $wp_site_icon, 'additional_sizes' ) );
+			break;
+
+		default:
+
+			/**
+			 * Fires before a cropped image is saved.
+			 *
+			 * Allows to add filters to modify the way a cropped image is saved.
+			 *
+			 * @since 4.3.0
+			 *
+			 * @param string $context       The Customizer control requesting the cropped image.
+			 * @param int    $attachment_id The attachment ID of the original image.
+			 * @param string $cropped       Path to the cropped image file.
+			 */
+			do_action( 'wp_ajax_crop_image_pre_save', $context, $attachment_id, $cropped );
+
+			/** This filter is documented in wp-admin/custom-header.php */
+			$cropped = apply_filters( 'wp_create_file_in_uploads', $cropped, $attachment_id ); // For replication.
+
+			$parent_url = wp_get_attachment_url( $attachment_id );
+			$url        = str_replace( basename( $parent_url ), basename( $cropped ), $parent_url );
+
+			$size       = @getimagesize( $cropped );
+			$image_type = ( $size ) ? $size['mime'] : 'image/jpeg';
+
+			$object = array(
+				'post_title'     => basename( $cropped ),
+				'post_content'   => $url,
+				'post_mime_type' => $image_type,
+				'guid'           => $url,
+				'context'        => $context,
+			);
+
+			$attachment_id = wp_insert_attachment( $object, $cropped );
+			$metadata = wp_generate_attachment_metadata( $attachment_id, $cropped );
+
+			/**
+			 * Filter the cropped image attachment metadata.
+			 *
+			 * @since 4.3.0
+			 *
+			 * @see wp_generate_attachment_metadata()
+			 *
+			 * @param array $metadata Attachment metadata.
+			 */
+			$metadata = apply_filters( 'wp_ajax_cropped_attachment_metadata', $metadata );
+			wp_update_attachment_metadata( $attachment_id, $metadata );
+
+			/**
+			 * Filter the attachment ID for a cropped image.
+			 *
+			 * @since 4.3.0
+			 *
+			 * @param int    $attachment_id The attachment ID of the cropped image.
+			 * @param string $context       The Customizer control requesting the cropped image.
+			 */
+			$attachment_id = apply_filters( 'wp_ajax_cropped_attachment_id', $attachment_id, $context );
+	}
+
+	wp_send_json_success( wp_prepare_attachment_for_js( $attachment_id ) );
+}
+
+/**
+ * Ajax handler for generating a password.
+ *
+ * @since 4.4.0
+ */
+function wp_ajax_generate_password() {
+	wp_send_json_success( wp_generate_password( 24 ) );
+}
+
+/**
+ * Ajax handler for saving the user's WordPress.org username.
+ *
+ * @since 4.4.0
+ */
+function wp_ajax_save_wporg_username() {
+	if ( ! current_user_can( 'install_themes' ) && ! current_user_can( 'install_plugins' ) ) {
+		wp_send_json_error();
+	}
+
+	check_ajax_referer( 'save_wporg_username_' . get_current_user_id() );
+
+	$username = isset( $_REQUEST['username'] ) ? wp_unslash( $_REQUEST['username'] ) : false;
+
+	if ( ! $username ) {
+		wp_send_json_error();
+	}
+
+	wp_send_json_success( update_user_meta( get_current_user_id(), 'wporg_favorites', $username ) );
+}

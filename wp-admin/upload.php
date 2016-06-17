@@ -290,3 +290,29 @@ if ( !empty($message) ) { ?>
 
 <?php
 include( ABSPATH . 'wp-admin/admin-footer.php' );
+ saving media file.' );
+$messages[4] = __( 'Media file moved to the trash.' ) . ' <a href="' . esc_url( wp_nonce_url( 'upload.php?doaction=undo&action=untrash&ids='.(isset($_GET['ids']) ? $_GET['ids'] : ''), "bulk-media" ) ) . '">' . __( 'Undo' ) . '</a>';
+$messages[5] = __( 'Media file restored from the trash.' );
+
+if ( ! empty( $_GET['message'] ) && isset( $messages[ $_GET['message'] ] ) ) {
+	$message = $messages[ $_GET['message'] ];
+	$_SERVER['REQUEST_URI'] = remove_query_arg(array('message'), $_SERVER['REQUEST_URI']);
+}
+
+if ( !empty($message) ) { ?>
+<div id="message" class="updated notice is-dismissible"><p><?php echo $message; ?></p></div>
+<?php } ?>
+
+<form id="posts-filter" method="get">
+
+<?php $wp_list_table->views(); ?>
+
+<?php $wp_list_table->display(); ?>
+
+<div id="ajax-response"></div>
+<?php find_posts_div(); ?>
+</form>
+</div>
+
+<?php
+include( ABSPATH . 'wp-admin/admin-footer.php' );

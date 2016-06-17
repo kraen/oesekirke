@@ -886,3 +886,84 @@ window.wp = window.wp || {};
 	} ) );
 
 }(jQuery));
+: function() {
+			this.getNodes( function( editor, node, content ) {
+				var win = $( 'iframe.wpview-sandbox', content ).get( 0 );
+
+				if ( win && ( win = win.contentWindow ) && win.mejs ) {
+					_.each( win.mejs.players, function( player ) {
+						try {
+							player.pause();
+						} catch ( e ) {}
+					} );
+				}
+			} );
+		}
+	} );
+
+	embed = _.extend( {}, av, {
+		action: 'parse-embed',
+
+		edit: function( text, update ) {
+			var frame = media.embed.edit( text, this.url ),
+				self = this;
+
+			this.pausePlayers();
+
+			frame.state( 'embed' ).props.on( 'change:url', function( model, url ) {
+				if ( url && model.get( 'url' ) ) {
+					frame.state( 'embed' ).metadata = model.toJSON();
+				}
+			} );
+
+			frame.state( 'embed' ).on( 'select', function() {
+				var data = frame.state( 'embed' ).metadata;
+
+				if ( self.url ) {
+					update( data.url );
+				} else {
+					update( media.embed.shortcode( data ).string() );
+				}
+			} );
+
+			frame.on( 'close', function() {
+				frame.detach();
+			} );
+
+			frame.open();
+		}
+	} );
+
+	views.register( 'gallery', _.extend( {}, gallery ) );
+
+	views.register( 'audio', _.extend( {}, av, {
+		state: [ 'audio-details' ]
+	} ) );
+
+	views.register( 'video', _.extend( {}, av, {
+		state: [ 'video-details' ]
+	} ) );
+
+	views.register( 'playlist', _.extend( {}, av, {
+		state: [ 'playlist-edit', 'video-playlist-edit' ]
+	} ) );
+
+	views.register( 'embed', _.extend( {}, embed ) );
+
+	views.register( 'embedURL', _.extend( {}, embed, {
+		match: function( content ) {
+			var re = /(^|<p>)(https?:\/\/[^\s"]+?)(<\/p>\s*|$)/gi,
+				match = re.exec( content );
+
+			if ( match ) {
+				return {
+					index: match.index + match[1].length,
+					content: match[2],
+					options: {
+						url: true
+					}
+				};
+			}
+		}
+	} ) );
+} )( window, window.wp.mce.views, window.wp.media, window.jQuery );

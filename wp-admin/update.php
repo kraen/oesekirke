@@ -270,3 +270,14 @@ if ( isset($_GET['action']) ) {
 		do_action( "update-custom_{$action}" );
 	}
 }
+ved.
+		 *
+		 * The dynamic portion of the hook name, `$action`, refers to the action
+		 * provided in the request for wp-admin/update.php. Can be used to
+		 * provide custom update functionality for themes and plugins.
+		 *
+		 * @since 2.8.0
+		 */
+		do_action( "update-custom_{$action}" );
+	}
+}

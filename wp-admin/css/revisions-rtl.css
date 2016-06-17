@@ -574,3 +574,28 @@ div.revisions-controls > .wp-slider > .ui-slider-handle {
 		word-wrap: break-word;
 	}
 }
+------------------------------------------------------ */
+
+/**
+ * HiDPI Displays
+ */
+@media print,
+  (-webkit-min-device-pixel-ratio: 1.25),
+  (min-resolution: 120dpi) {
+	.revision-tick.completed-false {
+		background-image: url(../images/spinner-2x.gif);
+	}
+}
+
+@media screen and ( max-width: 782px ) {
+	#diff-next-revision,
+	#diff-previous-revision {
+		margin-top: -1em;
+	}
+
+	table.diff {
+		-ms-word-break: break-all;
+		word-break: break-all;
+		word-wrap: break-word;
+	}
+}

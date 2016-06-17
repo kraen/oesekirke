@@ -258,3 +258,10 @@ function wp_script_is( $handle, $list = 'enqueued' ) {
 
 	return (bool) $wp_scripts->query( $handle, $list );
 }
+ for which we're storing a value.
+ * @param mixed  $value  String containing the data to be added.
+ * @return bool True on success, false on failure.
+ */
+function wp_script_add_data( $handle, $key, $value ){
+	return wp_scripts()->add_data( $handle, $key, $value );
+}

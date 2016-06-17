@@ -509,3 +509,70 @@ class WP_Terms_List_Table extends WP_List_Table {
 	<?php
 	}
 }
+ring $string      Blank string.
+		 * @param string $column_name Name of the column.
+		 * @param int    $term_id     Term ID.
+		 */
+		return apply_filters( "manage_{$this->screen->taxonomy}_custom_column", '', $column_name, $tag->term_id );
+	}
+
+	/**
+	 * Outputs the hidden row displayed when inline editing
+	 *
+	 * @since 3.1.0
+	 */
+	public function inline_edit() {
+		$tax = get_taxonomy( $this->screen->taxonomy );
+
+		if ( ! current_user_can( $tax->cap->edit_terms ) )
+			return;
+?>
+
+	<form method="get"><table style="display: none"><tbody id="inlineedit">
+		<tr id="inline-edit" class="inline-edit-row" style="display: none"><td colspan="<?php echo $this->get_column_count(); ?>" class="colspanchange">
+
+			<fieldset>
+				<legend class="inline-edit-legend"><?php _e( 'Quick Edit' ); ?></legend>
+				<div class="inline-edit-col">
+				<label>
+					<span class="title"><?php _ex( 'Name', 'term name' ); ?></span>
+					<span class="input-text-wrap"><input type="text" name="name" class="ptitle" value="" /></span>
+				</label>
+	<?php if ( !global_terms_enabled() ) { ?>
+				<label>
+					<span class="title"><?php _e( 'Slug' ); ?></span>
+					<span class="input-text-wrap"><input type="text" name="slug" class="ptitle" value="" /></span>
+				</label>
+	<?php } ?>
+			</div></fieldset>
+	<?php
+
+		$core_columns = array( 'cb' => true, 'description' => true, 'name' => true, 'slug' => true, 'posts' => true );
+
+		list( $columns ) = $this->get_column_info();
+
+		foreach ( $columns as $column_name => $column_display_name ) {
+			if ( isset( $core_columns[$column_name] ) )
+				continue;
+
+			/** This action is documented in wp-admin/includes/class-wp-posts-list-table.php */
+			do_action( 'quick_edit_custom_box', $column_name, 'edit-tags', $this->screen->taxonomy );
+		}
+
+	?>
+
+		<p class="inline-edit-save submit">
+			<button type="button" class="cancel button-secondary alignleft"><?php _e( 'Cancel' ); ?></button>
+			<button type="button" class="save button-primary alignright"><?php echo $tax->labels->update_item; ?></button>
+			<span class="spinner"></span>
+			<span class="error" style="display:none;"></span>
+			<?php wp_nonce_field( 'taxinlineeditnonce', '_inline_edit', false ); ?>
+			<input type="hidden" name="taxonomy" value="<?php echo esc_attr( $this->screen->taxonomy ); ?>" />
+			<input type="hidden" name="post_type" value="<?php echo esc_attr( $this->screen->post_type ); ?>" />
+			<br class="clear" />
+		</p>
+		</td></tr>
+		</tbody></table></form>
+	<?php
+	}
+}

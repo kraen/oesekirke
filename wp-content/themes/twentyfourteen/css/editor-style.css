@@ -715,3 +715,11 @@ html .mceContentBody.rtl {
 .rtl td {
 	text-align: right;
 }
+wp-caption,
+.rtl tr th {
+	text-align: right;
+}
+
+.rtl td {
+	text-align: right;
+}

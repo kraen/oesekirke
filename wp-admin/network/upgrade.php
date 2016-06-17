@@ -118,3 +118,14 @@ switch ( $action ) {
 </div>
 
 <?php include( ABSPATH . 'wp-admin/admin-footer.php' ); ?>
+ork upgrade screen.
+		 *
+		 * @since MU
+		 */
+		do_action( 'wpmu_upgrade_page' );
+	break;
+}
+?>
+</div>
+
+<?php include( ABSPATH . 'wp-admin/admin-footer.php' ); ?>

@@ -73,3 +73,6 @@
                data-default-color='<?php print esc_attr($font_color); ?>'/>
 	</td>
 </tr>
+tr($font_color); ?>'/>
+	</td>
+</tr>

@@ -457,3 +457,93 @@ class WP_Users_List_Table extends WP_List_Table {
 		return $r;
 	}
 }
+ .= "$user_object->first_name $user_object->last_name";
+						break;
+					case 'email':
+						$r .= "<a href='" . esc_url( "mailto:$email" ) . "'>$email</a>";
+						break;
+					case 'role':
+						$r .= esc_html( $roles_list );
+						break;
+					case 'posts':
+						if ( $numposts > 0 ) {
+							$r .= "<a href='edit.php?author=$user_object->ID' class='edit'>";
+							$r .= '<span aria-hidden="true">' . $numposts . '</span>';
+							$r .= '<span class="screen-reader-text">' . sprintf( _n( '%s post by this author', '%s posts by this author', $numposts ), number_format_i18n( $numposts ) ) . '</span>';
+							$r .= '</a>';
+						} else {
+							$r .= 0;
+						}
+						break;
+					default:
+						/**
+						 * Filter the display output of custom columns in the Users list table.
+						 *
+						 * @since 2.8.0
+						 *
+						 * @param string $output      Custom column output. Default empty.
+						 * @param string $column_name Column name.
+						 * @param int    $user_id     ID of the currently-listed user.
+						 */
+						$r .= apply_filters( 'manage_users_custom_column', '', $column_name, $user_object->ID );
+				}
+
+				if ( $primary === $column_name ) {
+					$r .= $this->row_actions( $actions );
+				}
+				$r .= "</td>";
+			}
+		}
+		$r .= '</tr>';
+
+		return $r;
+	}
+
+	/**
+	 * Gets the name of the default primary column.
+	 *
+	 * @since 4.3.0
+	 * @access protected
+	 *
+	 * @return string Name of the default primary column, in this case, 'username'.
+	 */
+	protected function get_default_primary_column_name() {
+		return 'username';
+	}
+
+	/**
+	 * Returns an array of user roles for a given user object.
+	 *
+	 * @since 4.4.0
+	 * @access protected
+	 *
+	 * @param WP_User $user_object The WP_User object.
+	 * @return array An array of user roles.
+	 */
+	protected function get_role_list( $user_object ) {
+		$wp_roles = wp_roles();
+
+		$role_list = array();
+
+		foreach ( $user_object->roles as $role ) {
+			if ( isset( $wp_roles->role_names[ $role ] ) ) {
+				$role_list[ $role ] = translate_user_role( $wp_roles->role_names[ $role ] );
+			}
+		}
+
+		if ( empty( $role_list ) ) {
+			$role_list['none'] = _x( 'None', 'no user roles' );
+		}
+
+		/**
+		 * Filter the returned array of roles for a user.
+		 *
+		 * @since 4.4.0
+		 *
+		 * @param array   $role_list   An array of user roles.
+		 * @param WP_User $user_object A WP_User object.
+		 */
+		return apply_filters( 'get_role_list', $role_list, $user_object );
+	}
+
+}

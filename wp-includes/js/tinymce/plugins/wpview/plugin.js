@@ -716,3 +716,10 @@ tinymce.PluginManager.add( 'wpview', function( editor ) {
 		getView: getView
 	};
 });
+editor.wp.setViewCursor = setViewCursor;
+
+	// Keep for back-compat.
+	return {
+		getView: getView
+	};
+});

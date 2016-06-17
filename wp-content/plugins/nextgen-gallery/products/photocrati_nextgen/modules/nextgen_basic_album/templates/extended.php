@@ -20,3 +20,4 @@
     <?php } ?>
 </div>
 <?php $this->end_element(); ?>
+?php $this->end_element(); ?>

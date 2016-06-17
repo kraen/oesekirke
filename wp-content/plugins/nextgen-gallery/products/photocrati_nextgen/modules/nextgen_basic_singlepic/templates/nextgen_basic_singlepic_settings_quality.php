@@ -15,3 +15,4 @@
                value='<?php echo esc_attr($quality); ?>'>
     </td>
 </tr>
+tr>

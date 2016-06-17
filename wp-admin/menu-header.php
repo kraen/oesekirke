@@ -236,3 +236,39 @@ do_action( 'adminmenu' );
 ?>
 </ul>
 </div>
+cho "<li$class><a href='{$sub_item[2]}'$class>$title</a></li>";
+				}
+			}
+			echo "</ul>";
+		}
+		echo "</li>";
+	}
+
+	echo '<li id="collapse-menu" class="hide-if-no-js"><div id="collapse-button"><div></div></div>';
+	echo '<span>' . esc_html__( 'Collapse menu' ) . '</span>';
+	echo '</li>';
+}
+
+?>
+
+<div id="adminmenumain" role="navigation" aria-label="<?php esc_attr_e( 'Main menu' ); ?>">
+<a href="#wpbody-content" class="screen-reader-shortcut"><?php _e( 'Skip to main content' ); ?></a>
+<a href="#wp-toolbar" class="screen-reader-shortcut"><?php _e( 'Skip to toolbar' ); ?></a>
+<div id="adminmenuback"></div>
+<div id="adminmenuwrap">
+<ul id="adminmenu">
+
+<?php
+
+_wp_menu_output( $menu, $submenu );
+/**
+ * Fires after the admin menu has been output.
+ *
+ * @since 2.5.0
+ */
+do_action( 'adminmenu' );
+
+?>
+</ul>
+</div>
+</div>

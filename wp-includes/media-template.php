@@ -1233,3 +1233,58 @@ function wp_print_media_templates() {
 	 */
 	do_action( 'print_media_templates' );
 }
+nail.url }}" width="{{ attachment.thumbnail.width }}" height="{{ attachment.thumbnail.height }}" alt="" />
+							<# } else { #>
+								<img src="{{ attachment.url }}" alt="" />
+							<# } #>
+						</dt>
+						<# if ( attachment.caption ) { #>
+							<dd class="wp-caption-text gallery-caption">
+								{{{ data.verifyHTML( attachment.caption ) }}}
+							</dd>
+						<# } #>
+					</dl>
+					<# if ( index % data.columns === data.columns - 1 ) { #>
+						<br style="clear: both;">
+					<# } #>
+				<# } ); #>
+			</div>
+		<# } else { #>
+			<div class="wpview-error">
+				<div class="dashicons dashicons-format-gallery"></div><p><?php _e( 'No items found.' ); ?></p>
+			</div>
+		<# } #>
+	</script>
+
+	<script type="text/html" id="tmpl-crop-content">
+		<img class="crop-image" src="{{ data.url }}" alt="">
+		<div class="upload-errors"></div>
+	</script>
+
+	<script type="text/html" id="tmpl-site-icon-preview">
+		<h2><?php _e( 'Preview' ); ?></h2>
+		<strong><?php _e( 'As a browser icon' ); ?></strong>
+		<div class="favicon-preview">
+			<img src="images/browser.png" class="browser-preview" width="182" height="" alt="" />
+
+			<div class="favicon">
+				<img id="preview-favicon" src="{{ data.url }}" alt="<?php esc_attr_e( 'Preview as a browser icon' ); ?>"/>
+			</div>
+			<span class="browser-title"><?php bloginfo( 'name' ); ?></span>
+		</div>
+
+		<strong><?php _e( 'As an app icon' ); ?></strong>
+		<div class="app-icon-preview">
+			<img id="preview-app-icon" src="{{ data.url }}" alt="<?php esc_attr_e( 'Preview as an app icon' ); ?>"/>
+		</div>
+	</script>
+
+	<?php
+
+	/**
+	 * Fires when the custom Backbone media templates are printed.
+	 *
+	 * @since 3.5.0
+	 */
+	do_action( 'print_media_templates' );
+}

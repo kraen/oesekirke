@@ -189,4 +189,8 @@ class C_NextGen_Shortcode_Manager
 
 		return $retval;
 	}
+}shortcode], $params, $inner_content);
+
+		return $retval;
+	}
 }

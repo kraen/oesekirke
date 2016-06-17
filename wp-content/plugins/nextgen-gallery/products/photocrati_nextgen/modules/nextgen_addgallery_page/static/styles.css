@@ -38,3 +38,12 @@
     font-size: 16px;
     color: silver;
 }
+
+.plupload_droptext {
+    font-size: 16px;
+    color: silver;
+}
+
+#gritter-notice-wrapper a {
+    color: #00b9eb;
+}

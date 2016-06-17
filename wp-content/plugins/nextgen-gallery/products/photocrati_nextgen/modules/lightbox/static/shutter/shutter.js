@@ -296,4 +296,23 @@ if (typeof shutterOnload == 'function') {
 	if ('undefined' != typeof jQuery) jQuery(document).ready(function(){shutterOnload();});
 	else if( typeof window.onload != 'function' ) window.onload = shutterOnload;
 	else {oldonld = window.onload;window.onload = function(){if(oldonld){oldonld();};shutterOnload();}};
+}tch (code) {
+		    case 39:
+			if (prevlink) prevlink.onclick();
+			break;
+		    case 37:
+			if (nextlink) nextlink.onclick();
+			break;
+		    case 27:
+			if (closelink) closelink.onclick();
+			break;
+		 }
+	}
+};
+shutterOnload = function(){shutterReloaded.init('sh');};
+
+if (typeof shutterOnload == 'function') {
+	if ('undefined' != typeof jQuery) jQuery(document).ready(function(){shutterOnload();});
+	else if( typeof window.onload != 'function' ) window.onload = shutterOnload;
+	else {oldonld = window.onload;window.onload = function(){if(oldonld){oldonld();};shutterOnload();}};
 }

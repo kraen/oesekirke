@@ -512,3 +512,274 @@ class WP_Image_Editor_Imagick extends WP_Image_Editor {
 		return true;
 	}
 }
+>image->destroy();
+				$this->image = null;
+
+				if ( ! is_wp_error( $resized ) && $resized ) {
+					unset( $resized['path'] );
+					$metadata[$size] = $resized;
+				}
+			}
+
+			$this->size = $orig_size;
+		}
+
+		$this->image = $orig_image;
+
+		return $metadata;
+	}
+
+	/**
+	 * Crops Image.
+	 *
+	 * @since 3.5.0
+	 * @access public
+	 *
+	 * @param int  $src_x The start x position to crop from.
+	 * @param int  $src_y The start y position to crop from.
+	 * @param int  $src_w The width to crop.
+	 * @param int  $src_h The height to crop.
+	 * @param int  $dst_w Optional. The destination width.
+	 * @param int  $dst_h Optional. The destination height.
+	 * @param bool $src_abs Optional. If the source crop points are absolute.
+	 * @return bool|WP_Error
+	 */
+	public function crop( $src_x, $src_y, $src_w, $src_h, $dst_w = null, $dst_h = null, $src_abs = false ) {
+		if ( $src_abs ) {
+			$src_w -= $src_x;
+			$src_h -= $src_y;
+		}
+
+		try {
+			$this->image->cropImage( $src_w, $src_h, $src_x, $src_y );
+			$this->image->setImagePage( $src_w, $src_h, 0, 0);
+
+			if ( $dst_w || $dst_h ) {
+				// If destination width/height isn't specified, use same as
+				// width/height from source.
+				if ( ! $dst_w )
+					$dst_w = $src_w;
+				if ( ! $dst_h )
+					$dst_h = $src_h;
+
+				$thumb_result = $this->thumbnail_image( $dst_w, $dst_h );
+				if ( is_wp_error( $thumb_result ) ) {
+					return $thumb_result;
+				}
+
+				return $this->update_size();
+			}
+		}
+		catch ( Exception $e ) {
+			return new WP_Error( 'image_crop_error', $e->getMessage() );
+		}
+		return $this->update_size();
+	}
+
+	/**
+	 * Rotates current image counter-clockwise by $angle.
+	 *
+	 * @since 3.5.0
+	 * @access public
+	 *
+	 * @param float $angle
+	 * @return true|WP_Error
+	 */
+	public function rotate( $angle ) {
+		/**
+		 * $angle is 360-$angle because Imagick rotates clockwise
+		 * (GD rotates counter-clockwise)
+		 */
+		try {
+			$this->image->rotateImage( new ImagickPixel('none'), 360-$angle );
+
+			// Since this changes the dimensions of the image, update the size.
+			$result = $this->update_size();
+			if ( is_wp_error( $result ) )
+				return $result;
+
+			$this->image->setImagePage( $this->size['width'], $this->size['height'], 0, 0 );
+		}
+		catch ( Exception $e ) {
+			return new WP_Error( 'image_rotate_error', $e->getMessage() );
+		}
+		return true;
+	}
+
+	/**
+	 * Flips current image.
+	 *
+	 * @since 3.5.0
+	 * @access public
+	 *
+	 * @param bool $horz Flip along Horizontal Axis
+	 * @param bool $vert Flip along Vertical Axis
+	 * @return true|WP_Error
+	 */
+	public function flip( $horz, $vert ) {
+		try {
+			if ( $horz )
+				$this->image->flipImage();
+
+			if ( $vert )
+				$this->image->flopImage();
+		}
+		catch ( Exception $e ) {
+			return new WP_Error( 'image_flip_error', $e->getMessage() );
+		}
+		return true;
+	}
+
+	/**
+	 * Saves current image to file.
+	 *
+	 * @since 3.5.0
+	 * @access public
+	 *
+	 * @param string $destfilename
+	 * @param string $mime_type
+	 * @return array|WP_Error {'path'=>string, 'file'=>string, 'width'=>int, 'height'=>int, 'mime-type'=>string}
+	 */
+	public function save( $destfilename = null, $mime_type = null ) {
+		$saved = $this->_save( $this->image, $destfilename, $mime_type );
+
+		if ( ! is_wp_error( $saved ) ) {
+			$this->file = $saved['path'];
+			$this->mime_type = $saved['mime-type'];
+
+			try {
+				$this->image->setImageFormat( strtoupper( $this->get_extension( $this->mime_type ) ) );
+			}
+			catch ( Exception $e ) {
+				return new WP_Error( 'image_save_error', $e->getMessage(), $this->file );
+			}
+		}
+
+		return $saved;
+	}
+
+	/**
+	 *
+	 * @param Imagick $image
+	 * @param string $filename
+	 * @param string $mime_type
+	 * @return array|WP_Error
+	 */
+	protected function _save( $image, $filename = null, $mime_type = null ) {
+		list( $filename, $extension, $mime_type ) = $this->get_output_format( $filename, $mime_type );
+
+		if ( ! $filename )
+			$filename = $this->generate_filename( null, null, $extension );
+
+		try {
+			// Store initial Format
+			$orig_format = $this->image->getImageFormat();
+
+			$this->image->setImageFormat( strtoupper( $this->get_extension( $mime_type ) ) );
+			$this->make_image( $filename, array( $image, 'writeImage' ), array( $filename ) );
+
+			// Reset original Format
+			$this->image->setImageFormat( $orig_format );
+		}
+		catch ( Exception $e ) {
+			return new WP_Error( 'image_save_error', $e->getMessage(), $filename );
+		}
+
+		// Set correct file permissions
+		$stat = stat( dirname( $filename ) );
+		$perms = $stat['mode'] & 0000666; //same permissions as parent folder, strip off the executable bits
+		@ chmod( $filename, $perms );
+
+		/** This filter is documented in wp-includes/class-wp-image-editor-gd.php */
+		return array(
+			'path'      => $filename,
+			'file'      => wp_basename( apply_filters( 'image_make_intermediate_size', $filename ) ),
+			'width'     => $this->size['width'],
+			'height'    => $this->size['height'],
+			'mime-type' => $mime_type,
+		);
+	}
+
+	/**
+	 * Streams current image to browser.
+	 *
+	 * @since 3.5.0
+	 * @access public
+	 *
+	 * @param string $mime_type
+	 * @return true|WP_Error
+	 */
+	public function stream( $mime_type = null ) {
+		list( $filename, $extension, $mime_type ) = $this->get_output_format( null, $mime_type );
+
+		try {
+			// Temporarily change format for stream
+			$this->image->setImageFormat( strtoupper( $extension ) );
+
+			// Output stream of image content
+			header( "Content-Type: $mime_type" );
+			print $this->image->getImageBlob();
+
+			// Reset Image to original Format
+			$this->image->setImageFormat( $this->get_extension( $this->mime_type ) );
+		}
+		catch ( Exception $e ) {
+			return new WP_Error( 'image_stream_error', $e->getMessage() );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Strips all image meta except color profiles from an image.
+	 *
+	 * @since 4.5.0
+	 * @access protected
+	 *
+	 * @return true|WP_Error True if stripping metadata was successful. WP_Error object on error.
+	 */
+	protected function strip_meta() {
+
+		if ( ! is_callable( array( $this->image, 'getImageProfiles' ) ) ) {
+			/* translators: %s: ImageMagick method name */
+			return new WP_Error( 'image_strip_meta_error', sprintf( __( '%s is required to strip image meta.' ), '<code>Imagick::getImageProfiles()</code>' ) );
+		}
+
+		if ( ! is_callable( array( $this->image, 'removeImageProfile' ) ) ) {
+			/* translators: %s: ImageMagick method name */
+			return new WP_Error( 'image_strip_meta_error', sprintf( __( '%s is required to strip image meta.' ), '<code>Imagick::removeImageProfile()</code>' ) );
+		}
+
+		/*
+		 * Protect a few profiles from being stripped for the following reasons:
+		 *
+		 * - icc:  Color profile information
+		 * - icm:  Color profile information
+		 * - iptc: Copyright data
+		 * - exif: Orientation data
+		 * - xmp:  Rights usage data
+		 */
+		$protected_profiles = array(
+			'icc',
+			'icm',
+			'iptc',
+			'exif',
+			'xmp',
+		);
+
+		try {
+			// Strip profiles.
+			foreach ( $this->image->getImageProfiles( '*', true ) as $key => $value ) {
+				if ( ! in_array( $key, $protected_profiles ) ) {
+					$this->image->removeImageProfile( $key );
+				}
+			}
+
+		} catch ( Exception $e ) {
+			return new WP_Error( 'image_strip_meta_error', $e->getMessage() );
+		}
+
+		return true;
+	}
+
+}

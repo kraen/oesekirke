@@ -1129,3 +1129,88 @@ function attachment_id3_data_meta_box( $post ) {
 	<?php
 	endforeach;
 }
+>
+		</fieldset></td>
+	</tr>
+
+</table>
+<p><?php _e('If the link is to a person, you can specify your relationship with them using the above form. If you would like to learn more about the idea check out <a href="http://gmpg.org/xfn/">XFN</a>.'); ?></p>
+<?php
+}
+
+/**
+ * Display advanced link options form fields.
+ *
+ * @since 2.6.0
+ *
+ * @param object $link
+ */
+function link_advanced_meta_box($link) {
+?>
+<table class="links-table" cellpadding="0">
+	<tr>
+		<th scope="row"><label for="link_image"><?php _e('Image Address') ?></label></th>
+		<td><input type="text" name="link_image" class="code" id="link_image" maxlength="255" value="<?php echo ( isset( $link->link_image ) ? esc_attr($link->link_image) : ''); ?>" /></td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="rss_uri"><?php _e('RSS Address') ?></label></th>
+		<td><input name="link_rss" class="code" type="text" id="rss_uri" maxlength="255" value="<?php echo ( isset( $link->link_rss ) ? esc_attr($link->link_rss) : ''); ?>" /></td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="link_notes"><?php _e('Notes') ?></label></th>
+		<td><textarea name="link_notes" id="link_notes" rows="10"><?php echo ( isset( $link->link_notes ) ? $link->link_notes : ''); // textarea_escaped ?></textarea></td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="link_rating"><?php _e('Rating') ?></label></th>
+		<td><select name="link_rating" id="link_rating" size="1">
+		<?php
+			for ( $r = 0; $r <= 10; $r++ ) {
+				echo '<option value="' . $r . '"';
+				if ( isset($link->link_rating) && $link->link_rating == $r )
+					echo ' selected="selected"';
+				echo('>' . $r . '</option>');
+			}
+		?></select>&nbsp;<?php _e('(Leave at 0 for no rating.)') ?>
+		</td>
+	</tr>
+</table>
+<?php
+}
+
+/**
+ * Display post thumbnail meta box.
+ *
+ * @since 2.9.0
+ *
+ * @param WP_Post $post A post object.
+ */
+function post_thumbnail_meta_box( $post ) {
+	$thumbnail_id = get_post_meta( $post->ID, '_thumbnail_id', true );
+	echo _wp_post_thumbnail_html( $thumbnail_id, $post->ID );
+}
+
+/**
+ * Display fields for ID3 data
+ *
+ * @since 3.9.0
+ *
+ * @param WP_Post $post A post object.
+ */
+function attachment_id3_data_meta_box( $post ) {
+	$meta = array();
+	if ( ! empty( $post->ID ) ) {
+		$meta = wp_get_attachment_metadata( $post->ID );
+	}
+
+	foreach ( wp_get_attachment_id3_keys( $post, 'edit' ) as $key => $label ) : ?>
+	<p>
+		<label for="title"><?php echo $label ?></label><br />
+		<input type="text" name="id3_<?php echo esc_attr( $key ) ?>" id="id3_<?php echo esc_attr( $key ) ?>" class="large-text" value="<?php
+			if ( ! empty( $meta[ $key ] ) ) {
+				echo esc_attr( $meta[ $key ] );
+			}
+		?>" />
+	</p>
+	<?php
+	endforeach;
+}

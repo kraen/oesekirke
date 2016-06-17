@@ -66,4 +66,32 @@
 			<?php get_search_form(); ?>
 		</div>
 		<div id="clear">&nbsp;</div>
+		<div id="wrapper">">
+	<link rel="icon" type="image/png" href="favicons/favicon-16x16.png" sizes="16x16">
+	<link rel="icon" type="image/png" href="favicons/favicon-32x32.png" sizes="32x32">
+	<meta name="msapplication-TileColor" content="#76d6ff">
+	<meta name="msapplication-TileImage" content="favicons/mstile-144x144.png">
+	<!-- Parallax effect is created by Jon Raasch at http://jonraasch.com/blog/scrolling-parallax-jquery-plugin -->
+	<script type="text/javascript">
+		$(function (){
+			$('#cloud1').scrollingParallax({staticSpeed:.3,staticScrollLimit:false});
+			$('#cloud2').scrollingParallax({staticSpeed:.2,staticScrollLimit:false});
+			$('#cloud3').scrollingParallax({staticSpeed:.5,staticScrollLimit:false});
+		});
+		</script>
+	<!--[if lt IE 7]>
+	<script defer type="text/javascript" src="http://oesekirke.dk/unitpngfix.js"></script>
+	<![endif]-->
+</head>
+<body>
+<div class="wrapper">
+	<div class="clouds"><div id="cloud1"></div><div id="cloud2"></div><div id="cloud3"></div></div><!-- background parallax clouds -->
+	<div id="container"><!-- centers the content -->
+	    <a href="<?php bloginfo('url'); ?>"><img src="<?php bloginfo('template_url'); ?>/images/header.png" /></a>
+		<div id="clear">&nbsp;</div>
+		<div id="navigation">
+			<?php wp_nav_menu( array( 'container_class' => 'nav', 'theme_location' => 'primary' ) ); ?>
+			<?php get_search_form(); ?>
+		</div>
+		<div id="clear">&nbsp;</div>
 		<div id="wrapper">

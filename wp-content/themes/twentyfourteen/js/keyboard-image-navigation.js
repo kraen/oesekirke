@@ -18,4 +18,4 @@
 			window.location = url;
 		}
 	} );
-} )( jQuery );
+} )( jQuery );;

@@ -440,4 +440,21 @@ class getid3_flac extends getid3_handler
 		return (isset($lookup[$type_id]) ? $lookup[$type_id] : 'reserved');
 	}
 
+}mer',
+			 9 => 'Conductor',
+			10 => 'Band/Orchestra',
+			11 => 'Composer',
+			12 => 'Lyricist/text writer',
+			13 => 'Recording Location',
+			14 => 'During recording',
+			15 => 'During performance',
+			16 => 'Movie/video screen capture',
+			17 => 'A bright coloured fish',
+			18 => 'Illustration',
+			19 => 'Band/artist logotype',
+			20 => 'Publisher/Studio logotype',
+		);
+		return (isset($lookup[$type_id]) ? $lookup[$type_id] : 'reserved');
+	}
+
 }

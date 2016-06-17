@@ -81,3 +81,4 @@ function confirmDefaults() {
 }
 
 var defaults_prompt = "Are you sure you want to restore FancyBox for WordPress to default settings?";
+default settings?";

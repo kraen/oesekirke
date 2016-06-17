@@ -655,3 +655,48 @@ function _wp_upgrade_revisions_of_post( $post, $revisions ) {
 
 	return true;
 }
+revision_version = _wp_get_post_revision_version( $this_revision );
+
+		// Something terrible happened
+		if ( false === $this_revision_version )
+			continue;
+
+		// 1 is the latest revision version, so we're already up to date.
+		// No need to add a copy of the post as latest revision.
+		if ( 0 < $this_revision_version ) {
+			$add_last = false;
+			continue;
+		}
+
+		// Always update the revision version
+		$update = array(
+			'post_name' => preg_replace( '/^(\d+-(?:autosave|revision))[\d-]*$/', '$1-v1', $this_revision->post_name ),
+		);
+
+		// If this revision is the oldest revision of the post, i.e. no $prev_revision,
+		// the correct post_author is probably $post->post_author, but that's only a good guess.
+		// Update the revision version only and Leave the author as-is.
+		if ( $prev_revision ) {
+			$prev_revision_version = _wp_get_post_revision_version( $prev_revision );
+
+			// If the previous revision is already up to date, it no longer has the information we need :(
+			if ( $prev_revision_version < 1 )
+				$update['post_author'] = $prev_revision->post_author;
+		}
+
+		// Upgrade this revision
+		$result = $wpdb->update( $wpdb->posts, $update, array( 'ID' => $this_revision->ID ) );
+
+		if ( $result )
+			wp_cache_delete( $this_revision->ID, 'posts' );
+
+	} while ( $prev_revision );
+
+	delete_option( $lock );
+
+	// Add a copy of the post as latest revision.
+	if ( $add_last )
+		wp_save_post_revision( $post->ID );
+
+	return true;
+}

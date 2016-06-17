@@ -239,3 +239,156 @@ class WP_Styles extends WP_Dependencies {
 		$this->print_html = '';
 	}
 }
+code ) {
+		if ( ! $code ) {
+			return false;
+		}
+
+		$after = $this->get_data( $handle, 'after' );
+		if ( ! $after ) {
+			$after = array();
+		}
+
+		$after[] = $code;
+
+		return $this->add_data( $handle, 'after', $after );
+	}
+
+	/**
+	 * Prints extra CSS styles of a registered stylesheet.
+	 *
+	 * @since 3.3.0
+	 * @access public
+	 *
+	 * @param string $handle The style's registered handle.
+	 * @param bool   $echo   Optional. Whether to echo the inline style instead of just returning it.
+	 *                       Default true.
+	 * @return string|bool False if no data exists, inline styles if `$echo` is true, true otherwise.
+	 */
+	public function print_inline_style( $handle, $echo = true ) {
+		$output = $this->get_data( $handle, 'after' );
+
+		if ( empty( $output ) ) {
+			return false;
+		}
+
+		$output = implode( "\n", $output );
+
+		if ( ! $echo ) {
+			return $output;
+		}
+
+		printf( "<style id='%s-inline-css' type='text/css'>\n%s\n</style>\n", esc_attr( $handle ), $output );
+
+		return true;
+	}
+
+	/**
+	 * Determines style dependencies.
+	 *
+	 * @since 2.6.0
+	 * @access public
+	 *
+	 * @see WP_Dependencies::all_deps()
+	 *
+	 * @param mixed     $handles   Item handle and argument (string) or item handles and arguments (array of strings).
+	 * @param bool      $recursion Internal flag that function is calling itself.
+	 * @param int|false $group     Group level: (int) level, (false) no groups.
+	 * @return bool True on success, false on failure.
+	 */
+	public function all_deps( $handles, $recursion = false, $group = false ) {
+		$r = parent::all_deps( $handles, $recursion, $group );
+		if ( ! $recursion ) {
+			/**
+			 * Filter the array of enqueued styles before processing for output.
+			 *
+			 * @since 2.6.0
+			 *
+			 * @param array $to_do The list of enqueued styles about to be processed.
+			 */
+			$this->to_do = apply_filters( 'print_styles_array', $this->to_do );
+		}
+		return $r;
+	}
+
+	/**
+	 * Generates an enqueued style's fully-qualified URL.
+	 *
+	 * @since 2.6.0
+	 * @access public
+	 *
+	 * @param string $src The source of the enqueued style.
+	 * @param string $ver The version of the enqueued style.
+	 * @param string $handle The style's registered handle.
+	 * @return string Style's fully-qualified URL.
+	 */
+	public function _css_href( $src, $ver, $handle ) {
+		if ( !is_bool($src) && !preg_match('|^(https?:)?//|', $src) && ! ( $this->content_url && 0 === strpos($src, $this->content_url) ) ) {
+			$src = $this->base_url . $src;
+		}
+
+		if ( !empty($ver) )
+			$src = add_query_arg('ver', $ver, $src);
+
+		/**
+		 * Filter an enqueued style's fully-qualified URL.
+		 *
+		 * @since 2.6.0
+		 *
+		 * @param string $src    The source URL of the enqueued style.
+		 * @param string $handle The style's registered handle.
+		 */
+		$src = apply_filters( 'style_loader_src', $src, $handle );
+		return esc_url( $src );
+	}
+
+	/**
+	 * Whether a handle's source is in a default directory.
+	 *
+	 * @since 2.8.0
+	 * @access public
+	 *
+	 * @param string $src The source of the enqueued style.
+	 * @return bool True if found, false if not.
+	 */
+	public function in_default_dir( $src ) {
+		if ( ! $this->default_dirs )
+			return true;
+
+		foreach ( (array) $this->default_dirs as $test ) {
+			if ( 0 === strpos($src, $test) )
+				return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Processes items and dependencies for the footer group.
+	 *
+	 * HTML 5 allows styles in the body, grab late enqueued items and output them in the footer.
+	 *
+	 * @since 3.3.0
+	 * @access public
+	 *
+	 * @see WP_Dependencies::do_items()
+	 *
+	 * @return array Handles of items that have been processed.
+	 */
+	public function do_footer_items() {
+		$this->do_items(false, 1);
+		return $this->done;
+	}
+
+	/**
+	 * Resets class properties.
+	 *
+	 * @since 3.3.0
+	 * @access public
+	 */
+	public function reset() {
+		$this->do_concat = false;
+		$this->concat = '';
+		$this->concat_version = '';
+		$this->print_html = '';
+	}
+}

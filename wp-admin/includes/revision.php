@@ -375,4 +375,38 @@ function wp_print_revision_templates() {
 		<# }); #>
 		</div>
 	</script><?php
+}			<span class="time-ago">{{ data.attributes.timeAgo }}</span>
+						<span class="date">({{ data.attributes.dateShort }})</span>
+					</div>
+				<# if ( 'to' === data.type && data.attributes.restoreUrl ) { #>
+					<input  <?php if ( wp_check_post_lock( $post->ID ) ) { ?>
+						disabled="disabled"
+					<?php } else { ?>
+						<# if ( data.attributes.current ) { #>
+							disabled="disabled"
+						<# } #>
+					<?php } ?>
+					<# if ( data.attributes.autosave ) { #>
+						type="button" class="restore-revision button button-primary" value="<?php esc_attr_e( 'Restore This Autosave' ); ?>" />
+					<# } else { #>
+						type="button" class="restore-revision button button-primary" value="<?php esc_attr_e( 'Restore This Revision' ); ?>" />
+					<# } #>
+				<# } #>
+			</div>
+		<# if ( 'tooltip' === data.type ) { #>
+			<div class="revisions-tooltip-arrow"><span></span></div>
+		<# } #>
+	<# } #>
+	</script>
+
+	<script id="tmpl-revisions-diff" type="text/html">
+		<div class="loading-indicator"><span class="spinner"></span></div>
+		<div class="diff-error"><?php _e( 'Sorry, something went wrong. The requested comparison could not be loaded.' ); ?></div>
+		<div class="diff">
+		<# _.each( data.fields, function( field ) { #>
+			<h3>{{ field.name }}</h3>
+			{{{ field.diff }}}
+		<# }); #>
+		</div>
+	</script><?php
 }

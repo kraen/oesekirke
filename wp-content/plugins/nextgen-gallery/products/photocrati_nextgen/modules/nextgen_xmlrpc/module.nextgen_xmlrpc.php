@@ -632,4 +632,37 @@ class M_NextGen_XmlRpc extends C_Base_Module
 	}
 }
 
+new M_NextGen_XmlRpc; $retval->save();
+		}
+
+		return $retval;
+	}
+
+	/**
+	 * Sets the post thumbnail for a post to a NextGEN Gallery image
+	 * @param $args (blog_id, username, password, post_id, image_id)
+	 *
+	 * @return IXR_Error|int attachment id
+	 */
+	function set_post_thumbnail($args)
+	{
+		$retval		= new IXR_Error(403, 'Invalid username or password');
+		$blog_id	= intval($args[0]);
+		$username	= strval($args[1]);
+		$password   = strval($args[2]);
+		$post_ID    = intval($args[3]);
+		$image_id   = intval($args[4]);
+
+		// Authenticate the user
+		if ($this->_login($username, $password, $blog_id)) {
+			if ( current_user_can( 'edit_post', $post_ID )) {
+				$retval = C_Gallery_Storage::get_instance()->set_post_thumbnail($post_ID, $image_id);
+			}
+			else $retval = new IXR_Error(403, "Sorry but you need permission to do this");
+		}
+
+		return $retval;
+	}
+}
+
 new M_NextGen_XmlRpc;
