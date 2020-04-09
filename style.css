@@ -1,0 +1,173 @@
+/*
+Theme Name: Church
+Theme URI: http://example.com/
+Author: Kræn Glintborg Bech-Petersen
+Author URI: https://kraenbech.dk/
+Version: 1.0
+Description: Description
+Tags: one, two
+*/
+
+body {
+  position: relative;
+  height: 100%;
+}
+
+/* NAVIGATION CSS */
+
+@media (max-width: 992px) {
+  .offcanvas-collapse {
+    position: fixed;
+    top: 56px; /* Height of navbar */
+    bottom: 0;
+    left: 100%;
+    width: 100%;
+    padding-right: 1rem;
+    padding-left: 1rem;
+    overflow-y: auto;
+    visibility: hidden;
+    background-color: #fff;
+    transition-timing-function: ease-in-out;
+    transition-duration: .3s;
+    transition-property: left, visibility;
+  }
+  .offcanvas-collapse.open {
+    left: 0;
+    visibility: visible;
+  }
+}
+
+.navbar {
+  background-color: #fff!important;
+  transition: background-color 200ms linear;
+  color:#555;
+}
+
+.navbar.navbar-transparent {
+  background: transparent!important;
+  color: #fff
+}
+
+.about-nav-scroll {
+  top:56px;
+  background-color: #fff !important;
+}
+
+.nav-link,
+.navbar-collapse.collapse.show .nav-link {
+  color: rgba(0,0,0,.5);
+}
+.navbar-brand:hover,
+.nav-link:hover,
+.navbar-collapse.collapse.show .nav-link:hover {
+  color: rgba(0,0,0,.7);
+}
+
+.navbar-brand,
+.navbar .active > .nav-link {
+  color: rgba(0,0,0,.9);
+}
+
+.navbar-transparent .nav-link {
+  color: rgba(255,255,255,.5)!important;
+}
+
+.navbar-transparent .navbar-brand:hover,
+.navbar-transparent .nav-link:hover {
+  color: rgba(255,255,255,.7)!important;
+}
+
+.navbar-transparent .navbar-brand,
+.navbar-transparent .active > .nav-link {
+  color: rgba(255,255,255,.9)!important;
+}
+
+.nav-underline .active {
+  border-bottom:1px solid rgba(0,0,0,.7);
+}
+
+.back-to-top {
+    cursor: pointer;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display:none;
+}
+
+/* INDEX PAGE CSS */
+
+.index-page {
+  background-color: #ccc;
+  background-repeat: no-repeat;
+  background-size: cover;
+  height: 90vh;
+  display: flex;
+  align-items: center;
+}
+
+.single-page {
+  background-color: #ccc;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  height: 40vh;
+  display: flex;
+  align-items: center;
+}
+
+.brand {
+  color: #fff;
+}
+
+.brand h1 {
+  text-transform: uppercase;
+  font-weight: 800
+}
+@media (min-width: 992px) {
+  .brand h1 {
+    font-size:5.2rem;
+  }
+}
+@media (max-width: 992px) {
+  .brand h1 {
+    font-size:3.5rem;
+  }
+}
+
+
+.brand h3 {
+  font-size: 1.3rem;
+}
+
+.frontpage-header h1 {
+  text-transform: uppercase;
+  font-size:1.2rem;
+  letter-spacing: 0.1rem;
+}
+
+.about-scrollspy {
+  position: relative;
+  height: 100%;
+  overflow-y: scroll;
+}
+
+.about-toc {
+  position: sticky;
+  position: -webkit-sticky;
+  height: 2.75rem;
+  overflow-y: auto;
+}
+
+.sticky-top {
+  top:56px;
+}
+
+/* FOOTER */
+footer {
+  background-color: #161616;
+  color: #fff;
+}
+
+footer a {
+  color:#fff
+}
